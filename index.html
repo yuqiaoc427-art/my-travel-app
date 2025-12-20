@@ -10,17 +10,20 @@
             --glass: rgba(255, 255, 255, 0.78); 
             --blur: blur(15px); 
             --accent: #2c3e50; 
+            --flight-blue: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             margin: 0; 
-            padding-bottom: 110px;
-            background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed;
+            padding-bottom: 120px;
+            /* 1. 背景圖網址更新 */
+            background: url('http://xn--static-v24j319j3hnzh6fnfta.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed;
             background-size: cover;
             min-height: 100vh;
         }
 
+        /* 玻璃卡片基礎 */
         .card { 
             background: var(--glass); 
             backdrop-filter: var(--blur); 
@@ -34,93 +37,128 @@
         .tab-content.active { display: block; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* 2. 標題文字更新 */
         .header { text-align: center; color: white; text-shadow: 0 2px 12px rgba(0,0,0,0.5); padding: 45px 20px 10px; }
         .header h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: 2px; }
 
+        /* 航班浮窗設計 */
+        .flight-widget {
+            background: rgba(46, 115, 232, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 15px;
+            margin: 15px;
+            color: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .flight-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .flight-row:last-child { margin-bottom: 0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; }
+        .airport-code { font-size: 20px; font-weight: 900; }
+        .flight-info { text-align: center; font-size: 12px; opacity: 0.9; }
+        .plane-icon { font-size: 18px; margin: 0 10px; }
+
+        /* 表單元素 */
         input { 
             width: 100%; padding: 14px; margin: 8px 0; 
             border: none; border-radius: 12px; background: rgba(255,255,255,0.6);
             font-size: 15px; outline: none; box-sizing: border-box;
         }
-
         button { 
             width: 100%; padding: 15px; background: var(--accent); color: white; 
             border: none; border-radius: 12px; font-weight: bold; margin-top: 12px; cursor: pointer;
         }
 
+        /* 成員膠囊 */
         .member-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
         .member-chip {
             padding: 8px 18px; border-radius: 20px; background: rgba(255, 255, 255, 0.5);
             border: 1px solid rgba(0, 0, 0, 0.08); font-size: 13px; color: #444; cursor: pointer;
         }
         .member-chip input { display: none; }
-        .member-chip.selected { background: var(--accent); color: white; border-color: var(--accent); }
+        .member-chip.selected { background: var(--accent); color: white; }
+
+        /* 行程項目 */
+        .trip-item { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 18px 0; }
+        .time-tag { font-size: 12px; color: #7f8c8d; margin-bottom: 4px; display: block; }
+        .duration-badge { font-size: 11px; background: #e9ecef; color: #495057; padding: 2px 8px; border-radius: 6px; font-weight: bold; }
+
+        /* 3. 記帳/編輯按鈕美化 */
+        .btn-edit-action {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 10px 24px;
+            background: white;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 800;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .btn-edit-action:active { background: var(--accent); color: white; transform: scale(0.95); }
 
         /* 導覽列 */
         .nav-bar { 
             position: fixed; bottom: 25px; left: 20px; right: 20px;
-            background: rgba(255, 255, 255, 0.85); backdrop-filter: var(--blur);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: var(--blur);
             height: 75px; border-radius: 37px; display: flex; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.2); z-index: 1000;
         }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #95a5a6; cursor: pointer; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
-
-        /* 行程項目 */
-        .trip-item { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 18px 0; }
-        .trip-info b { font-size: 18px; color: #2c3e50; }
-        .time-tag { font-size: 12px; color: #7f8c8d; margin-bottom: 4px; display: block; }
-        .duration-tag { font-size: 11px; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
-
-        /* 編輯按鈕美化 */
-        .btn-edit-action {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 20px;
-            background: white;
-            color: var(--accent);
-            border: 1.5px solid var(--accent);
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: 0.2s;
-        }
-        .btn-edit-action:active { background: var(--accent); color: white; }
-
-        .cost-badge { background: var(--accent); color: white; padding: 4px 12px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1 id="top-title">Qiao 旅遊誌</h1>
+        <h1>Qiao 旅遊誌</h1>
     </div>
 
     <div id="tab-home" class="tab-content active">
+        <div class="flight-widget">
+            <div style="font-size: 11px; margin-bottom: 8px; opacity: 0.8;"><i class="fas fa-plane"></i> FLIGHT INFO</div>
+            <div class="flight-row">
+                <div class="airport-code">TPE</div>
+                <div class="flight-info">
+                    <i class="fas fa-plane plane-icon"></i><br>
+                    <span>去程航班</span>
+                </div>
+                <div class="airport-code">NRT</div>
+            </div>
+            <div class="flight-row">
+                <div class="airport-code">NRT</div>
+                <div class="flight-info">
+                    <i class="fas fa-plane plane-icon" style="transform: rotate(180deg);"></i><br>
+                    <span>回程航班</span>
+                </div>
+                <div class="airport-code">TPE</div>
+            </div>
+        </div>
+
         <div class="card" style="text-align: center;">
             <p id="display-members">歡迎回來！請設定本次旅程</p>
-            <input type="text" id="setup-trip-name" placeholder="旅行名稱 (例：京都五日遊)">
+            <input type="text" id="setup-trip-name" placeholder="旅行名稱 (例：東京五日遊)">
             <input type="text" id="setup-members" placeholder="成員名單 (用逗號隔開)">
-            <button onclick="saveSettings()">儲存旅程</button>
+            <button onclick="saveSettings()">儲存旅程設定</button>
         </div>
     </div>
 
     <div id="tab-plan" class="tab-content">
         <div class="card">
-            <strong id="editor-title">📅 規劃行程</strong>
+            <strong id="editor-title" style="font-size: 18px;">📅 行程規劃</strong>
             <input type="hidden" id="edit-id">
             <input type="date" id="date">
             <div style="display: flex; gap: 10px;">
                 <input type="time" id="start-time" placeholder="開始時間">
                 <input type="time" id="end-time" placeholder="結束時間 (選填)">
             </div>
-            <input type="text" id="activity" placeholder="地點或活動名稱">
+            <input type="text" id="activity" placeholder="行程名稱 (必填)">
             <div style="margin-top:15px; border-top: 1px dashed #ccc; padding-top:10px;">
                 <input type="number" id="cost" placeholder="花費金額 (選填)">
                 <div id="dynamic-member-selection" class="member-grid"></div>
             </div>
-            <button onclick="saveTrip()" id="main-btn">儲存行程</button>
+            <button onclick="saveTrip()" id="main-btn">儲存行程紀錄</button>
         </div>
         <div class="card"><div id="trip-list"></div></div>
     </div>
@@ -128,9 +166,9 @@
     <div id="tab-files" class="tab-content">
         <div class="card">
             <strong>📎 雲端附件</strong>
-            <input type="text" id="link-name" placeholder="檔案名稱">
-            <input type="text" id="link-url" placeholder="Google Drive 連結">
-            <button onclick="saveLink()">儲存連結</button>
+            <input type="text" id="link-name" placeholder="名稱">
+            <input type="text" id="link-url" placeholder="網址">
+            <button onclick="saveLink()">新增</button>
         </div>
         <div id="link-list"></div>
     </div>
@@ -138,7 +176,7 @@
     <div id="tab-split" class="tab-content">
         <div class="card" style="text-align:center;">
             <p>總支出</p>
-            <h1 id="total-val" style="font-size:36px; color:var(--accent);">$0</h1>
+            <h1 id="total-val" style="font-size:36px;">$0</h1>
         </div>
         <div class="card" id="personal-list"></div>
     </div>
@@ -174,29 +212,28 @@
             el.classList.add('active');
         };
 
-        // 時間計算邏輯
-        function calculateDuration(start, end) {
-            if (!start || !end) return "";
-            const s = start.split(':');
-            const e = end.split(':');
-            let diff = (parseInt(e[0]) * 60 + parseInt(e[1])) - (parseInt(s[0]) * 60 + parseInt(s[1]));
-            if (diff <= 0) return "";
+        // 停留時間計算函數
+        function getDuration(s, e) {
+            if (!s || !e) return "";
+            const start = s.split(':').map(Number);
+            const end = e.split(':').map(Number);
+            let diff = (end[0] * 60 + end[1]) - (start[0] * 60 + start[1]);
+            if (diff < 0) diff += 1440; // 跨夜處理
             const h = Math.floor(diff / 60);
             const m = diff % 60;
-            return `(${h > 0 ? h + '小時' : ''}${m > 0 ? m + '分' : ''})`;
+            return `🕒 ${h > 0 ? h + 'h' : ''}${m > 0 ? m + 'm' : ''}`;
         }
 
         window.saveSettings = async () => {
             const name = document.getElementById('setup-trip-name').value;
             const members = document.getElementById('setup-members').value.split(',').map(m => m.trim()).filter(m => m);
             await setDoc(doc(db, "settings", "currentTrip"), { tripName: name, members: members });
-            alert("設定成功");
+            alert("旅程設定已更新");
         };
 
         onSnapshot(doc(db, "settings", "currentTrip"), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                document.getElementById('top-title').innerText = data.tripName;
                 document.getElementById('display-members').innerText = "旅伴：" + data.members.join(', ');
                 currentMembers = data.members;
                 let html = '';
@@ -218,7 +255,7 @@
                 members: Array.from(document.querySelectorAll('.trip-mem-cb:checked')).map(cb => cb.value),
                 updatedAt: new Date()
             };
-            if(!tripData.date || !tripData.startTime || !tripData.activity) return alert("請填寫日期、起始時間與地點");
+            if(!tripData.date || !tripData.startTime || !tripData.activity) return alert("請填寫必填欄位");
             if(id) await updateDoc(doc(db, "trips", id), tripData);
             else { tripData.createdAt = new Date(); await addDoc(collection(db, "trips"), tripData); }
             resetEditor();
@@ -248,19 +285,19 @@
             currentMembers.forEach(m => pTotal[m] = 0);
             snapshot.forEach(docSnap => {
                 const d = docSnap.data(); const ms = d.members || [];
-                const duration = calculateDuration(d.startTime, d.endTime);
+                const dur = getDuration(d.startTime, d.endTime);
                 total += d.cost; 
                 ms.forEach(m => { if(pTotal[m]!==undefined) pTotal[m] += (d.cost / ms.length); });
 
                 listHtml += `
                     <div class="trip-item">
                         <div class="trip-info">
-                            <span class="time-tag">${d.date} | ${d.startTime}${d.endTime ? ' ~ ' + d.endTime : ''} <span class="duration-tag">${duration}</span></span>
+                            <span class="time-tag">${d.date} | ${d.startTime}${d.endTime ? ' ~ ' + d.endTime : ''} ${dur ? `<span class="duration-badge">${dur}</span>` : ''}</span>
                             <b>${d.activity}</b>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                             <div class="btn-edit-action" onclick="editTrip('${docSnap.id}','${d.date}','${d.startTime}','${d.endTime}','${d.activity}',${d.cost},'${ms.join(',')}')">記帳 / 編輯</div>
-                            ${d.cost > 0 ? `<span class="cost-badge">$${d.cost}</span>` : ''}
+                            ${d.cost > 0 ? `<span style="font-weight:bold; color:var(--accent);">$${d.cost}</span>` : ''}
                         </div>
                     </div>`;
             });
@@ -283,10 +320,7 @@
                 const d = docSnap.data();
                 let fileId = d.url.includes('/d/') ? d.url.split('/d/')[1].split('/')[0] : '';
                 html += `<div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b>${d.name}</b> 
-                        <a href="${d.url}" target="_blank" style="color:var(--accent); font-size:20px;"><i class="fas fa-external-link-alt"></i></a>
-                    </div>
+                    <div style="display:flex; justify-content:space-between;"><b>${d.name}</b> <a href="${d.url}" target="_blank"><i class="fas fa-external-link-alt"></i></a></div>
                     ${fileId ? `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w800" style="width:100%; border-radius:15px; margin-top:10px;">` : ''}
                 </div>`;
             });
