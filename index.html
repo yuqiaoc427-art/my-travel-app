@@ -33,7 +33,6 @@
         .header { text-align: center; color: white; text-shadow: 0 2px 12px rgba(0,0,0,0.5); padding: 45px 20px 10px; }
         .header h1 { margin: 0; font-size: 32px; font-weight: 800; }
 
-        /* 航班電子機票樣式 */
         .flight-card {
             background: var(--flight-bg); border-radius: 20px; padding: 18px; margin: 15px; color: white;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative;
@@ -45,7 +44,6 @@
         .flight-path { flex: 1; text-align: center; position: relative; padding: 0 15px; }
         .flight-path::after { content: ""; position: absolute; top: 50%; left: 10%; right: 10%; border-top: 1px dashed rgba(255,255,255,0.4); }
 
-        /* 懸浮按鈕 (FAB) */
         .fab {
             position: fixed; bottom: 110px; right: 25px;
             width: 60px; height: 60px; background: var(--accent);
@@ -54,7 +52,6 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 999; cursor: pointer;
         }
 
-        /* 彈窗小卡 (Modal) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); display: none; z-index: 2000;
@@ -62,7 +59,6 @@
         }
         .modal-card { width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto; }
 
-        /* 元件美化 */
         .member-chip { padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer; margin: 4px; display: inline-block; transition: 0.3s; border: 1px solid rgba(0,0,0,0.05); }
         .member-chip.selected { background: var(--accent); color: white; border-color: var(--accent); }
         
@@ -101,23 +97,19 @@
                 </div>
             </div>
         </div>
-
         <div class="card">
             <strong>⚙️ 旅程與航班設定</strong>
             <input type="text" id="setup-trip-name" placeholder="旅行名稱">
             <input type="text" id="setup-members" placeholder="成員名單 (逗號隔開)">
-            
             <p style="font-size:11px; color:#7f8c8d; margin:10px 0 0;">去程設定：</p>
             <input type="text" id="go-air" placeholder="航空公司">
             <div style="display:flex; gap:10px;"><input type="text" id="go-start" placeholder="起飛機場"><input type="time" id="go-start-t"></div>
             <div style="display:flex; gap:10px;"><input type="text" id="go-end" placeholder="抵達機場"><input type="time" id="go-end-t"></div>
-            
             <p style="font-size:11px; color:#7f8c8d; margin:10px 0 0;">回程設定：</p>
             <input type="text" id="back-air" placeholder="航空公司">
             <div style="display:flex; gap:10px;"><input type="text" id="back-start" placeholder="起飛機場"><input type="time" id="back-start-t"></div>
             <div style="display:flex; gap:10px;"><input type="text" id="back-end" placeholder="抵達機場"><input type="time" id="back-end-t"></div>
-            
-            <button onclick="saveSettings()" style="background:var(--accent); color:white; border-radius:12px; border:none; padding:12px; width:100%; margin-top:10px; font-weight:bold;">儲存設定</button>
+            <button onclick="saveSettings()">儲存設定</button>
         </div>
     </div>
 
@@ -129,9 +121,9 @@
     <div id="tab-files" class="tab-content">
         <div class="card">
             <strong>📎 雲端附件連結</strong>
-            <input type="text" id="link-name" placeholder="檔案名稱 (例：飯店確認單)">
+            <input type="text" id="link-name" placeholder="檔案名稱">
             <input type="text" id="link-url" placeholder="Google Drive 連結">
-            <button onclick="saveLink()" style="background:var(--accent); color:white; border-radius:12px; border:none; padding:12px; width:100%; margin-top:10px;">儲存附件</button>
+            <button onclick="saveLink()">儲存附件</button>
         </div>
         <div id="link-list"></div>
     </div>
@@ -144,7 +136,10 @@
             <strong><i class="fas fa-exchange-alt"></i> 清算建議</strong>
             <div id="settlement-list" style="margin-top:10px;"></div>
         </div>
-        <div class="card"><strong>👤 各成員花費明細</strong><div id="personal-list"></div></div>
+        <div class="card">
+            <strong>👤 各成員消費明細</strong>
+            <div id="personal-list" style="margin-top:10px;"></div>
+        </div>
     </div>
 
     <div class="modal-overlay" id="modal">
@@ -157,10 +152,10 @@
             <div style="display:flex; gap:10px;"><input type="time" id="start-time"><input type="time" id="end-time"></div>
             <input type="text" id="activity" placeholder="行程名稱">
             <hr style="opacity:0.2; margin:15px 0;">
-            <input type="number" id="cost" placeholder="花費金額 (選填)">
+            <input type="number" id="cost" placeholder="花費金額">
             <select id="payer-select"></select>
             <div id="member-selection-area"></div>
-            <button onclick="saveTrip()" style="background:var(--accent); color:white; border-radius:12px; border:none; padding:15px; width:100%; margin-top:15px; font-weight:bold;">儲存</button>
+            <button onclick="saveTrip()">儲存</button>
         </div>
     </div>
 
@@ -293,21 +288,25 @@
         };
 
         onSnapshot(query(collection(db, "trips"), orderBy("date", "asc"), orderBy("startTime", "asc")), (snapshot) => {
-            let listHtml = '', total = 0, balances = {};
-            currentMembers.forEach(m => balances[m] = 0);
+            let listHtml = '', total = 0, balances = {}, spent = {};
+            currentMembers.forEach(m => { balances[m] = 0; spent[m] = 0; });
+
             snapshot.forEach(docSnap => {
                 const d = docSnap.data(); const ms = d.members || [];
                 total += d.cost;
                 if(d.cost > 0 && d.payer && ms.length > 0) {
                     const share = d.cost / ms.length;
                     balances[d.payer] += d.cost;
-                    ms.forEach(m => balances[m] -= share);
+                    ms.forEach(m => {
+                        balances[m] -= share;
+                        if(spent[m] !== undefined) spent[m] += share;
+                    });
                 }
                 listHtml += `<div class="trip-item">
                     <small>${d.date} ${d.startTime}</small><br><b>${d.activity}</b><br>
                     <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:8px;">
-                        <div onclick="editTrip('${docSnap.id}','${d.date}','${d.startTime}','${d.endTime}','${d.activity}',${d.cost},'${d.payer}','${ms.join(',')}')" style="background:white; padding:5px 15px; border-radius:10px; border:1px solid var(--accent); font-size:14px; cursor:pointer;">記帳 / 編輯</div>
-                        <button onclick="deleteTrip('${docSnap.id}')" style="background:none; border:none; color:#ccc; width:auto; padding:0; margin-left:10px;">✕</button>
+                        <div onclick="editTrip('${docSnap.id}','${d.date}','${d.startTime}','${d.endTime}','${d.activity}',${d.cost},'${d.payer}','${ms.join(',')}')" style="background:white; padding:5px 15px; border-radius:10px; border:1px solid var(--accent); font-size:14px; cursor:pointer;">記帳</div>
+                        <span onclick="deleteTrip('${docSnap.id}')" style="color:#ccc; margin-left:10px;">✕</span>
                         ${d.cost > 0 ? `<span>$${d.cost}</span>` : ''}
                     </div>
                 </div>`;
@@ -315,6 +314,16 @@
             document.getElementById('trip-list').innerHTML = listHtml;
             document.getElementById('total-val').innerText = "$" + total.toLocaleString();
 
+            // 顯示成員個人消費明細 (原本漏掉的地方)
+            let pHtml = '';
+            currentMembers.forEach(m => {
+                pHtml += `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span>${m} 總共花了</span><b>$${Math.round(spent[m]).toLocaleString()}</b>
+                </div>`;
+            });
+            document.getElementById('personal-list').innerHTML = pHtml;
+
+            // 清算建議
             let debtors = [], creditors = [];
             for (let m in balances) {
                 if (balances[m] > 1) creditors.push({ name: m, amount: balances[m] });
@@ -335,11 +344,9 @@
 
         window.deleteTrip = async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "trips", id)); };
 
-        // 附件連結邏輯
         window.saveLink = async () => {
-            const name = document.getElementById('link-name').value;
-            const url = document.getElementById('link-url').value;
-            if(!name || !url) return alert("請輸入完整資料");
+            const name = document.getElementById('link-name').value, url = document.getElementById('link-url').value;
+            if(!name || !url) return alert("資料不全");
             await addDoc(collection(db, "links"), { name, url, createdAt: new Date() });
             document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
         };
@@ -348,15 +355,13 @@
             let html = '';
             snapshot.forEach(docSnap => {
                 const d = docSnap.data();
-                let fileId = '';
-                if(d.url.includes('/d/')) fileId = d.url.split('/d/')[1].split('/')[0];
-                let preview = (fileId && !d.url.includes('/folders/')) ? `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w800" class="preview-img">` : '';
-                html += `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><b>${d.name}</b><div><a href="${d.url}" target="_blank" style="color:var(--accent); font-size:18px;"><i class="fas fa-external-link-alt"></i></a><span style="margin-left:15px; color:#ccc;" onclick="deleteLink('${docSnap.id}')">✕</span></div></div>${preview}</div>`;
+                let fId = d.url.includes('/d/') ? d.url.split('/d/')[1].split('/')[0] : '';
+                html += `<div class="card"><div style="display:flex; justify-content:space-between;"><b>${d.name}</b><div><a href="${d.url}" target="_blank" style="color:var(--accent);"><i class="fas fa-external-link-alt"></i></a><span style="margin-left:15px; color:#ccc;" onclick="deleteLink('${docSnap.id}')">✕</span></div></div>${fId ? `<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img">` : ''}</div>`;
             });
             document.getElementById('link-list').innerHTML = html;
         });
 
-        window.deleteLink = async (id) => { if(confirm("刪除連結？")) await deleteDoc(doc(db, "links", id)); };
+        window.deleteLink = async (id) => { if(confirm("刪除？")) await deleteDoc(doc(db, "links", id)); };
     </script>
 </body>
 </html>
