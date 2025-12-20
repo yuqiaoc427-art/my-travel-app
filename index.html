@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Qiao 旅遊誌 - 2025 正式版</title>
+    <title>Qiao 旅遊誌 - 2025 智慧版</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4&libraries=places&loading=async" defer></script>
@@ -17,25 +17,24 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
         
-        /* 登機證風格 */
+        /* 2. 登機證風格 (Boarding Pass) */
         .boarding-pass { background: #fff; border-radius: 20px; margin: 15px 5px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-left: 8px solid var(--accent); }
         .ticket-top { background: var(--accent); color: white; padding: 12px 15px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
-        .ticket-mid { padding: 25px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .ticket-mid { padding: 25px 20px; display: flex; justify-content: space-between; align-items: center; position: relative; }
         .airport-code { font-size: 36px; font-weight: 900; color: var(--accent); margin: 0; }
         .ticket-btm { padding: 15px 20px; background: #fafafa; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 11px; }
         .ticket-val { font-weight: bold; color: #222; display: block; font-size: 14px; }
 
-        /* 地點輸入框樣式 */
+        /* 3. 地點輸入框樣式 (適配新語法) */
         gmpx-place-autocomplete { width: 100%; margin: 10px 0; --gmpx-border-radius: 12px; }
         input.custom-input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; }
 
-        /* 行程卡片 */
+        /* 行程卡片與其他 */
         .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 12px; scrollbar-width: none; }
         .date-item { min-width: 65px; height: 85px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; }
         .date-item.active { background: var(--accent); color: white; border: none; }
         .itinerary-card { background: var(--glass); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .commute-info { text-align: center; color: white; font-size: 12px; margin: 5px 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
         .fab { position: fixed; bottom: 110px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 900; border: none; }
         .nav-bar { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(255,255,255,0.95); height: 75px; border-radius: 38px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; text-decoration: none; font-size: 11px; }
@@ -127,6 +126,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        const GOOGLE_KEY = "AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4";
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
         let currentMembers = [], selectedDate = "", lastSelectedPlace = "";
 
@@ -182,24 +182,6 @@
             refreshItinerary();
         };
 
-        // 修改後的通勤時間函數 (使用 JavaScript SDK 避免 CORS)
-        async function getCommuteTime(origin, destination) {
-            return new Promise((resolve) => {
-                const service = new google.maps.DistanceMatrixService();
-                service.getDistanceMatrix({
-                    origins: [origin],
-                    destinations: [destination],
-                    travelMode: 'DRIVING'
-                }, (response, status) => {
-                    if (status === 'OK' && response.rows[0].elements[0].status !== 'ZERO_RESULTS') {
-                        resolve(response.rows[0].elements[0].duration.text);
-                    } else {
-                        resolve("計算中...");
-                    }
-                });
-            });
-        }
-
         // 行程邏輯
         window.saveItinerary = async () => {
             const data = { date: selectedDate, location: lastSelectedPlace, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value };
@@ -210,41 +192,15 @@
         async function refreshItinerary() {
             const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
             const snap = await getDocs(q);
-            let html = '', prevLocation = "";
-            
-            const docs = snap.docs;
-            for(let i=0; i < docs.length; i++) {
-                const d = docs[i].data();
-                
-                // 計算通勤時間
-                if (prevLocation) {
-                    const time = await getCommuteTime(prevLocation, d.location);
-                    html += `<div class="commute-info"><i class="fas fa-car"></i> 約 ${time}</div>`;
-                }
-                
+            let html = '';
+            snap.forEach(docSnap => {
+                const d = docSnap.data();
                 html += `<div class="itinerary-card"><div style="flex:1;"><small>${d.start} - ${d.end}</small><br><b style="font-size:18px;">${d.location}</b></div></div>`;
-                prevLocation = d.location;
-                
-                // 只抓第一個行程的天氣 (防止 API 過載且較準確)
-                if (i === 0) updateWeather(d.location);
-            }
+            });
             document.getElementById('itinerary-list').innerHTML = html || '<p style="text-align:center; color:white;">無行程</p>';
         }
 
-        async function updateWeather(location) {
-            // 簡化地址為城市名進行天氣搜尋
-            const city = location.split(/[ ,，、]/)[0];
-            try {
-                const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.cod === 200) {
-                    document.getElementById('weather-box').innerHTML = `<i class="fas fa-cloud-sun"></i> ${data.weather[0].description} | ${Math.round(data.main.temp)}°C`;
-                }
-            } catch (e) {}
-        }
-
-        // 登機證與附件 (保持原樣)
+        // 登機證外觀 (Boarding Pass)
         window.saveFlight = async () => {
             const type = document.getElementById('f-type').value;
             await setDoc(doc(db, "flights", type), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type });
@@ -257,13 +213,18 @@
                 const f = docSnap.data();
                 html += `<div class="boarding-pass">
                     <div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'去程':'回程'}</span></div>
-                    <div class="ticket-mid"><p class="airport-code">${f.from}</p><i class="fas fa-plane"></i><p class="airport-code">${f.to}</p></div>
-                    <div class="ticket-btm"><div>時間 <span class="ticket-val">${f.fromT}</span></div><div>航班 <span class="ticket-val">${f.no}</span></div></div>
+                    <div class="ticket-mid">
+                        <p class="airport-code">${f.from}</p><i class="fas fa-plane"></i><p class="airport-code">${f.to}</p>
+                    </div>
+                    <div class="ticket-btm">
+                        <div>航班 <span class="ticket-val">${f.no}</span></div><div>時間 <span class="ticket-val">${f.fromT}</span></div>
+                    </div>
                 </div>`;
             });
             document.getElementById('flight-display-area').innerHTML = html;
         });
 
+        // 附件預覽 (Google Drive Fix)
         window.saveLink = async () => {
             await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
             document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
