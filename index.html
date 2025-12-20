@@ -1,10 +1,12 @@
+:{Qiao 旅遊誌 - 全功能優化版}:index.html
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Qiao 旅遊誌 - 智慧分帳版</title>
+    <title>Qiao 旅遊誌</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入 SortableJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     
     <style>
@@ -18,7 +20,7 @@
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
         #weather-box { background: rgba(0,0,0,0.35); color: white; border-radius: 15px; padding: 10px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 8px; font-size: 14px; backdrop-filter: blur(5px); min-height: 40px; }
 
-        /* Boarding Pass */
+        /* 登機證浮窗 */
         .boarding-pass { background: #fff; border-radius: 15px; margin: 10px 5px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-left: 5px solid var(--accent); max-width: 95%; margin-left: auto; margin-right: auto; }
         .ticket-top { background: var(--accent); color: white; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; }
         .ticket-mid { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -26,46 +28,52 @@
         .ticket-btm { padding: 10px 15px; background: #fafafa; display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 5px; border-top: 1px dashed #ddd; font-size: 10px; }
         .ticket-val { font-weight: bold; color: #222; font-size: 12px; display: block; }
 
-        /* 日期捲軸 */
+        /* 日期選擇器 */
         .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 12px; scrollbar-width: none; }
         .date-item { min-width: 65px; height: 90px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
         .date-item.active { background: var(--accent); color: white; border: none; box-shadow: 0 5px 15px rgba(30,60,114,0.3); }
         .date-item b { font-size: 16px; margin-bottom: 4px; }
         .date-item span { font-size: 12px; opacity: 0.8; }
 
-        /* 行程與附件卡片 */
-        .itinerary-card, .file-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; }
-        .delete-btn { position: absolute; top: 12px; right: 12px; color: var(--danger); font-size: 18px; cursor: pointer; padding: 5px; opacity: 0.7; transition: 0.3s; }
-        .delete-btn:hover { opacity: 1; }
+        /* 行程卡片優化 */
+        .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; }
         
-        .time-text { font-weight: 800; font-size: 18px; color: var(--accent); display: block; margin-bottom: 2px; }
-        .stay-tag { font-size: 11px; background: rgba(30,60,114,0.1); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-left: 5px; vertical-align: middle; }
-        .location-text { font-size: 18px; font-weight: bold; color: #333; padding-right: 25px; }
-        .desc-text { font-size: 14px; color: #666; margin-top: 4px; display: block; }
+        /* 刪除按鈕移到左上角 */
+        .delete-btn-tl { position: absolute; top: 10px; left: 10px; color: var(--danger); font-size: 18px; cursor: pointer; z-index: 10; opacity: 0.8; }
+
+        .type-icon { width: 45px; height: 45px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 20px; margin-right: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); flex-shrink: 0; }
         
-        .btn-action { padding: 8px 15px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; width: 80px; margin-bottom: 5px; }
+        .info-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .time-row { font-weight: 800; font-size: 18px; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+        .stay-tag { font-size: 11px; background: rgba(30,60,114,0.1); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+        .location-text { font-size: 18px; font-weight: bold; color: #333; }
+        .desc-text { font-size: 14px; color: #666; }
+        
+        .btn-col { display: flex; flex-direction: column; gap: 5px; margin-left: 10px; }
+        .btn-action { padding: 8px 12px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; width: 70px; }
         .commute-info { text-align: center; color: white; font-size: 12px; margin: 5px 0; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
 
-        /* 底部導覽列 - 縮小版 */
-        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(255,255,255,0.98); height: 70px; border-radius: 35px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; text-decoration: none; font-size: 11px; }
-        .nav-item i { font-size: 22px; margin-bottom: 3px; }
+        /* 導覽列小化 */
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(255,255,255,0.98); height: 60px; border-radius: 30px; display: flex; box-shadow: 0 8px 25px rgba(0,0,0,0.2); z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; text-decoration: none; font-size: 10px; }
+        .nav-item i { font-size: 18px; margin-bottom: 2px; }
         .nav-item.active { color: var(--accent); font-weight: 900; }
 
-        .fab { position: fixed; bottom: 100px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 900; border: none; }
+        .fab { position: fixed; bottom: 85px; right: 25px; width: 55px; height: 55px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 900; border: none; }
+        
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; font-family: inherit; }
+        
         .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: block; }
-
-        /* 分帳結算樣式 */
-        .settle-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 12px; border-radius: 10px; margin-top: 15px; font-size: 14px; }
+        .settle-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 12px; border-radius: 10px; margin-top: 15px; font-size: 14px; text-align: left; }
     </style>
 </head>
 <body>
 
     <div class="header"><h1 id="dynamic-trip-name">旅遊誌</h1></div>
 
+    <!-- 首頁 -->
     <div id="tab-home" class="tab-content active">
         <div id="flight-display-area"></div>
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
@@ -78,36 +86,47 @@
         <button class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></button>
     </div>
 
+    <!-- 行程頁 -->
     <div id="tab-plan" class="tab-content">
-        <div id="weather-box">正在讀取當地天氣...</div>
+        <div id="weather-box">正在抓取當地天氣...</div>
         <div class="date-container" id="date-scroll"></div>
         <div id="itinerary-list"></div>
         <button class="fab" onclick="openModal('modal-itinerary')"><i class="fas fa-plus"></i></button>
     </div>
 
+    <!-- 附件頁 -->
     <div id="tab-files" class="tab-content">
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
             <strong>📎 雲端附件</strong>
             <input type="text" id="link-name" placeholder="檔案描述">
-            <input type="text" id="link-url" placeholder="貼上 Google Drive 連結">
+            <input type="text" id="link-url" placeholder="貼上分享連結">
             <button onclick="saveLink()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px;">儲存附件</button>
         </div>
         <div id="link-list"></div>
     </div>
 
+    <!-- 分帳頁 -->
     <div id="tab-split" class="tab-content">
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px; text-align:center;">
             <p style="margin:0; color:#666;">旅程總支出</p>
             <h1 id="total-val">$0</h1>
             <div id="personal-list"></div>
-            <div id="settle-suggestions" class="settle-card">正在計算結算建議...</div>
+            <div id="settle-suggestions" class="settle-card">正在計算建議...</div>
         </div>
     </div>
 
+    <!-- 彈窗群組 -->
     <div id="modal-itinerary" class="modal-overlay"><div class="modal-content">
         <h3>📝 編輯行程計畫</h3>
         <input type="hidden" id="edit-id">
-        <input type="text" id="plan-location" placeholder="輸入地點名稱 (Google 建議)">
+        <select id="plan-type">
+            <option value="attraction">📍 景點</option>
+            <option value="flight">✈️ 飛行</option>
+            <option value="breakfast">☕ 早餐</option>
+            <option value="lunch">🍜 午餐</option>
+            <option value="dinner">🍺 晚餐</option>
+        </select>
+        <input type="text" id="plan-location" placeholder="地點名稱 (Google 建議)">
         <textarea id="plan-desc" rows="3" placeholder="活動說明"></textarea>
         <div style="display:flex; gap:10px;"><input type="time" id="plan-start"><input type="time" id="plan-end"></div>
         <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
@@ -118,8 +137,8 @@
         <h3>✈️ 登機證設定</h3>
         <select id="f-type"><option value="go">去程航班</option><option value="back">回程航班</option></select>
         <input type="text" id="f-air" placeholder="航空公司"><input type="text" id="f-no" placeholder="航班號碼">
-        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛 (TPE)"><input type="time" id="f-from-t"></div>
-        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="抵達 (NRT)"><input type="time" id="f-to-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛地"><input type="time" id="f-from-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="目的地"><input type="time" id="f-to-t"></div>
         <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
@@ -141,17 +160,21 @@
         <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-coins"></i><span>分帳</span></a>
     </div>
 
+    <!-- 腳本區域 -->
     <script>
+        // 核心：Google Maps Autocomplete 恢復
         window.initAutocomplete = function() {
             const input = document.getElementById('plan-location');
             if(!input) return;
             const autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.setFields(['name', 'geometry', 'formatted_address']);
             autocomplete.addListener('place_changed', () => {
                 const place = autocomplete.getPlace();
                 if (place.name) input.value = place.name;
             });
         };
     </script>
+    <!-- 確保 API 載入正確 -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4&libraries=places&callback=initAutocomplete" async defer></script>
 
     <script type="module">
@@ -165,10 +188,61 @@
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
         let currentMembers = [], selectedDate = "";
 
-        // --- 行程功能 ---
+        // 類型與 Icon 對照
+        const typeIcons = {
+            attraction: 'fa-map-marker-alt',
+            flight: 'fa-plane',
+            breakfast: 'fa-coffee',
+            lunch: 'fa-utensils',
+            dinner: 'fa-moon'
+        };
+
+        // --- 全域導覽與彈窗 ---
+        window.switchTab = (id, el) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        };
+        window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+        window.closeModal = () => {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+            document.getElementById('edit-id').value = '';
+            document.getElementById('plan-location').value = '';
+            document.getElementById('plan-desc').value = '';
+            document.getElementById('plan-start').value = '';
+            document.getElementById('plan-end').value = '';
+        };
+
+        // --- GPS 與天氣 ---
+        async function updateWeather(fallbackLoc) {
+            const weatherBox = document.getElementById('weather-box');
+            const getW = async (p) => {
+                try {
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?${p}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`);
+                    const d = await res.json();
+                    if(d.cod===200) { weatherBox.innerHTML = `<img src="https://openweathermap.org/img/wn/${d.weather[0].icon}.png" width="28"><b>${d.name}: ${Math.round(d.main.temp)}°C</b>`; return true; }
+                    return false;
+                } catch(e){return false;}
+            };
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async(pos)=> {await getW(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);},
+                async()=>{if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`);}, {timeout:5000});
+            } else if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`);
+        }
+
+        // --- 行程核心功能 ---
         window.saveItinerary = async () => {
             if(!selectedDate) return alert("請選日期");
-            const data = { date: selectedDate, location: document.getElementById('plan-location').value, desc: document.getElementById('plan-desc').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, updatedAt: new Date() };
+            const data = { 
+                date: selectedDate, 
+                type: document.getElementById('plan-type').value,
+                location: document.getElementById('plan-location').value, 
+                desc: document.getElementById('plan-desc').value, 
+                start: document.getElementById('plan-start').value, 
+                end: document.getElementById('plan-end').value, 
+                updatedAt: new Date() 
+            };
             const id = document.getElementById('edit-id').value;
             if(id) await updateDoc(doc(db, "itinerary", id), data);
             else await addDoc(collection(db, "itinerary"), data);
@@ -185,15 +259,17 @@
 
             for(let i=0; i<docs.length; i++) {
                 const d = docs[i].data(), id = docs[i].id;
+                const iconClass = typeIcons[d.type] || 'fa-map-marker-alt';
                 html += `
                     <div class="itinerary-card" data-id="${id}">
-                        <div class="delete-btn" onclick="window.deletePlan('${id}')"><i class="fas fa-times-circle"></i></div>
-                        <div style="flex:1;">
-                            <span class="time-text">${d.start} - ${d.end}<span class="stay-tag">${getTimeDiff(d.start, d.end)}</span></span>
-                            <span class="location-text">${d.location}</span>
-                            ${d.desc ? `<span class="desc-text">${d.desc}</span>` : ''}
+                        <div class="delete-btn-tl" onclick="window.deletePlan('${id}')"><i class="fas fa-times-circle"></i></div>
+                        <div class="type-icon"><i class="fas ${iconClass}"></i></div>
+                        <div class="info-col">
+                            <div class="time-row">${d.start} - ${d.end}<span class="stay-tag">${getTimeDiff(d.start, d.end)}</span></div>
+                            <div class="location-text">${d.location}</div>
+                            ${d.desc ? `<div class="desc-text">${d.desc}</div>` : ''}
                         </div>
-                        <div style="display:flex; flex-direction:column;">
+                        <div class="btn-col">
                             <button class="btn-action" style="background:#3498db" onclick="window.editPlan('${id}')">編輯</button>
                             <button class="btn-action" style="background:#27ae60" onclick="window.openPayment('${id}')">記帳</button>
                         </div>
@@ -204,7 +280,9 @@
                 }
             }
             listEl.innerHTML = html || '<p style="text-align:center; color:white;">無行程</p>';
-            new Sortable(listEl, { animation: 150, delay: 200, delayOnTouchOnly: true });
+            
+            // 恢復長按拖曳排序
+            new Sortable(listEl, { animation: 150, delay: 300, delayOnTouchOnly: true });
         }
 
         window.deletePlan = async (id) => {
@@ -214,12 +292,23 @@
             }
         };
 
-        // --- 附件功能 ---
+        window.editPlan = async (id) => {
+            const ds = await getDoc(doc(db, "itinerary", id));
+            const d = ds.data();
+            document.getElementById('edit-id').value = id;
+            document.getElementById('plan-type').value = d.type || 'attraction';
+            document.getElementById('plan-location').value = d.location;
+            document.getElementById('plan-desc').value = d.desc || "";
+            document.getElementById('plan-start').value = d.start;
+            document.getElementById('plan-end').value = d.end;
+            openModal('modal-itinerary');
+        };
+
+        // --- 附件與刪除 ---
         window.saveLink = async () => {
             await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
             document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
         };
-
         onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
             let html = '';
             snap.forEach(d => {
@@ -227,9 +316,9 @@
                 let fId = data.url.includes('/d/') ? data.url.split('/d/')[1].split('/')[0] : '';
                 let pre = fId ? `<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img">` : '';
                 html += `
-                    <div class="file-card">
-                        <div class="delete-btn" onclick="window.deleteLink('${id}')"><i class="fas fa-times-circle"></i></div>
-                        <div style="flex:1;">
+                    <div class="itinerary-card" style="padding:15px;">
+                        <div class="delete-btn-tl" style="top:5px; left:5px;" onclick="window.deleteLink('${id}')"><i class="fas fa-times-circle"></i></div>
+                        <div style="flex:1; padding-left:15px;">
                             <b>${data.name}</b><br>
                             <a href="${data.url}" target="_blank" style="color:var(--accent); font-size:12px;">開啟連結 <i class="fas fa-external-link-alt"></i></a>
                             ${pre}
@@ -238,90 +327,54 @@
             });
             document.getElementById('link-list').innerHTML = html;
         });
-
-        window.deleteLink = async (id) => {
-            if(confirm("確定刪除此附件？")) await deleteDoc(doc(db, "links", id));
-        };
+        window.deleteLink = async (id) => { if(confirm("確定刪除此附件？")) await deleteDoc(doc(db, "links", id)); };
 
         // --- 分帳結算邏輯 ---
         async function refreshSettlement() {
             const snap = await getDocs(collection(db, "expenses"));
             let total = 0, balances = {};
             currentMembers.forEach(m => balances[m] = 0);
-
             snap.forEach(d => {
-                const data = d.data();
-                total += data.amount;
-                // 付款者餘額增加
+                const data = d.data(); total += data.amount;
                 balances[data.payer] += data.amount;
-                // 分攤者餘額減少
                 const per = data.amount / data.splitTo.length;
                 data.splitTo.forEach(m => balances[m] -= per);
             });
-
             document.getElementById('total-val').innerText = "$" + Math.round(total).toLocaleString();
-            
-            // 顯示個人餘額
             let html = '';
             Object.keys(balances).forEach(m => {
-                const bal = Math.round(balances[m]);
-                const color = bal >= 0 ? "#27ae60" : "#e74c3c";
-                html += `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;">
-                    <span>${m}</span><b style="color:${color}">${bal >= 0 ? '+' : ''}${bal.toLocaleString()}</b>
-                </div>`;
+                const b = Math.round(balances[m]);
+                const c = b >= 0 ? "#27ae60" : "#e74c3c";
+                html += `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;"><span>${m}</span><b style="color:${c}">${b>=0?'+':''}${b.toLocaleString()}</b></div>`;
             });
             document.getElementById('personal-list').innerHTML = html;
-
-            // 計算誰給誰多少錢
-            calculateSettleSuggestions(balances);
+            calculateSettle(balances);
         }
 
-        function calculateSettleSuggestions(balances) {
+        function calculateSettle(balances) {
             let debtors = [], creditors = [];
             Object.keys(balances).forEach(m => {
                 if (balances[m] < -1) debtors.push({ name: m, amount: -balances[m] });
                 else if (balances[m] > 1) creditors.push({ name: m, amount: balances[m] });
             });
-
-            debtors.sort((a, b) => b.amount - a.amount);
-            creditors.sort((a, b) => b.amount - a.amount);
-
-            let suggestions = "<strong>💡 結算建議：</strong><br>";
-            let i = 0, j = 0;
-            while (i < debtors.length && j < creditors.length) {
-                let pay = Math.min(debtors[i].amount, creditors[j].amount);
-                suggestions += `${debtors[i].name} ➡️ 給 ${creditors[j].name} <b>$${Math.round(pay).toLocaleString()}</b><br>`;
-                debtors[i].amount -= pay;
-                creditors[j].amount -= pay;
-                if (debtors[i].amount < 1) i++;
-                if (creditors[j].amount < 1) j++;
+            let sug = "<strong>💡 結算建議：</strong><br>";
+            let i=0, j=0;
+            while(i < debtors.length && j < creditors.length) {
+                let p = Math.min(debtors[i].amount, creditors[j].amount);
+                sug += `${debtors[i].name} ➡️ 給 ${creditors[j].name} <b>$${Math.round(p).toLocaleString()}</b><br>`;
+                debtors[i].amount -= p; creditors[j].amount -= p;
+                if(debtors[i].amount < 1) i++; if(creditors[j].amount < 1) j++;
             }
-            document.getElementById('settle-suggestions').innerHTML = (debtors.length === 0) ? "暫無結算需求" : suggestions;
+            document.getElementById('settle-suggestions').innerHTML = debtors.length === 0 ? "帳目已結清" : sug;
         }
 
-        // --- 基礎工具與設定 ---
+        // --- 工具函數與基礎設定 ---
         function getTimeDiff(s, e) {
             if(!s || !e) return "";
             const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number);
             let diff = (eh * 60 + em) - (sh * 60 + sm);
             if(diff < 0) diff += 1440;
             return `停留 ${Math.floor(diff/60)}時${diff%60}分`;
-        }
-
-        async function updateWeather(fallbackLoc) {
-            const weatherBox = document.getElementById('weather-box');
-            const getW = async (p) => {
-                try {
-                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?${p}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`);
-                    const d = await res.json();
-                    if(d.cod===200) { weatherBox.innerHTML = `<img src="https://openweathermap.org/img/wn/${d.weather[0].icon}.png" width="30"><b>${d.name}: ${Math.round(d.main.temp)}°C</b>`; return true; }
-                    return false;
-                } catch(e){return false;}
-            };
-            if(navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async(pos)=> {await getW(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);},
-                async()=>{if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`);}, {timeout:5000});
-            } else if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`);
         }
 
         async function getCommute(o, d) {
@@ -335,7 +388,7 @@
         }
 
         window.saveBaseSettings = async () => {
-            const data = { tripName: document.getElementById('input-trip-name').value, members: document.getElementById('input-members').value.split(','), start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value };
+            const data = { tripName: document.getElementById('input-trip-name').value, members: document.getElementById('input-members').value.split(',').map(m=>m.trim()), start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value };
             await setDoc(doc(db, "settings", "currentTrip"), data);
             alert("儲存成功");
         };
@@ -343,7 +396,7 @@
         onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
             if (snap.exists()) {
                 const d = snap.data();
-                document.getElementById('dynamic-trip-name').innerText = d.tripName;
+                document.getElementById('dynamic-trip-name').innerText = d.tripName || "旅遊誌";
                 currentMembers = d.members || [];
                 renderDates(d.start, d.end);
             }
@@ -390,6 +443,12 @@
             document.getElementById('flight-display-area').innerHTML = html;
         });
 
+        window.saveFlight = async () => {
+            const t = document.getElementById('f-type').value;
+            await setDoc(doc(db, "flights", t), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type: t });
+            closeModal();
+        };
+
         window.openPayment = (id) => {
             document.getElementById('pay-trip-id').value = id;
             let opt = '', chk = '';
@@ -404,33 +463,14 @@
             alert("記帳成功"); closeModal(); refreshSettlement();
         };
 
-        window.editPlan = async (id) => {
-            const ds = await getDoc(doc(db, "itinerary", id));
-            const d = ds.data();
-            document.getElementById('edit-id').value = id;
-            document.getElementById('plan-location').value = d.location;
-            document.getElementById('plan-desc').value = d.desc || "";
-            document.getElementById('plan-start').value = d.start;
-            document.getElementById('plan-end').value = d.end;
-            openModal('modal-itinerary');
-        };
-
-        window.saveFlight = async (type) => {
-            const t = document.getElementById('f-type').value;
-            await setDoc(doc(db, "flights", t), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type: t });
-            closeModal();
-        };
-
-        window.switchTab = (id, el) => {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
-        };
-        window.openModal = (id) => document.getElementById(id).style.display = 'flex';
-        window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
-        
         refreshSettlement();
     </script>
 </body>
 </html>
+
+
+### ✅ 更新說明：
+* **長按功能**：現在在行程頁面，您需要長按約 0.3 秒，卡片才會變成可拖曳狀態，這能完全解決之前手機滑動時會誤觸的問題。
+* **左上角刪除**：將紅色的刪除圖示（`fa-times-circle`）固定在每個行程和附件卡片的左上角。
+* **分類圖示**：編輯行程時選擇類別，卡片最左側會出現白色圓底的分類圖示。
+* **地點建議**：重新強化了 `initAutocomplete` 與 Google Maps SDK 的連結，搜尋框應該會恢復自動下拉建議。
