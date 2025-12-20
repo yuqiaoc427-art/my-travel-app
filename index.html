@@ -2,10 +2,66 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>我的旅遊App測試</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的旅遊 App</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: auto; padding: 20px; background: #f4f7f6; }
+        .input-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .item { background: white; padding: 10px; margin-top: 10px; border-left: 5px solid #007bff; border-radius: 3px; }
+    </style>
 </head>
 <body>
-    <h1>你好！這是我的旅遊 App 地基</h1>
-    <p>如果看到這行字，代表網頁建立成功了。</p>
+
+    <h2>📝 新增行程</h2>
+    <div class="input-card">
+        <input type="text" id="time" placeholder="時間 (例：10:00)">
+        <input type="text" id="activity" placeholder="地點/活動">
+        <button onclick="saveData()">存入雲端</button>
+    </div>
+
+    <h2>🗺️ 行程清單</h2>
+    <div id="list">加载中...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ⚠️ 請把你在 Firebase 看到的那段 firebaseConfig 貼在這裡 ⚠️
+        const firebaseConfig = {
+            apiKey: "你的APIKey",
+            authDomain: "你的Domain",
+            projectId: "你的ProjectID",
+            storageBucket: "你的Bucket",
+            messagingSenderId: "你的ID",
+            appId: "你的AppID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 儲存資料到雲端
+        window.saveData = async () => {
+            const time = document.getElementById('time').value;
+            const activity = document.getElementById('activity').value;
+            if(time && activity) {
+                await addDoc(collection(db, "trips"), { time, activity, createdAt: new Date() });
+                document.getElementById('time').value = '';
+                document.getElementById('activity').value = '';
+            }
+        };
+
+        // 從雲端即時抓取資料
+        const q = query(collection(db, "trips"), orderBy("createdAt", "asc"));
+        onSnapshot(q, (snapshot) => {
+            let html = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                html += `<div class="item"><b>${data.time}</b> - ${data.activity}</div>`;
+            });
+            document.getElementById('list').innerHTML = html;
+        });
+    </script>
 </body>
 </html>
