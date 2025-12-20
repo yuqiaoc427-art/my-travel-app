@@ -1,50 +1,348 @@
-// --- 修復版：自動 GPS 定位 + 行程地點天氣抓取 ---
-async function updateWeather(fallbackLocation) {
-    const weatherBox = document.getElementById('weather-box');
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Qiao 旅遊誌 - 全功能 GPS 定位版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    // 取得天氣的內部函數
-    const getWeatherData = async (params) => {
-        try {
-            const url = `https://api.openweathermap.org/data/2.5/weather?${params}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.cod === 200) {
-                weatherBox.innerHTML = `
-                    <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}.png" width="30">
-                    <b>${data.name}: ${Math.round(data.main.temp)}°C</b> 
-                    <span>(體感 ${Math.round(data.main.feels_like)}°C)</span>`;
-                return true;
-            }
-            return false;
-        } catch (e) {
-            console.error("天氣 API 呼叫失敗", e);
-            return false;
-        }
-    };
+    <style>
+        :root { --glass: rgba(255, 255, 255, 0.92); --blur: blur(20px); --accent: #1e3c72; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 120px; background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #333; overflow-x: hidden; }
+        
+        .tab-content { display: none; padding: 0 10px; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    // 優先執行：手機 GPS 定位
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                console.log("GPS 定位成功:", lat, lon);
-                await getWeatherData(`lat=${lat}&lon=${lon}`);
-            },
-            async (error) => {
-                console.warn("GPS 定位失敗或被拒絕，切換至行程地點天氣", error);
-                if (fallbackLocation) {
-                    const city = fallbackLocation.split(/[ ,，、]/)[0].substring(0, 10);
-                    await getWeatherData(`q=${encodeURIComponent(city)}`);
-                } else {
-                    weatherBox.innerText = "請開啟 GPS 或新增行程以顯示天氣";
+        .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
+        #weather-box { background: rgba(0,0,0,0.35); color: white; border-radius: 15px; padding: 10px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 8px; font-size: 14px; backdrop-filter: blur(5px); min-height: 40px; }
+
+        /* Boarding Pass */
+        .boarding-pass { background: #fff; border-radius: 20px; margin: 15px 5px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-left: 8px solid var(--accent); }
+        .ticket-top { background: var(--accent); color: white; padding: 10px 15px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
+        .ticket-mid { padding: 25px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .airport-code { font-size: 32px; font-weight: 900; color: var(--accent); margin: 0; }
+        .ticket-btm { padding: 15px 20px; background: #fafafa; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 2px dashed #eee; }
+
+        /* 日期捲軸 */
+        .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 12px; scrollbar-width: none; }
+        .date-item { min-width: 65px; height: 85px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
+        .date-item.active { background: var(--accent); color: white; border: none; box-shadow: 0 5px 15px rgba(30,60,114,0.3); }
+
+        /* 行程卡片 */
+        .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .btn-action { padding: 8px 15px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; width: 80px; margin-bottom: 5px; }
+        .commute-info { text-align: center; color: white; font-size: 12px; margin: 5px 0; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+
+        .fab { position: fixed; bottom: 110px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 900; border: none; }
+        .nav-bar { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(255,255,255,0.95); height: 75px; border-radius: 38px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbb; text-decoration: none; font-size: 11px; }
+        .nav-item.active { color: var(--accent); font-weight: bold; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
+        input, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; }
+        
+        .pac-container { z-index: 3000 !important; border-radius: 12px; }
+        .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="header"><h1 id="dynamic-trip-name">旅遊誌</h1></div>
+
+    <div id="tab-home" class="tab-content active">
+        <div id="flight-display-area"></div>
+        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
+            <strong>⚙️ 旅程設定</strong>
+            <input type="text" id="input-trip-name" placeholder="旅行名稱">
+            <input type="text" id="input-members" placeholder="成員 (逗號隔開)">
+            <div style="display:flex; gap:10px;"><input type="date" id="input-start-date"><input type="date" id="input-end-date"></div>
+            <button onclick="saveBaseSettings()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:12px; font-weight:bold;">儲存</button>
+        </div>
+        <button class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></button>
+    </div>
+
+    <div id="tab-plan" class="tab-content">
+        <div id="weather-box">正在抓取當地天氣...</div>
+        <div class="date-container" id="date-scroll"></div>
+        <div id="itinerary-list"></div>
+        <button class="fab" onclick="openModal('modal-itinerary')"><i class="fas fa-plus"></i></button>
+    </div>
+
+    <div id="tab-files" class="tab-content">
+        <div class="card" style="background:var(--glass); border-radius:20px; padding:20px; margin:10px;">
+            <strong>📎 雲端附件</strong>
+            <input type="text" id="link-name" placeholder="檔案描述">
+            <input type="text" id="link-url" placeholder="貼上 Google Drive 連結">
+            <button onclick="saveLink()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px;">儲存附件</button>
+        </div>
+        <div id="link-list"></div>
+    </div>
+
+    <div id="tab-split" class="tab-content">
+        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px; text-align:center;">
+            <p>旅程總支出</p><h1 id="total-val">$0</h1>
+            <div id="personal-list"></div>
+        </div>
+    </div>
+
+    <div id="modal-itinerary" class="modal-overlay"><div class="modal-content">
+        <h3>📝 編輯行程</h3>
+        <input type="hidden" id="edit-id">
+        <input type="text" id="plan-location" placeholder="地點名稱">
+        <div style="display:flex; gap:10px;"><input type="time" id="plan-start"><input type="time" id="plan-end"></div>
+        <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存行程</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
+    </div></div>
+
+    <div id="modal-payment" class="modal-overlay"><div class="modal-content">
+        <h3>💰 記帳分攤</h3>
+        <input type="hidden" id="pay-trip-id">
+        <input type="number" id="pay-amount" placeholder="金額">
+        <select id="pay-payer"></select>
+        <div id="pay-split-list" style="margin-top:10px; font-size:13px;"></div>
+        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:12px;">確認記帳</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
+    </div></div>
+
+    <div id="modal-flight" class="modal-overlay"><div class="modal-content">
+        <h3>✈️ 登機證設定</h3>
+        <select id="f-type"><option value="go">去程航班</option><option value="back">回程航班</option></select>
+        <input type="text" id="f-air" placeholder="航空公司"><input type="text" id="f-no" placeholder="航班號碼">
+        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="TPE"><input type="time" id="f-from-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="NRT"><input type="time" id="f-to-t"></div>
+        <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
+    </div></div>
+
+    <div class="nav-bar">
+        <a href="javascript:void(0)" class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></a>
+        <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-plan', this)"><i class="fas fa-calendar-alt"></i><span>行程</span></a>
+        <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-files', this)"><i class="fas fa-paperclip"></i><span>附件</span></a>
+        <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-coins"></i><span>分帳</span></a>
+    </div>
+
+    <script>
+        window.initAutocomplete = function() {
+            const input = document.getElementById('plan-location');
+            if(!input) return;
+            const autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (place.name) input.value = place.name;
+            });
+        };
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4&libraries=places&callback=initAutocomplete" async defer></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, getDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE", authDomain: "my-travel-app-b029c.firebaseapp.com", projectId: "my-travel-app-b029c", storageBucket: "my-travel-app-b029c.appspot.com", messagingSenderId: "898590101576", appId: "1:898590101576:web:7c1916bb7ebbada144487d" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
+        let currentMembers = [], selectedDate = "";
+
+        // --- 全域導覽 ---
+        window.switchTab = (id, el) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        };
+        window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+        window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+
+        // --- GPS 定位天氣系統 ---
+        async function updateWeather(fallbackLocation) {
+            const weatherBox = document.getElementById('weather-box');
+            
+            const getWeatherData = async (params) => {
+                try {
+                    const url = `https://api.openweathermap.org/data/2.5/weather?${params}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    if (data.cod === 200) {
+                        weatherBox.innerHTML = `<img src="https://openweathermap.org/img/wn/${data.weather[0].icon}.png" width="30"><b>${data.name}: ${Math.round(data.main.temp)}°C</b>`;
+                        return true;
+                    }
+                    return false;
+                } catch (e) { return false; }
+            };
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => { await getWeatherData(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`); },
+                    async () => { 
+                        if (fallbackLocation) {
+                            const city = fallbackLocation.split(/[ ,，、]/)[0].substring(0, 10);
+                            await getWeatherData(`q=${encodeURIComponent(city)}`);
+                        }
+                    }, { timeout: 5000 }
+                );
+            } else if (fallbackLocation) {
+                const city = fallbackLocation.split(/[ ,，、]/)[0].substring(0, 10);
+                await getWeatherData(`q=${encodeURIComponent(city)}`);
+            }
+        }
+
+        // --- 行程功能 ---
+        async function getCommute(origin, dest) {
+            return new Promise((resolve) => {
+                const service = new google.maps.DistanceMatrixService();
+                service.getDistanceMatrix({ origins: [origin], destinations: [dest], travelMode: 'DRIVING' }, (res, status) => {
+                    if (status === 'OK' && res.rows[0].elements[0].status === 'OK') resolve(res.rows[0].elements[0].duration.text);
+                    else resolve("...");
+                });
+            });
+        }
+
+        window.saveItinerary = async () => {
+            if(!selectedDate) return alert("請選日期");
+            const data = { date: selectedDate, location: document.getElementById('plan-location').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, updatedAt: new Date() };
+            const id = document.getElementById('edit-id').value;
+            if(id) await updateDoc(doc(db, "itinerary", id), data);
+            else await addDoc(collection(db, "itinerary"), data);
+            closeModal(); refreshItinerary();
+        };
+
+        async function refreshItinerary() {
+            if(!selectedDate) return;
+            const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
+            const snap = await getDocs(q);
+            let html = '', docs = snap.docs;
+            if(docs.length > 0) updateWeather(docs[0].data().location);
+            else updateWeather(); // 沒行程也嘗試 GPS 定位天氣
+
+            for(let i=0; i<docs.length; i++) {
+                const d = docs[i].data(), id = docs[i].id;
+                html += `<div class="itinerary-card"><div style="flex:1;"><small>${d.start} - ${d.end}</small><br><b>${d.location}</b></div>
+                    <div style="display:flex; flex-direction:column;">
+                        <button class="btn-action" style="background:#3498db" onclick="window.editPlan('${id}')">編輯</button>
+                        <button class="btn-action" style="background:#27ae60" onclick="window.openPayment('${id}')">記帳</button>
+                    </div></div>`;
+                if(i < docs.length - 1) {
+                    const time = await getCommute(d.location, docs[i+1].data().location);
+                    html += `<div class="commute-info"><i class="fas fa-car"></i> 車程約 ${time}</div>`;
                 }
-            },
-            { timeout: 5000 } // 設定 5 秒超時
-        );
-    } else if (fallbackLocation) {
-        // 手機不支援 GPS 時的備案
-        const city = fallbackLocation.split(/[ ,，、]/)[0].substring(0, 10);
-        await getWeatherData(`q=${encodeURIComponent(city)}`);
-    }
-}
+            }
+            document.getElementById('itinerary-list').innerHTML = html || '<p style="text-align:center; color:white;">無行程</p>';
+        }
+
+        window.editPlan = async (id) => {
+            const ds = await getDoc(doc(db, "itinerary", id));
+            const d = ds.data();
+            document.getElementById('edit-id').value = id;
+            document.getElementById('plan-location').value = d.location;
+            document.getElementById('plan-start').value = d.start;
+            document.getElementById('plan-end').value = d.end;
+            openModal('modal-itinerary');
+        };
+
+        // --- 首頁與日期 ---
+        window.saveBaseSettings = async () => {
+            const data = { tripName: document.getElementById('input-trip-name').value, members: document.getElementById('input-members').value.split(','), start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value };
+            await setDoc(doc(db, "settings", "currentTrip"), data);
+            alert("儲存成功");
+        };
+
+        onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
+            if (snap.exists()) {
+                const d = snap.data();
+                document.getElementById('dynamic-trip-name').innerText = d.tripName;
+                currentMembers = d.members || [];
+                renderDates(d.start, d.end);
+            }
+        });
+
+        function renderDates(s, e) {
+            if(!s || !e) return;
+            let html = '', curr = new Date(s), last = new Date(e);
+            while(curr <= last) {
+                const dStr = curr.toISOString().split('T')[0];
+                html += `<div class="date-item ${selectedDate==dStr?'active':''}" onclick="window.selectDate('${dStr}')"><b>${(curr.getMonth()+1)}/${curr.getDate()}</b></div>`;
+                curr.setDate(curr.getDate() + 1);
+            }
+            document.getElementById('date-scroll').innerHTML = html;
+            if(!selectedDate) window.selectDate(s);
+        }
+
+        window.selectDate = (d) => {
+            selectedDate = d;
+            document.querySelectorAll('.date-item').forEach(el => {
+                const b = el.querySelector('b').innerText;
+                const dObj = new Date(d);
+                el.classList.toggle('active', b == ((dObj.getMonth()+1)+'/'+dObj.getDate()));
+            });
+            refreshItinerary();
+        };
+
+        // --- 登機證、附件與分帳 ---
+        onSnapshot(collection(db, "flights"), (snap) => {
+            let html = '';
+            snap.forEach(dSnap => {
+                const f = dSnap.data();
+                html += `<div class="boarding-pass"><div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'去程':'回程'}</span></div>
+                    <div class="ticket-mid"><p class="airport-code">${f.from}</p><i class="fas fa-plane" style="color:#eee"></i><p class="airport-code">${f.to}</p></div>
+                    <div class="ticket-btm"><div>航班 <b class="ticket-val">${f.no}</b></div><div>時間 <b class="ticket-val">${f.fromT}</b></div></div></div>`;
+            });
+            document.getElementById('flight-display-area').innerHTML = html;
+        });
+
+        window.saveFlight = async () => {
+            const type = document.getElementById('f-type').value;
+            await setDoc(doc(db, "flights", type), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type });
+            closeModal();
+        };
+
+        window.saveLink = async () => {
+            await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
+            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
+        };
+
+        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
+            let html = '';
+            snap.forEach(d => {
+                const data = d.data();
+                let fId = data.url.includes('/d/') ? data.url.split('/d/')[1].split('/')[0] : '';
+                let pre = fId ? `<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img">` : '';
+                html += `<div class="card" style="background:var(--glass); border-radius:20px; padding:15px; margin:10px;"><div style="display:flex;justify-content:space-between;"><b>${data.name}</b><a href="${data.url}" target="_blank"><i class="fas fa-external-link-alt"></i></a></div>${pre}</div>`;
+            });
+            document.getElementById('link-list').innerHTML = html;
+        });
+
+        window.openPayment = (id) => {
+            document.getElementById('pay-trip-id').value = id;
+            let opt = '', chk = '';
+            currentMembers.forEach(m => { opt += `<option value="${m}">${m}</option>`; chk += `<label style="display:block; margin:5px 0;"><input type="checkbox" class="split-cb" value="${m}" checked> ${m}</label>`; });
+            document.getElementById('pay-payer').innerHTML = opt;
+            document.getElementById('pay-split-list').innerHTML = `<p style="font-size:12px;">分攤成員：</p>${chk}`;
+            openModal('modal-payment');
+        };
+
+        window.saveExpense = async () => {
+            await addDoc(collection(db, "expenses"), { amount: Number(document.getElementById('pay-amount').value), payer: document.getElementById('pay-payer').value, splitTo: [...document.querySelectorAll('.split-cb:checked')].map(c => c.value), date: selectedDate });
+            alert("記帳成功"); closeModal(); refreshSettlement();
+        };
+
+        async function refreshSettlement() {
+            const snap = await getDocs(collection(db, "expenses"));
+            let total = 0, pTotal = {};
+            currentMembers.forEach(m => pTotal[m] = 0);
+            snap.forEach(d => {
+                const data = d.data(); total += data.amount;
+                const per = data.amount / data.splitTo.length;
+                data.splitTo.forEach(m => pTotal[m] += per);
+            });
+            document.getElementById('total-val').innerText = "$" + total.toLocaleString();
+            let html = '';
+            Object.keys(pTotal).forEach(m => html += `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;"><span>${m}</span><b>$${Math.round(pTotal[m]).toLocaleString()}</b></div>`);
+            document.getElementById('personal-list').innerHTML = html;
+        }
+        refreshSettlement();
+    </script>
+</body>
+</html>
