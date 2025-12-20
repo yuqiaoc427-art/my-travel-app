@@ -3,32 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的旅遊 App</title>
+    <title>我的旅遊隨身本</title>
     <style>
-        body { font-family: sans-serif; max-width: 500px; margin: auto; padding: 20px; background: #f4f7f6; }
-        .input-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .item { background: white; padding: 10px; margin-top: 10px; border-left: 5px solid #007bff; border-radius: 3px; }
+        :root { --primary: #4a90e2; --secondary: #f39c12; --danger: #e74c3c; --bg: #f8f9fa; }
+        body { font-family: -apple-system, "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        
+        /* 頂部總額卡片 */
+        .total-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .total-box small { opacity: 0.8; font-size: 0.9em; }
+        .total-box div { font-size: 28px; font-weight: bold; margin-top: 5px; }
+
+        /* 輸入區域 */
+        .input-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
+        /* 行程卡片設計 */
+        .item-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 6px solid var(--primary); }
+        .item-time { color: var(--primary); font-weight: bold; font-size: 0.9em; display: block; margin-bottom: 5px; }
+        .item-activity { font-size: 1.1em; font-weight: bold; color: #333; margin-bottom: 8px; }
+        .item-footer { border-top: 1px solid #eee; pt: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .price { color: var(--danger); font-weight: bold; }
+        .file-btn { background: #eee; color: #555; padding: 5px 12px; border-radius: 20px; text-decoration: none; font-size: 0.85em; }
     </style>
 </head>
 <body>
 
-    <h2>📝 新增行程</h2>
-    <div class="input-card">
-        <input type="text" id="time" placeholder="時間 (例：10:00)">
-        <input type="text" id="activity" placeholder="地點/活動">
-        <button onclick="saveData()">存入雲端</button>
+    <div class="total-box">
+        <small>預算累計支出</small>
+        <div id="total-amount">$0</div>
     </div>
 
-    <h2>🗺️ 行程清單</h2>
-    <div id="list">加载中...</div>
+    <div class="input-card">
+        <input type="text" id="time" placeholder="🕒 時間 (例 09:30)">
+        <input type="text" id="activity" placeholder="📍 地點/行程名稱">
+        <input type="number" id="cost" placeholder="💰 費用 (若無則留白)">
+        <input type="text" id="fileUrl" placeholder="🔗 雲端檔案網址 (選填)">
+        <button onclick="saveData()">＋ 加入行程</button>
+    </div>
+
+    <h3 style="color: #555; margin-left: 5px;">📍 行程時間軸</h3>
+    <div id="list">讀取中...</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ⚠️ 請把你在 Firebase 看到的那段 firebaseConfig 貼在這裡 ⚠️
+        // 已自動帶入你的 Firebase 設定
         const firebaseConfig = {
             apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
             authDomain: "my-travel-app-b029c.firebaseapp.com",
@@ -41,26 +62,45 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 儲存資料到雲端
         window.saveData = async () => {
             const time = document.getElementById('time').value;
             const activity = document.getElementById('activity').value;
+            const cost = document.getElementById('cost').value || 0;
+            const fileUrl = document.getElementById('fileUrl').value;
+
             if(time && activity) {
-                await addDoc(collection(db, "trips"), { time, activity, createdAt: new Date() });
-                document.getElementById('time').value = '';
-                document.getElementById('activity').value = '';
+                await addDoc(collection(db, "trips"), { 
+                    time, activity, cost: parseFloat(cost), fileUrl, createdAt: new Date() 
+                });
+                // 清空輸入框
+                ['time', 'activity', 'cost', 'fileUrl'].forEach(id => document.getElementById(id).value = '');
+            } else {
+                alert("請填寫時間與行程！");
             }
         };
 
-        // 從雲端即時抓取資料
         const q = query(collection(db, "trips"), orderBy("createdAt", "asc"));
         onSnapshot(q, (snapshot) => {
             let html = '';
+            let total = 0;
             snapshot.forEach(doc => {
                 const data = doc.data();
-                html += `<div class="item"><b>${data.time}</b> - ${data.activity}</div>`;
+                const costTag = data.cost > 0 ? `<span class="price">$${data.cost}</span>` : '<span></span>';
+                const fileTag = data.fileUrl ? `<a href="${data.fileUrl}" target="_blank" class="file-btn">📄 查看附件</a>` : '';
+                
+                html += `
+                    <div class="item-card">
+                        <span class="item-time">${data.time}</span>
+                        <div class="item-activity">${data.activity}</div>
+                        <div class="item-footer">
+                            ${costTag}
+                            ${fileTag}
+                        </div>
+                    </div>`;
+                total += data.cost;
             });
             document.getElementById('list').innerHTML = html;
+            document.getElementById('total-amount').innerText = '$' + total.toLocaleString();
         });
     </script>
 </body>
