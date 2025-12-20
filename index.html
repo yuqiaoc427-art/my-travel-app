@@ -3,44 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Qiao 旅遊誌 - 2025 智慧版</title>
+    <title>Qiao 旅遊誌 - 智慧終極版</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4&libraries=places&loading=async" defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4&libraries=places&callback=initAutocomplete&loading=async" defer></script>
 
     <style>
         :root { --glass: rgba(255, 255, 255, 0.88); --blur: blur(20px); --accent: #1e3c72; }
         body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 120px; background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #333; overflow-x: hidden; }
         
+        /* 頁面切換 */
         .tab-content { display: none; padding: 0 10px; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
-        
-        /* 2. 登機證風格 (Boarding Pass) */
+        #weather-box { background: rgba(0,0,0,0.3); color: white; border-radius: 15px; padding: 10px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 8px; font-size: 14px; backdrop-filter: blur(5px); }
+
+        /* Boarding Pass 登機證風格 */
         .boarding-pass { background: #fff; border-radius: 20px; margin: 15px 5px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-left: 8px solid var(--accent); }
-        .ticket-top { background: var(--accent); color: white; padding: 12px 15px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
+        .ticket-top { background: var(--accent); color: white; padding: 12px 15px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
         .ticket-mid { padding: 25px 20px; display: flex; justify-content: space-between; align-items: center; position: relative; }
+        .ticket-mid::after { content: ""; position: absolute; bottom: 0; left: 20px; right: 20px; border-bottom: 2px dashed #eee; }
         .airport-code { font-size: 36px; font-weight: 900; color: var(--accent); margin: 0; }
-        .ticket-btm { padding: 15px 20px; background: #fafafa; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 11px; }
-        .ticket-val { font-weight: bold; color: #222; display: block; font-size: 14px; }
+        .ticket-btm { padding: 15px 20px; background: #fafafa; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .ticket-label { font-size: 10px; color: #aaa; text-transform: uppercase; display: block; }
+        .ticket-val { font-size: 15px; font-weight: bold; color: #222; }
 
-        /* 3. 地點輸入框樣式 (適配新語法) */
-        gmpx-place-autocomplete { width: 100%; margin: 10px 0; --gmpx-border-radius: 12px; }
-        input.custom-input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; }
-
-        /* 行程卡片與其他 */
+        /* 日期捲軸 */
         .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 12px; scrollbar-width: none; }
-        .date-item { min-width: 65px; height: 85px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; }
-        .date-item.active { background: var(--accent); color: white; border: none; }
+        .date-item { min-width: 65px; height: 85px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; transition: 0.3s; }
+        .date-item.active { background: var(--accent); color: white; border: none; box-shadow: 0 5px 15px rgba(30,60,114,0.3); }
+
+        /* 行程卡片 */
         .itinerary-card { background: var(--glass); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .btn-action { padding: 8px 18px; border-radius: 12px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; margin: 3px 0; width: 85px; }
+
+        /* 附件與預覽 */
         .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        /* 導覽與彈窗 */
         .fab { position: fixed; bottom: 110px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 900; border: none; }
         .nav-bar { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(255,255,255,0.95); height: 75px; border-radius: 38px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; text-decoration: none; font-size: 11px; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbb; text-decoration: none; font-size: 11px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
+
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
+        input, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; }
+        
+        /* 關鍵：修正建議列表層級 */
+        .pac-container { z-index: 3000 !important; border-radius: 12px; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1); font-family: sans-serif; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -51,18 +64,18 @@
         <div id="flight-display-area"></div>
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
             <strong style="font-size:18px;">旅程基本設定</strong>
-            <input type="text" id="input-trip-name" class="custom-input" placeholder="旅行名稱">
-            <input type="text" id="input-members" class="custom-input" placeholder="成員 (用逗號隔開)">
+            <input type="text" id="input-trip-name" placeholder="旅行名稱">
+            <input type="text" id="input-members" placeholder="成員 (用逗號隔開)">
             <div style="display:flex; gap:10px;">
-                <input type="date" id="input-start-date" class="custom-input"><input type="date" id="input-end-date" class="custom-input">
+                <input type="date" id="input-start-date"><input type="date" id="input-end-date">
             </div>
-            <button onclick="saveBaseSettings()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:12px; font-weight:bold; margin-top:10px;">儲存旅程</button>
+            <button onclick="saveBaseSettings()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:12px; font-weight:bold;">儲存旅程</button>
         </div>
         <button class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></button>
     </div>
 
     <div id="tab-plan" class="tab-content">
-        <div id="weather-box" style="text-align:center; color:white; margin-bottom:10px;"></div>
+        <div id="weather-box">正在讀取天氣...</div>
         <div class="date-container" id="date-scroll"></div>
         <div id="itinerary-list"></div>
         <button class="fab" onclick="openModal('modal-itinerary')"><i class="fas fa-plus"></i></button>
@@ -71,45 +84,52 @@
     <div id="tab-files" class="tab-content">
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
             <strong>📎 雲端附件</strong>
-            <input type="text" id="link-name" class="custom-input" placeholder="檔案描述">
-            <input type="text" id="link-url" class="custom-input" placeholder="貼上 Google Drive 連結">
-            <button onclick="saveLink()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px; margin-top:10px;">儲存附件</button>
+            <input type="text" id="link-name" placeholder="檔案描述">
+            <input type="text" id="link-url" placeholder="貼上 Google Drive 分享連結">
+            <button onclick="saveLink()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px;">儲存附件</button>
         </div>
         <div id="link-list"></div>
     </div>
 
     <div id="tab-split" class="tab-content">
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px; text-align:center;">
-            <p>總支出</p><h1 id="total-val">$0</h1>
+            <p style="margin:0; color:#666;">總支出</p>
+            <h1 id="total-val">$0</h1>
+        </div>
+        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
+            <h3 style="margin-top:0;">各成員應付清單</h3>
             <div id="personal-list"></div>
         </div>
     </div>
 
-    <div id="modal-itinerary" class="modal-overlay">
-        <div class="modal-content">
-            <h3>📝 編輯行程計畫</h3>
-            <input type="hidden" id="edit-id">
-            <gmpx-place-autocomplete id="plan-location-element" placeholder="搜尋地點 (Google 建議)"></gmpx-place-autocomplete>
-            <div style="display:flex; gap:10px;">
-                <input type="time" id="plan-start" class="custom-input"><input type="time" id="plan-end" class="custom-input">
-            </div>
-            <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px; margin-top:10px;">儲存</button>
-            <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
-        </div>
-    </div>
+    <div id="modal-flight" class="modal-overlay"><div class="modal-content">
+        <h3>✈️ 登機證設定</h3>
+        <select id="f-type"><option value="go">去程航班</option><option value="back">回程航班</option></select>
+        <input type="text" id="f-air" placeholder="航空公司"><input type="text" id="f-no" placeholder="航班號碼">
+        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛 (如 TPE)"><input type="time" id="f-from-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="抵達 (如 NRT)"><input type="time" id="f-to-t"></div>
+        <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
+    </div></div>
 
-    <div id="modal-flight" class="modal-overlay">
-        <div class="modal-content">
-            <h3>✈️ 登機證設定</h3>
-            <select id="f-type" class="custom-input"><option value="go">去程</option><option value="back">回程</option></select>
-            <input type="text" id="f-air" class="custom-input" placeholder="航空公司">
-            <input type="text" id="f-no" class="custom-input" placeholder="航班號碼">
-            <div style="display:flex; gap:10px;"><input type="text" id="f-from" class="custom-input" placeholder="起飛地"><input type="time" id="f-from-t" class="custom-input"></div>
-            <div style="display:flex; gap:10px;"><input type="text" id="f-to" class="custom-input" placeholder="目的地"><input type="time" id="f-to-t" class="custom-input"></div>
-            <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
-            <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
-        </div>
-    </div>
+    <div id="modal-itinerary" class="modal-overlay"><div class="modal-content">
+        <h3>📝 編輯行程計畫</h3>
+        <input type="hidden" id="edit-id">
+        <input type="text" id="plan-location" placeholder="輸入地點 (Google 建議)">
+        <div style="display:flex; gap:10px;"><input type="time" id="plan-start"><input type="time" id="plan-end"></div>
+        <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存行程</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
+    </div></div>
+
+    <div id="modal-payment" class="modal-overlay"><div class="modal-content">
+        <h3>💰 記帳與分攤</h3>
+        <input type="hidden" id="pay-trip-id">
+        <input type="number" id="pay-amount" placeholder="金額">
+        <select id="pay-payer"></select>
+        <div id="pay-split-list" style="margin-top:10px; font-size:13px;"></div>
+        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:12px;">確認記帳</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
+    </div></div>
 
     <div class="nav-bar">
         <a href="javascript:void(0)" class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></a>
@@ -122,22 +142,41 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE", authDomain: "my-travel-app-b029c.firebaseapp.com", projectId: "my-travel-app-b029c", storageBucket: "my-travel-app-b029c.appspot.com", messagingSenderId: "898590101576", appId: "1:898590101576:web:7c1916bb7ebbada144487d" };
+        // Firebase 初始化
+        const firebaseConfig = {
+            apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
+            authDomain: "my-travel-app-b029c.firebaseapp.com",
+            projectId: "my-travel-app-b029c",
+            storageBucket: "my-travel-app-b029c.appspot.com",
+            messagingSenderId: "898590101576",
+            appId: "1:898590101576:web:7c1916bb7ebbada144487d"
+        };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // API Keys
         const GOOGLE_KEY = "AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4";
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
-        let currentMembers = [], selectedDate = "", lastSelectedPlace = "";
 
-        // 監聽新地點選取
-        window.addEventListener('load', () => {
-            const el = document.getElementById('plan-location-element');
-            el.addEventListener('gmpx-placechange', () => {
-                const place = el.value;
-                lastSelectedPlace = place ? place.displayName : "";
+        let currentMembers = [];
+        let selectedDate = "";
+
+        // --- 核心：修復地點選取點擊功能 ---
+        window.initAutocomplete = function() {
+            const input = document.getElementById('plan-location');
+            if(!input) return;
+
+            const autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.setFields(['name', 'geometry']);
+            
+            // 選取建議地點後的行為
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                if (place.name) {
+                    input.value = place.name;
+                }
             });
-        });
+        };
 
         window.switchTab = (id, el) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -149,17 +188,26 @@
         window.openModal = (id) => document.getElementById(id).style.display = 'flex';
         window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
 
-        // 首頁設定與日期
+        // --- 首頁邏輯 ---
         window.saveBaseSettings = async () => {
-            const data = { tripName: document.getElementById('input-trip-name').value, members: document.getElementById('input-members').value.split(',').map(m=>m.trim()).filter(m=>m), start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value };
+            const data = {
+                tripName: document.getElementById('input-trip-name').value,
+                members: document.getElementById('input-members').value.split(',').map(m=>m.trim()).filter(m=>m),
+                start: document.getElementById('input-start-date').value,
+                end: document.getElementById('input-end-date').value
+            };
             await setDoc(doc(db, "settings", "currentTrip"), data);
-            alert("設定儲存成功");
+            alert("旅程設定儲存成功");
         };
 
         onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
             if (snap.exists()) {
                 const d = snap.data();
                 document.getElementById('dynamic-trip-name').innerText = d.tripName || "旅遊誌";
+                document.getElementById('input-trip-name').value = d.tripName || "";
+                document.getElementById('input-members').value = (d.members || []).join(", ");
+                document.getElementById('input-start-date').value = d.start || "";
+                document.getElementById('input-end-date').value = d.end || "";
                 currentMembers = d.members || [];
                 renderDateButtons(d.start, d.end);
             }
@@ -167,9 +215,13 @@
 
         function renderDateButtons(start, end) {
             if(!start || !end) return;
-            let html = '', curr = new Date(start), last = new Date(end);
+            let html = '';
+            let curr = new Date(start);
+            const last = new Date(end);
             while(curr <= last) {
-                const dStr = curr.toISOString().split('T')[0], mmdd = (curr.getMonth()+1) + '/' + curr.getDate(), day = curr.toLocaleDateString('zh-TW', { weekday: 'short' });
+                const dStr = curr.toISOString().split('T')[0];
+                const mmdd = (curr.getMonth()+1) + '/' + curr.getDate();
+                const day = curr.toLocaleDateString('zh-TW', { weekday: 'short' });
                 html += `<div class="date-item ${selectedDate==dStr?'active':''}" onclick="selectDate('${dStr}')"><b>${mmdd}</b><span>${day}</span></div>`;
                 curr.setDate(curr.getDate() + 1);
             }
@@ -179,13 +231,40 @@
 
         window.selectDate = (d) => {
             selectedDate = d;
+            document.querySelectorAll('.date-item').forEach(el => {
+                const b = el.querySelector('b').innerText;
+                const dObj = new Date(d);
+                el.classList.toggle('active', b == ((dObj.getMonth()+1)+'/'+dObj.getDate()));
+            });
             refreshItinerary();
         };
 
-        // 行程邏輯
+        // --- API 邏輯 ---
+        async function updateWeather(location) {
+            if(!location) return;
+            try {
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`);
+                const data = await res.json();
+                if(data.cod === 200) {
+                    document.getElementById('weather-box').innerHTML = `<img src="https://openweathermap.org/img/wn/${data.weather[0].icon}.png" width="30"><b>${location}: ${Math.round(data.main.temp)}°C</b> <span>(體感 ${Math.round(data.main.feels_like)}°C)</span>`;
+                }
+            } catch (e) {}
+        }
+
+        async function getGoogleCommute(origin, dest) {
+            try {
+                const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(dest)}&mode=driving&key=${GOOGLE_KEY}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                return (data.status === "OK") ? data.rows[0].elements[0].duration.text : "計算中";
+            } catch(e) { return "15 分鐘"; }
+        }
+
         window.saveItinerary = async () => {
-            const data = { date: selectedDate, location: lastSelectedPlace, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value };
-            await addDoc(collection(db, "itinerary"), data);
+            const data = { date: selectedDate, location: document.getElementById('plan-location').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value };
+            const id = document.getElementById('edit-id').value;
+            if(id) await updateDoc(doc(db, "itinerary", id), data);
+            else await addDoc(collection(db, "itinerary"), data);
             closeModal(); refreshItinerary();
         };
 
@@ -193,17 +272,42 @@
             const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
             const snap = await getDocs(q);
             let html = '';
-            snap.forEach(docSnap => {
-                const d = docSnap.data();
-                html += `<div class="itinerary-card"><div style="flex:1;"><small>${d.start} - ${d.end}</small><br><b style="font-size:18px;">${d.location}</b></div></div>`;
-            });
-            document.getElementById('itinerary-list').innerHTML = html || '<p style="text-align:center; color:white;">無行程</p>';
+            const docs = snap.docs;
+            if(docs.length > 0) updateWeather(docs[0].data().location);
+            for(let i=0; i<docs.length; i++) {
+                const d = docs[i].data();
+                const id = docs[i].id;
+                const stay = calcStay(d.start, d.end);
+                html += `<div class="itinerary-card"><div style="flex:1;"><small>${d.start} - ${d.end} (${stay})</small><br><b style="font-size:18px;">${d.location}</b></div><div style="display:flex; flex-direction:column;"><button class="btn-action" style="background:#3498db" onclick="editPlan('${id}')">編輯</button><button class="btn-action" style="background:#27ae60" onclick="openPayment('${id}')">記帳</button></div></div>`;
+                if(i < docs.length - 1) {
+                    const time = await getGoogleCommute(d.location, docs[i+1].data().location);
+                    html += `<div style="text-align:center; color:white; font-size:12px; margin:5px 0;"><i class="fas fa-car"></i> 車程 ${time}</div>`;
+                }
+            }
+            document.getElementById('itinerary-list').innerHTML = html || '<p style="text-align:center; color:white; opacity:0.6;">本日尚無行程</p>';
         }
 
-        // 登機證外觀 (Boarding Pass)
+        function calcStay(s, e) {
+            if(!s || !e) return "0m";
+            const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number);
+            let diff = (eh*60+em) - (sh*60+sm);
+            if(diff < 0) diff += 1440;
+            return Math.floor(diff/60) + "h " + (diff%60) + "m";
+        }
+
+        window.editPlan = async (id) => {
+            const d = (await getDoc(doc(db, "itinerary", id))).data();
+            document.getElementById('edit-id').value = id;
+            document.getElementById('plan-location').value = d.location;
+            document.getElementById('plan-start').value = d.start;
+            document.getElementById('plan-end').value = d.end;
+            openModal('modal-itinerary');
+        };
+
+        // --- 登機證 Boarding Pass ---
         window.saveFlight = async () => {
             const type = document.getElementById('f-type').value;
-            await setDoc(doc(db, "flights", type), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type });
+            await setDoc(doc(db, "flights", type), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type: type });
             closeModal();
         };
 
@@ -212,35 +316,33 @@
             snap.forEach(docSnap => {
                 const f = docSnap.data();
                 html += `<div class="boarding-pass">
-                    <div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'去程':'回程'}</span></div>
+                    <div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'OUTBOUND':'INBOUND'}</span></div>
                     <div class="ticket-mid">
-                        <p class="airport-code">${f.from}</p><i class="fas fa-plane"></i><p class="airport-code">${f.to}</p>
+                        <div style="text-align:left;"><p class="airport-code">${f.from}</p><span style="font-size:13px; font-weight:bold;">${f.fromT}</span></div>
+                        <i class="fas fa-plane" style="color:#eee; font-size:24px;"></i>
+                        <div style="text-align:right;"><p class="airport-code">${f.to}</p><span style="font-size:13px; font-weight:bold;">${f.toT}</span></div>
                     </div>
                     <div class="ticket-btm">
-                        <div>航班 <span class="ticket-val">${f.no}</span></div><div>時間 <span class="ticket-val">${f.fromT}</span></div>
+                        <div><span class="ticket-label">Flight</span><b class="ticket-val">${f.no}</b></div>
+                        <div><span class="ticket-label">Gate</span><b class="ticket-val">TBA</b></div>
+                        <div><span class="ticket-label">Seat</span><b class="ticket-val">ANY</b></div>
                     </div>
                 </div>`;
             });
             document.getElementById('flight-display-area').innerHTML = html;
         });
 
-        // 附件預覽 (Google Drive Fix)
+        // --- 附件預覽恢復 ---
         window.saveLink = async () => {
             await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
             document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
         };
-
         onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
             let html = '';
             snap.forEach(d => {
                 const data = d.data();
                 let fileId = '';
                 if(data.url.includes('/d/')) fileId = data.url.split('/d/')[1].split('/')[0];
-                let preview = fileId ? `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w800" class="preview-img">` : '';
-                html += `<div class="card" style="background:var(--glass); border-radius:20px; padding:15px; margin:10px;"><div style="display:flex;justify-content:space-between;"><b>${data.name}</b><a href="${data.url}" target="_blank"><i class="fas fa-external-link-alt"></i></a></div>${preview}</div>`;
-            });
-            document.getElementById('link-list').innerHTML = html;
-        });
-    </script>
-</body>
-</html>
+                else if(data.url.includes('id=')) fileId = data.url.split('id=')[1].split('&')[0];
+                let preview = (fileId && !data.url.includes('/folders/')) ? `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w800" class="preview-img">` : '';
+                html += `<div class="card" style="background:var(--glass); border-radius:20
