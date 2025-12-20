@@ -3,99 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅遊管家 App</title>
+    <title>旅遊管家 Pro+</title>
     <style>
-        :root { --primary: #007bff; --bg: #f4f7f6; --success: #28a745; --warning: #ffc107; }
-        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 80px; background: var(--bg); }
-        
-        /* 分頁切換 */
+        :root { --primary: #007bff; --bg: #f4f7f6; --success: #28a745; --warning: #ffc107; --info: #17a2b8; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 85px; background: var(--bg); }
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
-        
-        /* 底部導覽列 */
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .nav-item { flex: 1; text-align: center; padding: 15px 0; cursor: pointer; color: #666; font-size: 12px; }
+        .nav-item { flex: 1; text-align: center; padding: 12px 0; cursor: pointer; color: #666; font-size: 11px; }
         .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); font-weight: bold; }
-        
-        /* 卡片與輸入框 */
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; }
         input, button { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        
-        /* 成員勾選網格 */
         .member-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
         .member-item { background: #f8f9fa; padding: 10px; border-radius: 8px; display: flex; align-items: center; border: 1px solid #eee; }
         .member-item input { width: auto; margin-right: 10px; }
-
-        /* 行程列表樣式 */
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        td { padding: 12px 5px; border-bottom: 1px solid #eee; vertical-align: middle; }
-        .cost-badge { color: white; background: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .no-cost { color: #888; background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-        .btn-edit { background: var(--warning); color: #212529; padding: 4px 8px; border-radius: 5px; font-size: 11px; display: inline-block; margin-top: 5px; text-decoration: none; font-weight: bold; }
+        td { padding: 12px 5px; border-bottom: 1px solid #eee; }
+        .cost-badge { color: white; background: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .btn-edit { background: var(--warning); color: #212529; padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; text-decoration: none; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
 
     <div id="tab-home" class="tab-content active">
         <div class="card" style="text-align:center; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; padding: 40px 15px;">
-            <h2 id="display-trip-name" style="margin:0;">請先設定旅行</h2>
-            <p id="display-members" style="opacity: 0.9; font-size: 14px; margin-top: 10px;">尚未設定成員</p>
+            <h2 id="display-trip-name">載入中...</h2>
+            <p id="display-members" style="opacity: 0.8;">請先設定成員</p>
         </div>
         <div class="card">
-            <strong style="display:block; margin-bottom:10px;">⚙️ 旅行基礎設定</strong>
-            <input type="text" id="setup-trip-name" placeholder="本次旅行名稱 (例：台中放空之旅)">
-            <input type="text" id="setup-members" placeholder="成員名字 (請用逗號隔開，例：小明,美美,小華)">
-            <button onclick="saveSettings()">儲存設定並同步</button>
+            <strong>⚙️ 旅行基礎設定</strong>
+            <input type="text" id="setup-trip-name" placeholder="旅行名稱">
+            <input type="text" id="setup-members" placeholder="成員名字 (逗號隔開)">
+            <button onclick="saveSettings()">儲存設定</button>
         </div>
     </div>
 
     <div id="tab-plan" class="tab-content">
         <div id="editor-section" class="card">
-            <strong id="editor-title">📅 新增行程規劃</strong>
-            <input type="hidden" id="edit-id"> <input type="date" id="date">
-            <input type="text" id="time" placeholder="時間 (例：12:30)">
-            <input type="text" id="activity" placeholder="地點或活動內容">
-            
-            <div id="cost-area" style="border-top: 1px dashed #ccc; margin-top: 10px; padding-top: 10px;">
-                <input type="number" id="cost" placeholder="實際花費金額 (規劃期可不填)">
-                <div style="font-size:12px; color: #666; margin: 5px 0;">參與成員 (勾選後自動平分)：</div>
+            <strong id="editor-title">📅 新增行程</strong>
+            <input type="hidden" id="edit-id">
+            <input type="date" id="date">
+            <input type="text" id="time" placeholder="時間">
+            <input type="text" id="activity" placeholder="地點/活動">
+            <div style="border-top:1px dashed #ccc; margin-top:10px; padding-top:10px;">
+                <input type="number" id="cost" placeholder="金額">
                 <div id="dynamic-member-selection" class="member-grid"></div>
             </div>
-            
             <button id="main-btn" onclick="saveTrip()">儲存行程</button>
-            <button id="cancel-btn" onclick="resetEditor()" style="background:#6c757d; display:none; margin-top:5px;">取消編輯</button>
         </div>
+        <div class="card"><table style="width:100%"><tbody id="trip-list"></tbody></table></div>
+    </div>
 
-        <div class="card" style="overflow-x:auto;">
-            <table id="trip-table">
-                <tbody id="trip-list"></tbody>
-            </table>
+    <div id="tab-files" class="tab-content">
+        <div class="card">
+            <strong>📁 上傳附件 (訂房/機票)</strong>
+            <input type="text" id="file-desc" placeholder="檔案描述 (例：飯店確認單)">
+            <input type="file" id="file-input" style="border:none;">
+            <button id="upload-btn" onclick="uploadFile()" style="background:var(--info)">開始上傳</button>
+            <progress id="upload-progress" value="0" max="100" style="width:100%; display:none;"></progress>
+        </div>
+        <div class="card">
+            <h3>檔案列表</h3>
+            <div id="file-list"></div>
         </div>
     </div>
 
     <div id="tab-split" class="tab-content">
         <div class="card" style="text-align:center; background:#212529; color:white;">
-            <p style="margin:0; opacity: 0.8;">整趟旅程總花費</p>
-            <h1 id="total-val" style="margin:5px 0; font-size: 32px;">$0</h1>
+            <p style="margin:0;">總花費</p><h1 id="total-val">$0</h1>
         </div>
-        <div class="card">
-            <h3 style="margin-top:0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;">👤 個人應付結帳</h3>
-            <div id="personal-list"></div>
-        </div>
+        <div class="card"><div id="personal-list"></div></div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('tab-home', this)">🏠 首頁</div>
-        <div class="nav-item" onclick="switchTab('tab-plan', this)">🗺️ 行程</div>
-        <div class="nav-item" onclick="switchTab('tab-split', this)">💰 分帳</div>
+        <div class="nav-item active" onclick="switchTab('tab-home', this)">🏠首頁</div>
+        <div class="nav-item" onclick="switchTab('tab-plan', this)">🗺️行程</div>
+        <div class="nav-item" onclick="switchTab('tab-files', this)">📎附件</div>
+        <div class="nav-item" onclick="switchTab('tab-split', this)">💰分帳</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // 已自動帶入你的 Firebase 設定
         const firebaseConfig = {
             apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
             authDomain: "my-travel-app-b029c.firebaseapp.com",
@@ -107,6 +100,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
         let currentMembers = [];
 
         window.switchTab = (id, el) => {
@@ -116,28 +110,27 @@
             el.classList.add('active');
         };
 
+        // 首頁邏輯
         window.saveSettings = async () => {
             const name = document.getElementById('setup-trip-name').value;
             const members = document.getElementById('setup-members').value.split(',').map(m => m.trim()).filter(m => m);
-            if(!name || members.length === 0) return alert("請填寫旅行名稱與成員名字");
             await setDoc(doc(db, "settings", "currentTrip"), { tripName: name, members: members });
-            alert("設定成功！");
+            alert("設定成功");
         };
 
         onSnapshot(doc(db, "settings", "currentTrip"), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 document.getElementById('display-trip-name').innerText = data.tripName;
-                document.getElementById('display-members').innerText = "參與成員：" + data.members.join(', ');
+                document.getElementById('display-members').innerText = "成員：" + data.members.join(', ');
                 currentMembers = data.members;
                 let html = '';
-                data.members.forEach(m => {
-                    html += `<div class="member-item"><input type="checkbox" class="trip-mem-cb" value="${m}">${m}</div>`;
-                });
+                data.members.forEach(m => html += `<div class="member-item"><input type="checkbox" class="trip-mem-cb" value="${m}">${m}</div>`);
                 document.getElementById('dynamic-member-selection').innerHTML = html;
             }
         });
 
+        // 行程邏輯
         window.saveTrip = async () => {
             const id = document.getElementById('edit-id').value;
             const tripData = {
@@ -148,83 +141,79 @@
                 members: Array.from(document.querySelectorAll('.trip-mem-cb:checked')).map(cb => cb.value),
                 updatedAt: new Date()
             };
-
-            if(!tripData.date || !tripData.activity) return alert("請至少填寫日期與地點");
-
-            if(id) {
-                await updateDoc(doc(db, "trips", id), tripData);
-            } else {
-                tripData.createdAt = new Date();
-                await addDoc(collection(db, "trips"), tripData);
-            }
+            if(id) await updateDoc(doc(db, "trips", id), tripData);
+            else { tripData.createdAt = new Date(); await addDoc(collection(db, "trips"), tripData); }
             resetEditor();
         };
 
         window.resetEditor = () => {
             document.getElementById('edit-id').value = '';
-            document.getElementById('editor-title').innerText = "📅 新增行程規劃";
-            document.getElementById('main-btn').innerText = "儲存行程";
-            document.getElementById('cancel-btn').style.display = 'none';
             ['date', 'time', 'activity', 'cost'].forEach(i => document.getElementById(i).value = '');
             document.querySelectorAll('.trip-mem-cb').forEach(cb => cb.checked = false);
         };
 
         window.editTrip = (id, d, t, a, c, mStr) => {
             document.getElementById('edit-id').value = id;
-            document.getElementById('editor-title').innerText = "💰 補記帳 / 修改內容";
-            document.getElementById('main-btn').innerText = "更新資料";
-            document.getElementById('cancel-btn').style.display = 'block';
-            document.getElementById('date').value = d;
-            document.getElementById('time').value = t;
-            document.getElementById('activity').value = a;
-            document.getElementById('cost').value = c > 0 ? c : '';
+            document.getElementById('date').value = d; document.getElementById('time').value = t;
+            document.getElementById('activity').value = a; document.getElementById('cost').value = c || '';
             const mList = mStr.split(',');
-            document.querySelectorAll('.trip-mem-cb').forEach(cb => {
-                cb.checked = mList.includes(cb.value);
-            });
+            document.querySelectorAll('.trip-mem-cb').forEach(cb => cb.checked = mList.includes(cb.value));
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         const q = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc"));
         onSnapshot(q, (snapshot) => {
-            let listHtml = '';
-            let total = 0;
-            let personalData = {};
-            currentMembers.forEach(m => personalData[m] = 0);
-
+            let listHtml = '', total = 0, pTotal = {};
+            currentMembers.forEach(m => pTotal[m] = 0);
             snapshot.forEach(docSnap => {
-                const data = docSnap.data();
-                const mems = data.members || [];
-                const perCost = mems.length > 0 ? data.cost / mems.length : 0;
-                total += data.cost;
-                mems.forEach(m => { if(personalData[m] !== undefined) personalData[m] += perCost; });
-
-                const costStatus = data.cost > 0 
-                    ? `<span class="cost-badge">$${data.cost}</span>` 
-                    : `<span class="no-cost">未記帳</span>`;
-
-                listHtml += `<tr>
-                    <td><small>${data.date}</small><br><b>${data.time} ${data.activity}</b></td>
-                    <td style="text-align:right;">
-                        ${costStatus}<br>
-                        <div class="btn-edit" onclick="editTrip('${docSnap.id}','${data.date}','${data.time}','${data.activity}',${data.cost},'${mems.join(',')}')">💸 記帳/編輯</div>
-                    </td>
-                    <td><button onclick="deleteTrip('${docSnap.id}')" style="background:none;color:#ccc;width:auto;padding:0">✕</button></td>
-                </tr>`;
+                const d = docSnap.data(); const ms = d.members || []; const pCost = ms.length > 0 ? d.cost / ms.length : 0;
+                total += d.cost; ms.forEach(m => { if(pTotal[m]!==undefined) pTotal[m] += pCost; });
+                listHtml += `<tr><td><small>${d.date}</small><br><b>${d.time} ${d.activity}</b></td><td style="text-align:right;">${d.cost>0?`<span class="cost-badge">$${d.cost}</span>`:`<small>未記帳</small>`}<br><div class="btn-edit" onclick="editTrip('${docSnap.id}','${d.date}','${d.time}','${d.activity}',${d.cost},'${ms.join(',')}')">記帳</div></td><td><button onclick="deleteTrip('${docSnap.id}')" style="background:none;color:#ccc;width:auto;">✕</button></td></tr>`;
             });
-
             document.getElementById('trip-list').innerHTML = listHtml;
             document.getElementById('total-val').innerText = "$" + total.toLocaleString();
-            let personHtml = '';
-            Object.keys(personalData).forEach(m => {
-                personHtml += `<div style="display:flex; justify-content:space-between; padding:15px; border-bottom:1px solid #eee; font-size:18px;">
-                    <span>${m}</span><b style="color:var(--success)">$${Math.round(personalData[m]).toLocaleString()}</b>
-                </div>`;
-            });
-            document.getElementById('personal-list').innerHTML = personHtml;
+            let pHtml = ''; Object.keys(pTotal).forEach(m => pHtml += `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee;"><span>${m}</span><b>$${Math.round(pTotal[m]).toLocaleString()}</b></div>`);
+            document.getElementById('personal-list').innerHTML = pHtml;
         });
 
-        window.deleteTrip = async (id) => { if(confirm("確定刪除此筆行程？")) await deleteDoc(doc(db, "trips", id)); };
+        window.deleteTrip = async (id) => { if(confirm("刪除？")) await deleteDoc(doc(db, "trips", id)); };
+
+        // 附件上傳邏輯
+        window.uploadFile = () => {
+            const file = document.getElementById('file-input').files[0];
+            const desc = document.getElementById('file-desc').value;
+            if(!file || !desc) return alert("請填寫描述並選擇檔案");
+
+            const storageRef = ref(storage, 'files/' + Date.now() + "_" + file.name);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+            const prog = document.getElementById('upload-progress');
+            prog.style.display = 'block';
+
+            uploadTask.on('state_changed', 
+                (snapshot) => prog.value = (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+                (error) => alert("上傳失敗"), 
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+                        addDoc(collection(db, "files"), { name: desc, url: url, createdAt: new Date() });
+                        alert("上傳成功！");
+                        prog.style.display = 'none';
+                        document.getElementById('file-desc').value = '';
+                        document.getElementById('file-input').value = '';
+                    });
+                }
+            );
+        };
+
+        onSnapshot(query(collection(db, "files"), orderBy("createdAt", "desc")), (snapshot) => {
+            let html = '';
+            snapshot.forEach(docSnap => {
+                const d = docSnap.data();
+                html += `<div class="file-item"><span>${d.name}</span><div><a href="${d.url}" target="_blank" style="color:var(--info);text-decoration:none;font-weight:bold;">查看</a> <button onclick="deleteFile('${docSnap.id}')" style="background:none;color:#ccc;width:auto;margin-left:10px;">✕</button></div></div>`;
+            });
+            document.getElementById('file-list').innerHTML = html;
+        });
+
+        window.deleteFile = async (id) => { if(confirm("刪除檔案？")) await deleteDoc(doc(db, "files", id)); };
     </script>
 </body>
 </html>
