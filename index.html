@@ -7,169 +7,153 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { 
-            --glass: rgba(255, 255, 255, 0.82); 
+            --glass: rgba(255, 255, 255, 0.85); 
             --blur: blur(15px); 
-            --accent: #2c3e50; 
-            --flight-bg: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --accent: #1e3c72;
+            --ticket-bg: #ffffff;
         }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; padding-bottom: 120px;
+            font-family: -apple-system, sans-serif; 
+            margin: 0; padding-bottom: 110px;
             background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed;
             background-size: cover; min-height: 100vh;
-            font-size: 16px;
         }
 
-        .card { 
-            background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-            padding: 20px; border-radius: 24px; margin: 15px; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.4);
+        /* 頂部標題 */
+        .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 30px 20px 10px; }
+        .header h1 { margin: 0; font-size: 26px; letter-spacing: 2px; }
+
+        /* Boarding Pass 樣式 */
+        .boarding-pass {
+            background: var(--ticket-bg); border-radius: 16px; margin: 10px 15px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); overflow: hidden; position: relative;
+        }
+        .ticket-top { background: var(--accent); color: white; padding: 8px 15px; font-size: 11px; display: flex; justify-content: space-between; font-weight: bold; }
+        .ticket-body { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .city-code { font-size: 28px; font-weight: 800; color: var(--accent); margin: 0; }
+        .ticket-divider { border-top: 2px dashed #eee; margin: 0 15px; height: 1px; position: relative; }
+        .ticket-footer { background: #fdfdfd; padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; font-size: 11px; }
+
+        /* 日期切換器 */
+        .date-scroller { display: flex; overflow-x: auto; padding: 10px 15px; gap: 10px; scrollbar-width: none; }
+        .date-btn { 
+            flex: 0 0 65px; background: var(--glass); backdrop-filter: var(--blur);
+            padding: 10px 0; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.3);
+            cursor: pointer; transition: 0.3s;
+        }
+        .date-btn.active { background: var(--accent); color: white; }
+        .date-btn span { display: block; font-size: 14px; font-weight: bold; }
+        .date-btn small { font-size: 11px; opacity: 0.8; }
+
+        /* 行程浮窗 */
+        .trip-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 20px; margin: 10px 15px; padding: 15px; position: relative; }
+        .trip-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .trip-content { flex: 1; }
+        .trip-actions { display: flex; flex-direction: column; gap: 8px; margin-left: 10px; }
+        .btn-mini { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; color: white; width: 60px; }
+        .btn-edit { background: #34495e; }
+        .btn-cash { background: #27ae60; }
+        
+        /* 通勤時間 */
+        .commute-info { text-align: center; padding: 5px 0; font-size: 12px; color: #555; }
+
+        /* 底部按鈕 */
+        .fab { 
+            position: fixed; bottom: 100px; right: 20px; width: 56px; height: 56px;
+            background: var(--accent); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 999;
         }
 
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        .header { text-align: center; color: white; text-shadow: 0 2px 12px rgba(0,0,0,0.5); padding: 45px 20px 10px; }
-        .header h1 { margin: 0; font-size: 32px; font-weight: 800; }
-
-        /* 航班卡片 */
-        .flight-card { background: var(--flight-bg); border-radius: 20px; padding: 18px; margin: 15px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .flight-header { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.8; margin-bottom: 12px; font-weight: bold; }
-        .flight-main { display: flex; justify-content: space-between; align-items: center; }
-        .airport-code { font-size: 26px; font-weight: 900; margin: 0; }
-        .airport-time { font-size: 14px; opacity: 0.9; }
-        .flight-path { flex: 1; text-align: center; position: relative; padding: 0 15px; }
-        .flight-path::after { content: ""; position: absolute; top: 50%; left: 10%; right: 10%; border-top: 1px dashed rgba(255,255,255,0.4); }
-
-        /* 日期選擇按鈕 */
-        .date-selector { display: flex; overflow-x: auto; padding: 10px 15px; gap: 12px; scrollbar-width: none; }
-        .date-selector::-webkit-scrollbar { display: none; }
-        .date-btn {
-            flex: 0 0 75px; height: 80px; background: var(--glass); border-radius: 20px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border: 1px solid rgba(255,255,255,0.4); cursor: pointer; transition: 0.3s;
-        }
-        .date-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-        .date-btn .d-num { font-size: 20px; font-weight: bold; }
-        .date-btn .d-week { font-size: 12px; margin-top: 4px; }
-
-        /* 行程與車程 */
-        .trip-item { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 18px 0; }
-        .transport-divider { display: flex; align-items: center; justify-content: center; padding: 12px 0; color: var(--accent); font-weight: bold; font-size: 14px; opacity: 0.8; }
-        .transport-divider i { margin-right: 8px; }
-
-        /* 懸浮按鈕與彈窗 */
-        .fab { position: fixed; bottom: 110px; right: 25px; width: 65px; height: 65px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; z-index: 999; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-card { width: 92%; max-width: 420px; max-height: 85vh; overflow-y: auto; }
-
-        /* UI 元件 */
-        .member-chip { padding: 10px 18px; border-radius: 22px; background: rgba(255,255,255,0.5); font-size: 14px; cursor: pointer; margin: 4px; display: inline-block; border: 1px solid rgba(0,0,0,0.05); }
-        .member-chip.selected { background: var(--accent); color: white; }
-        input, select { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; background: rgba(255,255,255,0.8); font-size: 16px; box-sizing: border-box; }
-        .nav-bar { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(255, 255, 255, 0.95); height: 80px; border-radius: 40px; display: flex; z-index: 1000; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #95a5a6; }
+        /* 導覽列 */
+        .nav-bar { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(255,255,255,0.9); height: 70px; border-radius: 35px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbb; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
-        .preview-img { width: 100%; border-radius: 18px; margin-top: 12px; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; border-radius: 20px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
 
-    <div class="header"><h1>Qiao 旅遊誌</h1></div>
+    <div class="header"><h1 id="top-title">旅遊誌</h1></div>
 
     <div id="tab-home" class="tab-content active">
-        <div id="flight-container">
-            <div class="flight-card">
-                <div class="flight-header"><span><i class="fas fa-plane-departure"></i> OUTBOUND</span><span id="view-go-air">--</span></div>
-                <div class="flight-main">
-                    <div style="text-align:center;"><p class="airport-code" id="view-go-start">---</p><p class="airport-time" id="view-go-start-t">--:--</p></div>
-                    <div class="flight-path"><i class="fas fa-plane"></i></div>
-                    <div style="text-align:center;"><p class="airport-code" id="view-go-end">---</p><p class="airport-time" id="view-go-end-t">--:--</p></div>
-                </div>
-            </div>
-            <div class="flight-card" style="margin-top:-5px;">
-                <div class="flight-header"><span><i class="fas fa-plane-arrival"></i> INBOUND</span><span id="view-back-air">--</span></div>
-                <div class="flight-main">
-                    <div style="text-align:center;"><p class="airport-code" id="view-back-start">---</p><p class="airport-time" id="view-back-start-t">--:--</p></div>
-                    <div class="flight-path"><i class="fas fa-plane" style="transform:rotate(180deg)"></i></div>
-                    <div style="text-align:center;"><p class="airport-code" id="view-back-end">---</p><p class="airport-time" id="view-back-end-t">--:--</p></div>
-                </div>
-            </div>
+        <div id="flight-display-area"></div>
+        <div class="card" style="margin-top:20px;">
+            <strong>⚙️ 旅程設定</strong>
+            <input type="text" id="setup-trip-name" placeholder="輸入行程名稱">
+            <input type="text" id="setup-members" placeholder="成員 (用逗號隔開)">
+            <button onclick="saveSettings()">儲存旅程</button>
         </div>
-
-        <div class="card">
-            <strong>⚙️ 旅程基礎設定</strong>
-            <input type="text" id="setup-trip-name" placeholder="旅行名稱">
-            <input type="text" id="setup-members" placeholder="成員名單 (逗號隔開)">
-            <div style="display:flex; gap:10px;">
-                <div style="flex:1;"><small>開始日期</small><input type="date" id="setup-start"></div>
-                <div style="flex:1;"><small>結束日期</small><input type="date" id="setup-end"></div>
-            </div>
-            
-            <p style="font-size:11px; color:#7f8c8d; margin:15px 0 0;">✈️ 航班進階設定：</p>
-            <input type="text" id="go-air" placeholder="去程航空公司">
-            <div style="display:flex; gap:10px;"><input type="text" id="go-start" placeholder="起飛機場"><input type="time" id="go-start-t"></div>
-            <div style="display:flex; gap:10px;"><input type="text" id="go-end" placeholder="抵達機場"><input type="time" id="go-end-t"></div>
-            
-            <input type="text" id="back-air" placeholder="回程航空公司">
-            <div style="display:flex; gap:10px;"><input type="text" id="back-start" placeholder="起飛機場"><input type="time" id="back-start-t"></div>
-            <div style="display:flex; gap:10px;"><input type="text" id="back-end" placeholder="抵達機場"><input type="time" id="back-end-t"></div>
-            
-            <button onclick="saveSettings()">儲存並更新所有設定</button>
-        </div>
+        <div class="fab" onclick="showModal('modal-flight')"><i class="fas fa-plus"></i></div>
     </div>
 
     <div id="tab-plan" class="tab-content">
-        <div class="date-selector" id="date-buttons"></div>
-        <div class="card" id="trip-list-container">
-            <div id="trip-list"></div>
-        </div>
-        <div class="fab" onclick="openModal()"><i class="fas fa-plus"></i></div>
+        <div class="header"><h1>每日行程</h1></div>
+        <div class="date-scroller" id="date-buttons"></div>
+        <div id="weather-area" style="text-align:center; color:white; padding:5px;"></div>
+        <div id="trip-items-area"></div>
+        <div class="fab" onclick="showModal('modal-trip')"><i class="fas fa-plus"></i></div>
     </div>
 
-    <div id="tab-files" class="tab-content">
-        <div class="card">
-            <strong>📎 雲端附件連結</strong>
-            <input type="text" id="link-name" placeholder="檔案名稱">
-            <input type="text" id="link-url" placeholder="Google Drive 連結">
-            <button onclick="saveLink()">儲存附件</button>
-        </div>
-        <div id="link-list"></div>
-    </div>
-
-    <div id="tab-split" class="tab-content">
-        <div class="card" style="text-align:center;"><p>總支出</p><h1 id="total-val" style="font-size:36px; color:var(--accent);">$0</h1></div>
-        <div class="card"><strong><i class="fas fa-exchange-alt"></i> 清算建議</strong><div id="settlement-list"></div></div>
-        <div class="card"><strong>👤 成員消費明細</strong><div id="personal-list"></div></div>
-    </div>
-
-    <div class="modal-overlay" id="modal">
-        <div class="card modal-card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><strong>編輯行程計畫</strong><i class="fas fa-times" onclick="closeModal()"></i></div>
-            <input type="hidden" id="edit-id">
-            <input type="date" id="date">
-            <div style="display:flex; gap:10px;"><input type="time" id="start-time" placeholder="開始時間"><input type="time" id="end-time" placeholder="結束時間"></div>
-            <input type="text" id="activity" placeholder="地點/活動行程">
-            <hr style="opacity:0.2; margin:15px 0;">
-            <input type="number" id="cost" placeholder="花費金額 (選填)">
-            <select id="payer-select"></select>
-            <div id="member-selection-area"></div>
-            <button onclick="saveTrip()" style="margin-top:15px;">儲存變更</button>
-        </div>
-    </div>
+    <div id="tab-split" class="tab-content"><div class="card" id="personal-list"></div></div>
 
     <div class="nav-bar">
         <div class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></div>
         <div class="nav-item" onclick="switchTab('tab-plan', this)"><i class="fas fa-calendar-alt"></i><span>行程</span></div>
-        <div class="nav-item" onclick="switchTab('tab-files', this)"><i class="fas fa-paperclip"></i><span>附件</span></div>
         <div class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-coins"></i><span>分帳</span></div>
+    </div>
+
+    <div id="modal-flight" class="modal">
+        <div class="modal-content">
+            <h3>輸入航班資訊</h3>
+            <input type="text" id="fl-air" placeholder="航空公司">
+            <input type="text" id="fl-no" placeholder="航班號碼">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <input type="text" id="fl-start" placeholder="起飛機場 (TPE)"><input type="time" id="fl-start-t">
+                <input type="text" id="fl-end" placeholder="抵達機場 (NRT)"><input type="time" id="fl-end-t">
+            </div>
+            <select id="fl-type"><option value="go">去程</option><option value="back">回程</option></select>
+            <button onclick="saveFlight()">儲存航班</button>
+            <button onclick="closeModal()" style="background:#ccc;">關閉</button>
+        </div>
+    </div>
+
+    <div id="modal-trip" class="modal">
+        <div class="modal-content">
+            <h3 id="trip-modal-title">編輯行程計畫</h3>
+            <input type="hidden" id="edit-trip-id">
+            <input type="date" id="trip-date">
+            <input type="text" id="trip-place" placeholder="地點名稱">
+            <div style="display:flex; gap:5px;">
+                <input type="time" id="trip-start"><input type="time" id="trip-end">
+            </div>
+            <button onclick="saveTrip()">儲存行程</button>
+            <button onclick="closeModal()" style="background:#ccc;">關閉</button>
+        </div>
+    </div>
+
+    <div id="modal-cash" class="modal">
+        <div class="modal-content">
+            <h3>行程記帳</h3>
+            <input type="hidden" id="cash-trip-id">
+            <input type="number" id="cash-amount" placeholder="金額">
+            <select id="cash-payer"></select>
+            <div id="cash-members"></div>
+            <button onclick="saveCash()">確認儲存</button>
+            <button onclick="closeModal()" style="background:#ccc;">關閉</button>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, deleteDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
@@ -179,229 +163,193 @@
             messagingSenderId: "898590101576",
             appId: "1:898590101576:web:7c1916bb7ebbada144487d"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        let currentMembers = [];
+        let currentTripName = "";
+        let members = [];
         let selectedDate = "";
-        let allTrips = [];
 
+        // 工具函數
         window.switchTab = (id, el) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             el.classList.add('active');
         };
+        window.showModal = (id) => document.getElementById(id).style.display = 'flex';
+        window.closeModal = () => document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
 
-        window.openModal = () => { 
-            document.getElementById('modal').style.display = 'flex'; 
-            if(selectedDate) document.getElementById('date').value = selectedDate;
-        };
-        window.closeModal = () => { document.getElementById('modal').style.display = 'none'; resetEditor(); };
-
+        // 1. 首頁與設定
         window.saveSettings = async () => {
-            const data = {
-                tripName: document.getElementById('setup-trip-name').value,
-                members: document.getElementById('setup-members').value.split(',').map(m => m.trim()).filter(m => m),
-                start: document.getElementById('setup-start').value,
-                end: document.getElementById('setup-end').value,
-                goAir: document.getElementById('go-air').value,
-                goStart: document.getElementById('go-start').value.toUpperCase(),
-                goStartT: document.getElementById('go-start-t').value,
-                goEnd: document.getElementById('go-end').value.toUpperCase(),
-                goEndT: document.getElementById('go-end-t').value,
-                backAir: document.getElementById('back-air').value,
-                backStart: document.getElementById('back-start').value.toUpperCase(),
-                backStartT: document.getElementById('back-start-t').value,
-                backEnd: document.getElementById('back-end').value.toUpperCase(),
-                backEndT: document.getElementById('back-end-t').value
-            };
-            await setDoc(doc(db, "settings", "currentTrip"), data);
-            alert("所有旅程與航班設定已儲存！");
+            const name = document.getElementById('setup-trip-name').value;
+            const mems = document.getElementById('setup-members').value.split(',').map(m => m.trim());
+            await setDoc(doc(db, "settings", "currentTrip"), { tripName: name, members: mems });
+            alert("旅程已設定");
         };
 
-        onSnapshot(doc(db, "settings", "currentTrip"), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                // 設定填回
-                document.getElementById('setup-trip-name').value = data.tripName || '';
-                document.getElementById('setup-members').value = (data.members || []).join(', ');
-                document.getElementById('setup-start').value = data.start || '';
-                document.getElementById('setup-end').value = data.end || '';
-                
-                // 航班顯示
-                document.getElementById('view-go-air').innerText = data.goAir || '--';
-                document.getElementById('view-go-start').innerText = data.goStart || '---';
-                document.getElementById('view-go-start-t').innerText = data.goStartT || '--:--';
-                document.getElementById('view-go-end').innerText = data.goEnd || '---';
-                document.getElementById('view-go-end-t').innerText = data.goEndT || '--:--';
-                document.getElementById('view-back-air').innerText = data.backAir || '--';
-                document.getElementById('view-back-start').innerText = data.backStart || '---';
-                document.getElementById('view-back-start-t').innerText = data.backStartT || '--:--';
-                document.getElementById('view-back-end').innerText = data.backEnd || '---';
-                document.getElementById('view-back-end-t').innerText = data.backEndT || '--:--';
-
-                // 日期按鈕產生
-                if(data.start && data.end) {
-                    let start = new Date(data.start); let end = new Date(data.end);
-                    let html = ''; const weekDays = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
-                    while(start <= end) {
-                        let dStr = start.toISOString().split('T')[0];
-                        if(!selectedDate) selectedDate = dStr;
-                        html += `<div class="date-btn ${selectedDate === dStr ? 'active' : ''}" onclick="filterDate('${dStr}')">
-                            <span class="d-num">${start.getDate()}</span>
-                            <span class="d-week">${weekDays[start.getDay()]}</span>
-                        </div>`;
-                        start.setDate(start.getDate() + 1);
-                    }
-                    document.getElementById('date-buttons').innerHTML = html;
-                }
-
-                currentMembers = data.members || [];
-                let mHtml = '', sHtml = '<option value="">-- 選擇付款人 --</option>';
-                currentMembers.forEach(m => {
-                    mHtml += `<div class="member-chip" onclick="this.classList.toggle('selected')">${m}</div>`;
-                    sHtml += `<option value="${m}">${m}</option>`;
-                });
-                document.getElementById('member-selection-area').innerHTML = mHtml;
-                document.getElementById('payer-select').innerHTML = sHtml;
-                renderTrips();
+        onSnapshot(doc(db, "settings", "currentTrip"), (ds) => {
+            if (ds.exists()) {
+                const d = ds.data();
+                currentTripName = d.tripName;
+                members = d.members;
+                document.getElementById('top-title').innerText = currentTripName || "旅遊誌";
+                // 更新記帳付款人選項
+                const payerSelect = document.getElementById('cash-payer');
+                payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
             }
         });
 
-        window.filterDate = (date) => {
-            selectedDate = date;
-            document.querySelectorAll('.date-btn').forEach(btn => btn.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            renderTrips();
-        };
-
-        const qTrips = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("startTime", "asc"));
-        onSnapshot(qTrips, (snapshot) => {
-            allTrips = [];
-            snapshot.forEach(docSnap => allTrips.push({ id: docSnap.id, ...docSnap.data() }));
-            renderTrips();
-            renderBalances();
-        });
-
-        function renderTrips() {
-            let html = '', total = 0;
-            const dayTrips = allTrips.filter(t => t.date === selectedDate);
-            
-            dayTrips.forEach((t, index) => {
-                html += `<div class="trip-item">
-                    <small style="color:#7f8c8d;">${t.startTime}${t.endTime ? ' ~ ' + t.endTime : ''}</small><br>
-                    <b>${t.activity}</b><br>
-                    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:8px;">
-                        <div onclick="editTrip('${t.id}','${t.date}','${t.startTime}','${t.endTime}','${t.activity}',${t.cost},'${t.payer}','${(t.members||[]).join(',')}')" style="background:white; padding:6px 16px; border-radius:12px; border:1px solid var(--accent); font-size:14px; cursor:pointer;">記帳 / 編輯</div>
-                        <span onclick="deleteTrip('${t.id}')" style="color:#ccc; margin-left:10px;">✕</span>
-                        ${t.cost > 0 ? `<span style="font-weight:bold;">$${t.cost}</span>` : ''}
-                    </div>
-                </div>`;
-                
-                // 車程顯示
-                if(index < dayTrips.length - 1) {
-                    const next = dayTrips[index+1];
-                    if(t.endTime && next.startTime) {
-                        const s = next.startTime.split(':').map(Number);
-                        const e = t.endTime.split(':').map(Number);
-                        const diff = (s[0]*60 + s[1]) - (e[0]*60 + e[1]);
-                        if(diff > 0) {
-                            html += `<div class="transport-divider"><i class="fas fa-car"></i> 預計車程 ${Math.floor(diff/60)}h ${diff%60}m</div>`;
-                        }
-                    }
-                }
-            });
-            document.getElementById('trip-list').innerHTML = html || '<p style="text-align:center; opacity:0.5; padding:40px;">今日尚未規劃行程</p>';
-        }
-
-        // 分帳邏輯、附件邏輯保持完整...
-        function renderBalances() {
-            let total = 0, balances = {}, spent = {};
-            currentMembers.forEach(m => { balances[m] = 0; spent[m] = 0; });
-            allTrips.forEach(d => {
-                total += d.cost;
-                if(d.cost > 0 && d.payer && (d.members||[]).length > 0) {
-                    const share = d.cost / d.members.length;
-                    balances[d.payer] += d.cost;
-                    d.members.forEach(m => { balances[m] -= share; spent[m] += share; });
-                }
-            });
-            document.getElementById('total-val').innerText = "$" + total.toLocaleString();
-            let pHtml = ''; currentMembers.forEach(m => pHtml += `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(0,0,0,0.05);"><span>${m}</span><b>$${Math.round(spent[m]).toLocaleString()}</b></div>`);
-            document.getElementById('personal-list').innerHTML = pHtml;
-            
-            let debtors = [], creditors = [], settleHtml = '';
-            for (let m in balances) {
-                if (balances[m] > 1) creditors.push({ name: m, amount: balances[m] });
-                else if (balances[m] < -1) debtors.push({ name: m, amount: Math.abs(balances[m]) });
-            }
-            debtors.forEach(d => {
-                creditors.forEach(c => {
-                    if (d.amount > 0 && c.amount > 0) {
-                        let pay = Math.min(d.amount, c.amount);
-                        settleHtml += `<div style="padding:10px 0; border-bottom:1px solid #eee;">💰 <b>${d.name}</b> 需支付 <b>$${Math.round(pay)}</b> 給 <b>${c.name}</b></div>`;
-                        d.amount -= pay; c.amount -= pay;
-                    }
-                });
-            });
-            document.getElementById('settlement-list').innerHTML = settleHtml || '<p style="color:#999;">帳務平衡</p>';
-        }
-
-        window.saveTrip = async () => {
-            const id = document.getElementById('edit-id').value;
+        // 2. 航班邏輯
+        window.saveFlight = async () => {
             const data = {
-                date: document.getElementById('date').value,
-                startTime: document.getElementById('start-time').value,
-                endTime: document.getElementById('end-time').value,
-                activity: document.getElementById('activity').value,
-                cost: Number(document.getElementById('cost').value || 0),
-                payer: document.getElementById('payer-select').value,
-                members: Array.from(document.querySelectorAll('#member-selection-area .selected')).map(el => el.innerText),
-                updatedAt: new Date()
+                air: document.getElementById('fl-air').value,
+                no: document.getElementById('fl-no').value,
+                start: document.getElementById('fl-start').value,
+                startT: document.getElementById('fl-start-t').value,
+                end: document.getElementById('fl-end').value,
+                endT: document.getElementById('fl-end-t').value,
+                type: document.getElementById('fl-type').value,
+                createdAt: new Date()
             };
-            if(id) await updateDoc(doc(db, "trips", id), data);
-            else { data.createdAt = new Date(); await addDoc(collection(db, "trips"), data); }
+            await addDoc(collection(db, "flights"), data);
             closeModal();
         };
 
-        window.resetEditor = () => {
-            document.getElementById('edit-id').value = '';
-            ['date','start-time','end-time','activity','cost','payer-select'].forEach(i => document.getElementById(i).value = '');
-            document.querySelectorAll('#member-selection-area .member-chip').forEach(c => c.classList.remove('selected'));
-        };
-
-        window.editTrip = (id, d, st, et, a, c, p, ms) => {
-            document.getElementById('edit-id').value = id;
-            document.getElementById('date').value = d; document.getElementById('start-time').value = st;
-            document.getElementById('end-time').value = et; document.getElementById('activity').value = a;
-            document.getElementById('cost').value = c; document.getElementById('payer-select').value = p;
-            const mList = ms ? ms.split(',') : [];
-            document.querySelectorAll('#member-selection-area .member-chip').forEach(chip => {
-                if(mList.includes(chip.innerText)) chip.classList.add('selected'); else chip.classList.remove('selected');
-            });
-            openModal();
-        };
-
-        window.deleteTrip = async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "trips", id)); };
-
-        window.saveLink = async () => {
-            const name = document.getElementById('link-name').value, url = document.getElementById('link-url').value;
-            await addDoc(collection(db, "links"), { name, url, createdAt: new Date() });
-            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
-        };
-
-        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snapshot) => {
+        onSnapshot(query(collection(db, "flights"), orderBy("createdAt", "desc")), (snap) => {
             let html = '';
-            snapshot.forEach(docSnap => {
-                const d = docSnap.data();
-                let fId = d.url.includes('/d/') ? d.url.split('/d/')[1].split('/')[0] : '';
-                html += `<div class="card"><div style="display:flex; justify-content:space-between;"><b>${d.name}</b><div><a href="${d.url}" target="_blank" style="color:var(--accent);"><i class="fas fa-external-link-alt"></i></a><span style="margin-left:15px; color:#ccc;" onclick="deleteLink('${docSnap.id}')">✕</span></div></div>${fId ? `<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img">` : ''}</div>`;
+            snap.forEach(docSnap => {
+                const f = docSnap.data();
+                html += `
+                <div class="boarding-pass">
+                    <div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'去程':'回程'}</span></div>
+                    <div class="ticket-body">
+                        <div><p class="city-code">${f.start}</p><p style="font-weight:bold;">${f.startT}</p></div>
+                        <div style="color:#ddd; font-size:20px;"><i class="fas fa-plane"></i></div>
+                        <div style="text-align:right;"><p class="city-code">${f.end}</p><p style="font-weight:bold;">${f.endT}</p></div>
+                    </div>
+                    <div class="ticket-divider"></div>
+                    <div class="ticket-footer">
+                        <div><span style="color:#999;">FLIGHT</span><br><b>${f.no}</b></div>
+                        <div style="text-align:right;"><button onclick="deleteDoc(doc(db,'flights','${docSnap.id}'))" style="background:none; color:#ccc; border:none; width:auto; padding:0;">✕</button></div>
+                    </div>
+                </div>`;
             });
-            document.getElementById('link-list').innerHTML = html;
+            document.getElementById('flight-display-area').innerHTML = html;
         });
 
-        window.deleteLink = async (id) => { if(confirm("刪除？")) await deleteDoc(doc(db, "links", id)); };
+        // 3. 行程與日期切換
+        const dayNames = ["周日","周一","周二","周三","周四","周五","周六"];
+        onSnapshot(query(collection(db, "trips"), orderBy("date", "asc")), (snap) => {
+            const dates = [];
+            snap.forEach(d => { if(!dates.includes(d.data().date)) dates.push(d.data().date); });
+            
+            let btnHtml = '';
+            dates.forEach(d => {
+                const dateObj = new Date(d);
+                const active = selectedDate == d ? 'active' : '';
+                btnHtml += `
+                    <div class="date-btn ${active}" onclick="selectDate('${d}')">
+                        <span>${(dateObj.getMonth()+1)+'/'+dateObj.getDate()}</span>
+                        <small>${dayNames[dateObj.getDay()]}</small>
+                    </div>`;
+            });
+            document.getElementById('date-buttons').innerHTML = btnHtml;
+            if(selectedDate) renderDayTrips();
+        });
+
+        window.selectDate = (date) => {
+            selectedDate = date;
+            document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+            renderDayTrips();
+            getWeather(date);
+        };
+
+        async function renderDayTrips() {
+            const qTrip = query(collection(db, "trips"), where("date", "==", selectedDate), orderBy("start", "asc"));
+            const snap = await getDocs(qTrip);
+            let html = '';
+            let lastPlace = "";
+
+            for (const docSnap of snap.docs) {
+                const t = docSnap.data();
+                const id = docSnap.id;
+                
+                // 計算停留時間
+                const diff = (new Date(`2000-01-01 ${t.end}`) - new Date(`2000-01-01 ${t.start}`)) / 60000;
+                const dur = diff > 0 ? `(${Math.floor(diff/60)}h ${diff%60}m)` : "";
+
+                // 通勤時間 (暫時用模擬，若要真實請串接 Distance Matrix API)
+                if(lastPlace) {
+                    html += `<div class="commute-info"><i class="fas fa-car"></i> 預估 25 分鐘</div>`;
+                }
+
+                html += `
+                <div class="trip-card">
+                    <div class="trip-header">
+                        <div class="trip-content">
+                            <small style="color:#7f8c8d;">${t.start} ~ ${t.end} ${dur}</small>
+                            <h3 style="margin:5px 0; color:#2c3e50;">${t.place}</h3>
+                            ${t.cost ? `<span style="color:#27ae60; font-weight:bold;">💰 $${t.cost}</span>` : ''}
+                        </div>
+                        <div class="trip-actions">
+                            <button class="btn-mini btn-edit" onclick="editTripForm('${id}')">編輯</button>
+                            <button class="btn-mini btn-cash" onclick="cashTripForm('${id}')">記帳</button>
+                        </div>
+                    </div>
+                </div>`;
+                lastPlace = t.place;
+            }
+            document.getElementById('trip-items-area').innerHTML = html;
+        }
+
+        // 4. 編輯與記帳
+        window.saveTrip = async () => {
+            const data = {
+                date: document.getElementById('trip-date').value,
+                place: document.getElementById('trip-place').value,
+                start: document.getElementById('trip-start').value,
+                end: document.getElementById('trip-end').value,
+            };
+            const id = document.getElementById('edit-trip-id').value;
+            if(id) await updateDoc(doc(db, "trips", id), data);
+            else await addDoc(collection(db, "trips"), data);
+            closeModal();
+        };
+
+        window.editTripForm = async (id) => {
+            const ds = await getDocs(query(collection(db, "trips")));
+            const t = ds.docs.find(d => d.id == id).data();
+            document.getElementById('edit-trip-id').value = id;
+            document.getElementById('trip-date').value = t.date;
+            document.getElementById('trip-place').value = t.place;
+            document.getElementById('trip-start').value = t.start;
+            document.getElementById('trip-end').value = t.end;
+            showModal('modal-trip');
+        };
+
+        window.cashTripForm = (id) => {
+            document.getElementById('cash-trip-id').value = id;
+            document.getElementById('cash-members').innerHTML = members.map(m => `
+                <label><input type="checkbox" class="cash-m-cb" value="${m}" checked> ${m}</label>
+            `).join(' ');
+            showModal('modal-cash');
+        };
+
+        window.saveCash = async () => {
+            const id = document.getElementById('cash-trip-id').value;
+            const amount = Number(document.getElementById('cash-amount').value);
+            const payer = document.getElementById('cash-payer').value;
+            const splitMems = Array.from(document.querySelectorAll('.cash-m-cb:checked')).map(c => c.value);
+            await updateDoc(doc(db, "trips", id), { cost: amount, payer, splitWith: splitMems });
+            closeModal();
+            renderDayTrips();
+        };
+
+        // 5. 天氣 (模擬)
+        function getWeather(date) {
+            document.getElementById('weather-area').innerHTML = `<i class="fas fa-sun"></i> 24°C 晴天`;
+        }
+
     </script>
 </body>
 </html>
