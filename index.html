@@ -188,13 +188,49 @@
         };
 
         onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snapshot) => {
-            let html = '';
-            snapshot.forEach(docSnap => {
-                const d = docSnap.data();
-                html += `<div class="file-item"><span>${d.name}</span><div><a href="${d.url}" target="_blank" class="drive-btn">開啟連結</a> <button onclick="deleteLink('${docSnap.id}')" style="background:none;color:#ccc;width:auto;margin-left:10px;">✕</button></div></div>`;
-            });
-            document.getElementById('link-list').innerHTML = html;
-        });
+    let html = '';
+    snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        let previewHtml = '';
+
+        // 優化的 Google Drive 圖片代碼轉換
+        if (d.url.includes('drive.google.com')) {
+            // 抓取連結中的 ID 部分
+            const parts = d.url.split('/');
+            let fileId = '';
+            
+            // 處理不同的 Google Drive 網址格式
+            if (d.url.includes('/d/')) {
+                fileId = d.url.split('/d/')[1].split('/')[0];
+            } else if (d.url.includes('id=')) {
+                fileId = d.url.split('id=')[1].split('&')[0];
+            }
+
+            // 如果成功取得 ID，且不是資料夾（資料夾網址通常含 /folders/）
+            if (fileId && !d.url.includes('/folders/')) {
+                // 使用 Google Drive 官方預覽圖 API (輸出縮圖)
+                const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
+                previewHtml = `
+                    <div style="margin-top:10px; background:#eee; border-radius:8px; overflow:hidden; text-align:center;">
+                        <img src="${thumbnailUrl}" style="max-width:100%; display:block; margin:auto;" alt="預覽圖">
+                    </div>`;
+            }
+        }
+
+        html += `
+            <div class="card" style="padding:12px; border: 1px solid #eee;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:#333;">${d.name}</strong>
+                    <a href="${d.url}" target="_blank" class="drive-btn" style="background:#4285F4; color:white; padding:5px 12px; border-radius:4px; text-decoration:none; font-size:12px;">開啟</a>
+                </div>
+                ${previewHtml}
+                <div style="text-align:right; margin-top:8px;">
+                    <button onclick="deleteLink('${docSnap.id}')" style="background:none; color:#bbb; border:none; cursor:pointer; font-size:12px;">✕ 刪除</button>
+                </div>
+            </div>`;
+    });
+    document.getElementById('link-list').innerHTML = html;
+});
 
         window.deleteLink = async (id) => { if(confirm("刪除連結？")) await deleteDoc(doc(db, "links", id)); };
     </script>
