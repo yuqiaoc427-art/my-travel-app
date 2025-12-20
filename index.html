@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Qiao 旅遊誌 - 全功能優化版</title>
+    <title>Qiao 旅遊誌 - 智慧分帳版</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     
     <style>
-        :root { --glass: rgba(255, 255, 255, 0.92); --blur: blur(20px); --accent: #1e3c72; }
-        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 120px; background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #333; overflow-x: hidden; }
+        :root { --glass: rgba(255, 255, 255, 0.92); --blur: blur(20px); --accent: #1e3c72; --danger: #e74c3c; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 100px; background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #333; overflow-x: hidden; }
         
         .tab-content { display: none; padding: 0 10px; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
@@ -33,30 +33,33 @@
         .date-item b { font-size: 16px; margin-bottom: 4px; }
         .date-item span { font-size: 12px; opacity: 0.8; }
 
-        /* 行程卡片 */
-        .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; }
+        /* 行程與附件卡片 */
+        .itinerary-card, .file-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; }
+        .delete-btn { position: absolute; top: 12px; right: 12px; color: var(--danger); font-size: 18px; cursor: pointer; padding: 5px; opacity: 0.7; transition: 0.3s; }
+        .delete-btn:hover { opacity: 1; }
+        
         .time-text { font-weight: 800; font-size: 18px; color: var(--accent); display: block; margin-bottom: 2px; }
         .stay-tag { font-size: 11px; background: rgba(30,60,114,0.1); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-left: 5px; vertical-align: middle; }
-        .location-text { font-size: 18px; font-weight: bold; color: #333; }
+        .location-text { font-size: 18px; font-weight: bold; color: #333; padding-right: 25px; }
         .desc-text { font-size: 14px; color: #666; margin-top: 4px; display: block; }
         
-        .btn-action-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
-        .btn-action { padding: 8px 12px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; width: 70px; }
-        .btn-delete { background: none; border: none; color: #e74c3c; font-size: 18px; cursor: pointer; padding: 5px; line-height: 1; }
-        
+        .btn-action { padding: 8px 15px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; width: 80px; margin-bottom: 5px; }
         .commute-info { text-align: center; color: white; font-size: 12px; margin: 5px 0; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
 
-        /* 底部導覽列 - 縮小優化尺寸 */
+        /* 底部導覽列 - 縮小版 */
         .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(255,255,255,0.98); height: 70px; border-radius: 35px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; text-decoration: none; font-size: 11px; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; text-decoration: none; font-size: 11px; }
         .nav-item i { font-size: 22px; margin-bottom: 3px; }
-        .nav-item.active { color: var(--accent); font-weight: 800; }
+        .nav-item.active { color: var(--accent); font-weight: 900; }
 
-        .fab { position: fixed; bottom: 105px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 900; border: none; }
+        .fab { position: fixed; bottom: 100px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 900; border: none; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; font-family: inherit; }
         .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: block; }
+
+        /* 分帳結算樣式 */
+        .settle-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 12px; border-radius: 10px; margin-top: 15px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -97,6 +100,7 @@
             <p style="margin:0; color:#666;">旅程總支出</p>
             <h1 id="total-val">$0</h1>
             <div id="personal-list"></div>
+            <div id="settle-suggestions" class="settle-card">正在計算結算建議...</div>
         </div>
     </div>
 
@@ -161,14 +165,147 @@
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
         let currentMembers = [], selectedDate = "";
 
+        // --- 行程功能 ---
+        window.saveItinerary = async () => {
+            if(!selectedDate) return alert("請選日期");
+            const data = { date: selectedDate, location: document.getElementById('plan-location').value, desc: document.getElementById('plan-desc').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, updatedAt: new Date() };
+            const id = document.getElementById('edit-id').value;
+            if(id) await updateDoc(doc(db, "itinerary", id), data);
+            else await addDoc(collection(db, "itinerary"), data);
+            closeModal(); refreshItinerary();
+        };
+
+        async function refreshItinerary() {
+            if(!selectedDate) return;
+            const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
+            const snap = await getDocs(q);
+            const listEl = document.getElementById('itinerary-list');
+            let html = '', docs = snap.docs;
+            if(docs.length > 0) updateWeather(docs[0].data().location);
+
+            for(let i=0; i<docs.length; i++) {
+                const d = docs[i].data(), id = docs[i].id;
+                html += `
+                    <div class="itinerary-card" data-id="${id}">
+                        <div class="delete-btn" onclick="window.deletePlan('${id}')"><i class="fas fa-times-circle"></i></div>
+                        <div style="flex:1;">
+                            <span class="time-text">${d.start} - ${d.end}<span class="stay-tag">${getTimeDiff(d.start, d.end)}</span></span>
+                            <span class="location-text">${d.location}</span>
+                            ${d.desc ? `<span class="desc-text">${d.desc}</span>` : ''}
+                        </div>
+                        <div style="display:flex; flex-direction:column;">
+                            <button class="btn-action" style="background:#3498db" onclick="window.editPlan('${id}')">編輯</button>
+                            <button class="btn-action" style="background:#27ae60" onclick="window.openPayment('${id}')">記帳</button>
+                        </div>
+                    </div>`;
+                if(i < docs.length - 1) {
+                    const time = await getCommute(d.location, docs[i+1].data().location);
+                    html += `<div class="commute-info"><i class="fas fa-car"></i> 約 ${time}</div>`;
+                }
+            }
+            listEl.innerHTML = html || '<p style="text-align:center; color:white;">無行程</p>';
+            new Sortable(listEl, { animation: 150, delay: 200, delayOnTouchOnly: true });
+        }
+
+        window.deletePlan = async (id) => {
+            if(confirm("確定刪除此行程？")) {
+                await deleteDoc(doc(db, "itinerary", id));
+                refreshItinerary();
+            }
+        };
+
+        // --- 附件功能 ---
+        window.saveLink = async () => {
+            await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
+            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
+        };
+
+        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
+            let html = '';
+            snap.forEach(d => {
+                const data = d.data(), id = d.id;
+                let fId = data.url.includes('/d/') ? data.url.split('/d/')[1].split('/')[0] : '';
+                let pre = fId ? `<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img">` : '';
+                html += `
+                    <div class="file-card">
+                        <div class="delete-btn" onclick="window.deleteLink('${id}')"><i class="fas fa-times-circle"></i></div>
+                        <div style="flex:1;">
+                            <b>${data.name}</b><br>
+                            <a href="${data.url}" target="_blank" style="color:var(--accent); font-size:12px;">開啟連結 <i class="fas fa-external-link-alt"></i></a>
+                            ${pre}
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('link-list').innerHTML = html;
+        });
+
+        window.deleteLink = async (id) => {
+            if(confirm("確定刪除此附件？")) await deleteDoc(doc(db, "links", id));
+        };
+
+        // --- 分帳結算邏輯 ---
+        async function refreshSettlement() {
+            const snap = await getDocs(collection(db, "expenses"));
+            let total = 0, balances = {};
+            currentMembers.forEach(m => balances[m] = 0);
+
+            snap.forEach(d => {
+                const data = d.data();
+                total += data.amount;
+                // 付款者餘額增加
+                balances[data.payer] += data.amount;
+                // 分攤者餘額減少
+                const per = data.amount / data.splitTo.length;
+                data.splitTo.forEach(m => balances[m] -= per);
+            });
+
+            document.getElementById('total-val').innerText = "$" + Math.round(total).toLocaleString();
+            
+            // 顯示個人餘額
+            let html = '';
+            Object.keys(balances).forEach(m => {
+                const bal = Math.round(balances[m]);
+                const color = bal >= 0 ? "#27ae60" : "#e74c3c";
+                html += `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;">
+                    <span>${m}</span><b style="color:${color}">${bal >= 0 ? '+' : ''}${bal.toLocaleString()}</b>
+                </div>`;
+            });
+            document.getElementById('personal-list').innerHTML = html;
+
+            // 計算誰給誰多少錢
+            calculateSettleSuggestions(balances);
+        }
+
+        function calculateSettleSuggestions(balances) {
+            let debtors = [], creditors = [];
+            Object.keys(balances).forEach(m => {
+                if (balances[m] < -1) debtors.push({ name: m, amount: -balances[m] });
+                else if (balances[m] > 1) creditors.push({ name: m, amount: balances[m] });
+            });
+
+            debtors.sort((a, b) => b.amount - a.amount);
+            creditors.sort((a, b) => b.amount - a.amount);
+
+            let suggestions = "<strong>💡 結算建議：</strong><br>";
+            let i = 0, j = 0;
+            while (i < debtors.length && j < creditors.length) {
+                let pay = Math.min(debtors[i].amount, creditors[j].amount);
+                suggestions += `${debtors[i].name} ➡️ 給 ${creditors[j].name} <b>$${Math.round(pay).toLocaleString()}</b><br>`;
+                debtors[i].amount -= pay;
+                creditors[j].amount -= pay;
+                if (debtors[i].amount < 1) i++;
+                if (creditors[j].amount < 1) j++;
+            }
+            document.getElementById('settle-suggestions').innerHTML = (debtors.length === 0) ? "暫無結算需求" : suggestions;
+        }
+
+        // --- 基礎工具與設定 ---
         function getTimeDiff(s, e) {
             if(!s || !e) return "";
-            const [sh, sm] = s.split(':').map(Number);
-            const [eh, em] = e.split(':').map(Number);
+            const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number);
             let diff = (eh * 60 + em) - (sh * 60 + sm);
             if(diff < 0) diff += 1440;
-            const h = Math.floor(diff/60), m = diff%60;
-            return `停留 ${h}時${m}分`;
+            return `停留 ${Math.floor(diff/60)}時${diff%60}分`;
         }
 
         async function updateWeather(fallbackLoc) {
@@ -185,54 +322,6 @@
                 navigator.geolocation.getCurrentPosition(async(pos)=> {await getW(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);},
                 async()=>{if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`);}, {timeout:5000});
             } else if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`);
-        }
-
-        window.saveItinerary = async () => {
-            if(!selectedDate) return alert("請選日期");
-            const data = { date: selectedDate, location: document.getElementById('plan-location').value, desc: document.getElementById('plan-desc').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, updatedAt: new Date() };
-            const id = document.getElementById('edit-id').value;
-            if(id) await updateDoc(doc(db, "itinerary", id), data);
-            else await addDoc(collection(db, "itinerary"), data);
-            closeModal(); refreshItinerary();
-        };
-
-        window.deleteItinerary = async (id) => {
-            if(confirm("確定要刪除這筆行程嗎？")) {
-                await deleteDoc(doc(db, "itinerary", id));
-                refreshItinerary();
-            }
-        };
-
-        async function refreshItinerary() {
-            if(!selectedDate) return;
-            const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
-            const snap = await getDocs(q);
-            const listEl = document.getElementById('itinerary-list');
-            let html = '', docs = snap.docs;
-            if(docs.length > 0) updateWeather(docs[0].data().location);
-
-            for(let i=0; i<docs.length; i++) {
-                const d = docs[i].data(), id = docs[i].id;
-                html += `
-                    <div class="itinerary-card" data-id="${id}">
-                        <div style="flex:1;">
-                            <span class="time-text">${d.start} - ${d.end}<span class="stay-tag">${getTimeDiff(d.start, d.end)}</span></span>
-                            <span class="location-text">${d.location}</span>
-                            ${d.desc ? `<span class="desc-text">${d.desc}</span>` : ''}
-                        </div>
-                        <div class="btn-action-group">
-                            <button class="btn-delete" onclick="window.deleteItinerary('${id}')"><i class="fas fa-times-circle"></i></button>
-                            <button class="btn-action" style="background:#3498db" onclick="window.editPlan('${id}')">編輯</button>
-                            <button class="btn-action" style="background:#27ae60" onclick="window.openPayment('${id}')">記帳</button>
-                        </div>
-                    </div>`;
-                if(i < docs.length - 1) {
-                    const time = await getCommute(d.location, docs[i+1].data().location);
-                    html += `<div class="commute-info"><i class="fas fa-car"></i> 約 ${time}</div>`;
-                }
-            }
-            listEl.innerHTML = html || '<p style="text-align:center; color:white;">無行程</p>';
-            new Sortable(listEl, { animation: 150, delay: 200, delayOnTouchOnly: true });
         }
 
         async function getCommute(o, d) {
@@ -264,9 +353,7 @@
             if(!s || !e) return;
             let html = '', curr = new Date(s), last = new Date(e);
             while(curr <= last) {
-                const dStr = curr.toISOString().split('T')[0];
-                const mmdd = (curr.getMonth()+1) + '/' + curr.getDate();
-                const day = curr.toLocaleDateString('zh-TW', { weekday: 'short' });
+                const dStr = curr.toISOString().split('T')[0], mmdd = (curr.getMonth()+1) + '/' + curr.getDate(), day = curr.toLocaleDateString('zh-TW', { weekday: 'short' });
                 html += `<div class="date-item ${selectedDate==dStr?'active':''}" onclick="window.selectDate('${dStr}')"><b>${mmdd}</b><span>${day}</span></div>`;
                 curr.setDate(curr.getDate() + 1);
             }
@@ -274,43 +361,33 @@
             if(!selectedDate) window.selectDate(s);
         }
 
+        window.selectDate = (d) => {
+            selectedDate = d;
+            document.querySelectorAll('.date-item').forEach(el => {
+                const b = el.querySelector('b').innerText;
+                const dObj = new Date(d);
+                el.classList.toggle('active', b == ((dObj.getMonth()+1)+'/'+dObj.getDate()));
+            });
+            refreshItinerary();
+        };
+
         onSnapshot(collection(db, "flights"), (snap) => {
             let html = '';
             snap.forEach(dSnap => {
                 const f = dSnap.data();
-                const [sh, sm] = f.fromT.split(':').map(Number);
-                const [eh, em] = f.toT.split(':').map(Number);
+                const [sh, sm] = f.fromT.split(':').map(Number), [eh, em] = f.toT.split(':').map(Number);
                 let diff = (eh * 60 + em) - (sh * 60 + sm);
                 if(diff < 0) diff += 1440;
-                const duration = `${Math.floor(diff/60)}h ${diff%60}m`;
                 html += `<div class="boarding-pass">
                     <div class="ticket-top"><span>${f.air} ${f.no}</span><span>${f.type=='go'?'OUTBOUND':'INBOUND'}</span></div>
                     <div class="ticket-mid">
                         <div style="text-align:left;"><p class="airport-code">${f.from}</p><span style="font-size:12px;font-weight:bold;">${f.fromT}</span></div>
-                        <div style="text-align:center;flex:1;position:relative;">
-                            <span style="font-size:9px;color:#999;position:absolute;top:-12px;left:50%;transform:translateX(-50%);">${duration}</span>
-                            <i class="fas fa-plane" style="color:#eee;font-size:18px;"></i>
-                        </div>
+                        <div style="text-align:center;flex:1;position:relative;"><span style="font-size:9px;color:#999;position:absolute;top:-12px;left:50%;transform:translateX(-50%);">${Math.floor(diff/60)}h ${diff%60}m</span><i class="fas fa-plane" style="color:#eee;font-size:18px;"></i></div>
                         <div style="text-align:right;"><p class="airport-code">${f.to}</p><span style="font-size:12px;font-weight:bold;">${f.toT}</span></div>
                     </div>
                 </div>`;
             });
             document.getElementById('flight-display-area').innerHTML = html;
-        });
-
-        window.saveLink = async () => {
-            await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
-            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
-        };
-        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
-            let html = '';
-            snap.forEach(d => {
-                const data = d.data();
-                let fId = data.url.includes('/d/') ? data.url.split('/d/')[1].split('/')[0] : '';
-                let pre = fId ? `<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img">` : '';
-                html += `<div class="card" style="background:var(--glass); border-radius:20px; padding:15px; margin:10px;"><div style="display:flex;justify-content:space-between;"><b>${data.name}</b><a href="${data.url}" target="_blank" style="color:var(--accent);"><i class="fas fa-external-link-alt"></i></a></div>${pre}</div>`;
-            });
-            document.getElementById('link-list').innerHTML = html;
         });
 
         window.openPayment = (id) => {
@@ -327,44 +404,6 @@
             alert("記帳成功"); closeModal(); refreshSettlement();
         };
 
-        async function refreshSettlement() {
-            const snap = await getDocs(collection(db, "expenses"));
-            let total = 0, pTotal = {};
-            currentMembers.forEach(m => pTotal[m] = 0);
-            snap.forEach(d => {
-                const data = d.data(); total += data.amount;
-                const per = data.amount / data.splitTo.length;
-                data.splitTo.forEach(m => pTotal[m] += per);
-            });
-            document.getElementById('total-val').innerText = "$" + total.toLocaleString();
-            let html = '';
-            Object.keys(pTotal).forEach(m => html += `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;"><span>${m}</span><b>$${Math.round(pTotal[m]).toLocaleString()}</b></div>`);
-            document.getElementById('personal-list').innerHTML = html;
-        }
-        refreshSettlement();
-
-        window.switchTab = (id, el) => {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
-        };
-        window.openModal = (id) => document.getElementById(id).style.display = 'flex';
-        window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
-        window.selectDate = (d) => {
-            selectedDate = d;
-            document.querySelectorAll('.date-item').forEach(el => {
-                const b = el.querySelector('b').innerText;
-                const dObj = new Date(d);
-                el.classList.toggle('active', b == ((dObj.getMonth()+1)+'/'+dObj.getDate()));
-            });
-            refreshItinerary();
-        };
-        window.saveFlight = async () => {
-            const type = document.getElementById('f-type').value;
-            await setDoc(doc(db, "flights", type), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type });
-            closeModal();
-        };
         window.editPlan = async (id) => {
             const ds = await getDoc(doc(db, "itinerary", id));
             const d = ds.data();
@@ -375,6 +414,23 @@
             document.getElementById('plan-end').value = d.end;
             openModal('modal-itinerary');
         };
+
+        window.saveFlight = async (type) => {
+            const t = document.getElementById('f-type').value;
+            await setDoc(doc(db, "flights", t), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type: t });
+            closeModal();
+        };
+
+        window.switchTab = (id, el) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        };
+        window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+        window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        
+        refreshSettlement();
     </script>
 </body>
 </html>
