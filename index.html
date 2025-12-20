@@ -7,102 +7,34 @@
     <style>
         :root {
             --bg-color: #f6f8fa;
-            --accent-color: #007AFF; /* 經典 iOS 藍 */
+            --accent-color: #007AFF;
             --text-main: #1c1c1e;
             --text-sub: #8e8e93;
             --card-bg: #ffffff;
         }
-
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background-color: var(--bg-color); 
             color: var(--text-main);
             margin: 0; 
-            padding: env(safe-area-inset-top) 20px 100px 20px; 
+            padding: 20px 20px 100px 20px; 
         }
-
-        /* 頂部標題 */
-        .app-header {
-            margin: 20px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
+        .app-header { margin: 20px 0; display: flex; justify-content: space-between; align-items: flex-end; }
         .app-header h1 { margin: 0; font-size: 28px; font-weight: 800; }
-        .total-badge { 
-            background: var(--accent-color); 
-            color: white; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 14px; 
-            font-weight: 600;
-        }
-
-        /* 輸入區域卡片化 */
-        .input-section {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .input-section input {
-            width: 100%;
-            border: none;
-            padding: 10px 0;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #eee;
-            font-size: 15px;
-            outline: none;
-        }
-        .add-btn {
-            background: var(--accent-color);
-            color: white;
-            width: 100%;
-            border: none;
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        /* 行程卡片設計 */
-        .date-group {
-            margin-bottom: 25px;
-        }
-        .date-title {
-            font-size: 14px;
-            color: var(--text-sub);
-            font-weight: 600;
-            margin-bottom: 10px;
-            padding-left: 5px;
-        }
-        .trip-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .total-badge { background: var(--accent-color); color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+        .input-section { background: var(--card-bg); padding: 15px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .input-section input { width: 100%; border: none; padding: 10px 0; margin-bottom: 8px; border-bottom: 1px solid #eee; font-size: 15px; outline: none; box-sizing: border-box; }
+        .add-btn { background: var(--accent-color); color: white; width: 100%; border: none; padding: 12px; border-radius: 12px; font-weight: 600; margin-top: 10px; cursor: pointer; }
+        .date-title { font-size: 14px; color: var(--text-sub); font-weight: 600; margin: 20px 0 10px 5px; }
+        .trip-card { background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; }
         .card-left { flex: 1; }
         .card-time { color: var(--accent-color); font-size: 13px; font-weight: 700; margin-bottom: 4px; }
         .card-activity { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
-        .card-note { color: var(--text-sub); font-size: 13px; }
-        
+        .card-note { color: var(--text-sub); font-size: 13px; margin-bottom: 5px; }
         .card-right { text-align: right; margin-left: 10px; }
         .card-cost { font-weight: 700; color: #ff3b30; margin-bottom: 8px; }
-        .file-link { 
-            color: var(--accent-color); 
-            text-decoration: none; 
-            font-size: 12px; 
-            background: #eef6ff;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-        .btn-del { color: #ccc; border: none; background: none; font-size: 18px; margin-left: 10px; cursor: pointer; }
+        .file-link { color: var(--accent-color); text-decoration: none; font-size: 12px; background: #eef6ff; padding: 4px 8px; border-radius: 6px; display: inline-block; }
+        .btn-del { color: #ccc; border: none; background: none; font-size: 18px; cursor: pointer; padding: 5px; }
     </style>
 </head>
 <body>
@@ -125,13 +57,14 @@
     <button class="add-btn" onclick="saveData()">確認新增</button>
 </div>
 
-<div id="trip-list">
-    </div>
+<div id="trip-list">讀取中...</div>
 
 <script type="module">
+    // 引入 Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // 你的 Firebase 設定
     const firebaseConfig = {
         apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
         authDomain: "my-travel-app-b029c.firebaseapp.com",
@@ -141,9 +74,11 @@
         appId: "1:898590101576:web:7c1916bb7ebbada144487d"
     };
 
+    // 初始化 Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // 儲存資料到 Firebase
     window.saveData = async () => {
         const date = document.getElementById('date').value;
         const time = document.getElementById('time').value;
@@ -153,31 +88,53 @@
         const fileUrl = document.getElementById('fileUrl').value;
 
         if(date && activity) {
-            await addDoc(collection(db, "trips"), {
-                date, time, activity, note, cost: parseFloat(cost), fileUrl, createdAt: new Date()
-            });
-            ['time', 'activity', 'note', 'cost', 'fileUrl'].forEach(id => document.getElementById(id).value = '');
+            try {
+                await addDoc(collection(db, "trips"), {
+                    date, time, activity, note, 
+                    cost: parseFloat(cost), 
+                    fileUrl, 
+                    createdAt: new Date()
+                });
+                // 清空輸入框
+                document.getElementById('time').value = '';
+                document.getElementById('activity').value = '';
+                document.getElementById('note').value = '';
+                document.getElementById('cost').value = '';
+                document.getElementById('fileUrl').value = '';
+                alert("儲存成功！");
+            } catch (e) {
+                console.error("錯誤: ", e);
+                alert("儲存失敗，請檢查 Firebase Rules 設定。");
+            }
         } else {
-            alert("請填寫日期與地點");
+            alert("請務必填寫日期與地點！");
         }
     };
 
+    // 刪除行程
     window.deleteItem = async (id) => {
-        if(confirm("確定刪除？")) await deleteDoc(doc(db, "trips", id));
+        if(confirm("確定要刪除這筆行程嗎？")) {
+            await deleteDoc(doc(db, "trips", id));
+        }
     };
 
+    // 即時監聽資料庫
     const q = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc"));
     onSnapshot(q, (snapshot) => {
         let html = '';
         let total = 0;
         let lastDate = "";
 
+        if (snapshot.empty) {
+            document.getElementById('trip-list').innerHTML = '<p style="text-align:center; color:#8e8e93;">目前尚無行程，請從上方新增。</p>';
+            document.getElementById('total-sum').innerText = '$0';
+            return;
+        }
+
         snapshot.forEach(doc => {
             const data = doc.data();
-            
-            // 日期分組顯示
             if (data.date !== lastDate) {
-                html += `<div class="date-title">${data.date}</div>`;
+                html += `<div class="date-title">🗓️ ${data.date}</div>`;
                 lastDate = data.date;
             }
 
@@ -186,23 +143,3 @@
 
             html += `
                 <div class="trip-card">
-                    <div class="card-left">
-                        <div class="card-time">${data.time}</div>
-                        <div class="card-activity">${data.activity}</div>
-                        <div class="card-note">${data.note}</div>
-                        ${fileBtn}
-                    </div>
-                    <div class="card-right">
-                        ${costText}
-                        <button class="btn-del" onclick="deleteItem('${doc.id}')">×</button>
-                    </div>
-                </div>`;
-            total += data.cost;
-        });
-        document.getElementById('trip-list').innerHTML = html;
-        document.getElementById('total-sum').innerText = '$' + total.toLocaleString();
-    });
-</script>
-
-</body>
-</html>
