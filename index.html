@@ -1,69 +1,230 @@
-<div id="tab-plan" class="tab-content">
-    <div class="card">
-        <strong>➕ 新增/編輯行程花費</strong>
-        <input type="date" id="date">
-        <input type="text" id="time" placeholder="時間">
-        <input type="text" id="activity" placeholder="活動地點 (例如：東京鐵塔)">
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>旅遊管家 App</title>
+    <style>
+        :root { --primary: #007bff; --bg: #f4f7f6; --success: #28a745; --warning: #ffc107; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 80px; background: var(--bg); }
         
-        <div style="background: #fdf2f2; padding: 10px; border-radius: 8px; margin-top: 10px;">
-            <input type="number" id="cost" placeholder="實支金額 (未發生請留白)">
-            <div style="font-size:12px; margin: 5px 0;">參與成員：</div>
-            <div id="dynamic-member-selection" class="member-grid"></div>
+        /* 分頁切換 */
+        .tab-content { display: none; padding: 15px; }
+        .tab-content.active { display: block; }
+        
+        /* 底部導覽列 */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { flex: 1; text-align: center; padding: 15px 0; cursor: pointer; color: #666; font-size: 12px; }
+        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); font-weight: bold; }
+        
+        /* 卡片與輸入框 */
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; }
+        input, button { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        
+        /* 成員勾選網格 */
+        .member-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .member-item { background: #f8f9fa; padding: 10px; border-radius: 8px; display: flex; align-items: center; border: 1px solid #eee; }
+        .member-item input { width: auto; margin-right: 10px; }
+
+        /* 行程列表樣式 */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        td { padding: 12px 5px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        .cost-badge { color: white; background: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .no-cost { color: #888; background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .btn-edit { background: var(--warning); color: #212529; padding: 4px 8px; border-radius: 5px; font-size: 11px; display: inline-block; margin-top: 5px; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="tab-home" class="tab-content active">
+        <div class="card" style="text-align:center; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; padding: 40px 15px;">
+            <h2 id="display-trip-name" style="margin:0;">請先設定旅行</h2>
+            <p id="display-members" style="opacity: 0.9; font-size: 14px; margin-top: 10px;">尚未設定成員</p>
         </div>
-        
-        <button onclick="saveTrip()">確認儲存</button>
-        <p style="font-size: 11px; color: gray;">* 規劃期可先填日期地點；實際消費後再回來補金額勾選成員即可。</p>
+        <div class="card">
+            <strong style="display:block; margin-bottom:10px;">⚙️ 旅行基礎設定</strong>
+            <input type="text" id="setup-trip-name" placeholder="本次旅行名稱 (例：台中放空之旅)">
+            <input type="text" id="setup-members" placeholder="成員名字 (請用逗號隔開，例：小明,美美,小華)">
+            <button onclick="saveSettings()">儲存設定並同步</button>
+        </div>
     </div>
 
-    <div class="card" style="overflow-x:auto;">
-        <table>
-            <thead><tr><th>時間/行程</th><th>花費明細</th><th>操作</th></tr></thead>
-            <tbody id="trip-list"></tbody>
-        </table>
-    </div>
-</div>
-
-<script type="module">
-    // ... 前面的 Firebase 初始化保持不變 ...
-
-    // 優化的行程列表顯示
-    onSnapshot(q, (snapshot) => {
-        let listHtml = '';
-        // ... (計算邏輯不變) ...
-
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const mems = data.members || [];
+    <div id="tab-plan" class="tab-content">
+        <div id="editor-section" class="card">
+            <strong id="editor-title">📅 新增行程規劃</strong>
+            <input type="hidden" id="edit-id"> <input type="date" id="date">
+            <input type="text" id="time" placeholder="時間 (例：12:30)">
+            <input type="text" id="activity" placeholder="地點或活動內容">
             
-            // 判斷是否已記帳
-            const costInfo = data.cost > 0 
-                ? `<span class="cost">$${data.cost}</span><br><span class="names">${mems.join(',')}</span>`
-                : `<button onclick="fillData('${docSnap.id}')" style="background:#ffc107; color:black; padding:2px 8px; font-size:11px; width:auto;">💸 補記帳</button>`;
+            <div id="cost-area" style="border-top: 1px dashed #ccc; margin-top: 10px; padding-top: 10px;">
+                <input type="number" id="cost" placeholder="實際花費金額 (規劃期可不填)">
+                <div style="font-size:12px; color: #666; margin: 5px 0;">參與成員 (勾選後自動平分)：</div>
+                <div id="dynamic-member-selection" class="member-grid"></div>
+            </div>
+            
+            <button id="main-btn" onclick="saveTrip()">儲存行程</button>
+            <button id="cancel-btn" onclick="resetEditor()" style="background:#6c757d; display:none; margin-top:5px;">取消編輯</button>
+        </div>
 
-            listHtml += `<tr>
-                <td><small>${data.date} ${data.time}</small><br><b>${data.activity}</b></td>
-                <td id="info-${docSnap.id}">${costInfo}</td>
-                <td><button onclick="deleteTrip('${docSnap.id}')" ...>✕</button></td>
-            </tr>`;
+        <div class="card" style="overflow-x:auto;">
+            <table id="trip-table">
+                <tbody id="trip-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-split" class="tab-content">
+        <div class="card" style="text-align:center; background:#212529; color:white;">
+            <p style="margin:0; opacity: 0.8;">整趟旅程總花費</p>
+            <h1 id="total-val" style="margin:5px 0; font-size: 32px;">$0</h1>
+        </div>
+        <div class="card">
+            <h3 style="margin-top:0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;">👤 個人應付結帳</h3>
+            <div id="personal-list"></div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('tab-home', this)">🏠 首頁</div>
+        <div class="nav-item" onclick="switchTab('tab-plan', this)">🗺️ 行程</div>
+        <div class="nav-item" onclick="switchTab('tab-split', this)">💰 分帳</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 已自動帶入你的 Firebase 設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
+            authDomain: "my-travel-app-b029c.firebaseapp.com",
+            projectId: "my-travel-app-b029c",
+            storageBucket: "my-travel-app-b029c.firebasestorage.app",
+            messagingSenderId: "898590101576",
+            appId: "1:898590101576:web:7c1916bb7ebbada144487d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let currentMembers = [];
+
+        window.switchTab = (id, el) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        };
+
+        window.saveSettings = async () => {
+            const name = document.getElementById('setup-trip-name').value;
+            const members = document.getElementById('setup-members').value.split(',').map(m => m.trim()).filter(m => m);
+            if(!name || members.length === 0) return alert("請填寫旅行名稱與成員名字");
+            await setDoc(doc(db, "settings", "currentTrip"), { tripName: name, members: members });
+            alert("設定成功！");
+        };
+
+        onSnapshot(doc(db, "settings", "currentTrip"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('display-trip-name').innerText = data.tripName;
+                document.getElementById('display-members').innerText = "參與成員：" + data.members.join(', ');
+                currentMembers = data.members;
+                let html = '';
+                data.members.forEach(m => {
+                    html += `<div class="member-item"><input type="checkbox" class="trip-mem-cb" value="${m}">${m}</div>`;
+                });
+                document.getElementById('dynamic-member-selection').innerHTML = html;
+            }
         });
-        document.getElementById('trip-list').innerHTML = listHtml;
-    });
 
-    // 點擊「補記帳」時，自動把行程資訊填回輸入框
-    window.fillData = async (id) => {
-        // 先從資料庫抓這筆行程
-        const docRef = doc(db, "trips", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            document.getElementById('date').value = data.date;
-            document.getElementById('time').value = data.time;
-            document.getElementById('activity').value = data.activity;
-            // 捲動到頂部讓使用者輸入金額
+        window.saveTrip = async () => {
+            const id = document.getElementById('edit-id').value;
+            const tripData = {
+                date: document.getElementById('date').value,
+                time: document.getElementById('time').value,
+                activity: document.getElementById('activity').value,
+                cost: Number(document.getElementById('cost').value || 0),
+                members: Array.from(document.querySelectorAll('.trip-mem-cb:checked')).map(cb => cb.value),
+                updatedAt: new Date()
+            };
+
+            if(!tripData.date || !tripData.activity) return alert("請至少填寫日期與地點");
+
+            if(id) {
+                await updateDoc(doc(db, "trips", id), tripData);
+            } else {
+                tripData.createdAt = new Date();
+                await addDoc(collection(db, "trips"), tripData);
+            }
+            resetEditor();
+        };
+
+        window.resetEditor = () => {
+            document.getElementById('edit-id').value = '';
+            document.getElementById('editor-title').innerText = "📅 新增行程規劃";
+            document.getElementById('main-btn').innerText = "儲存行程";
+            document.getElementById('cancel-btn').style.display = 'none';
+            ['date', 'time', 'activity', 'cost'].forEach(i => document.getElementById(i).value = '');
+            document.querySelectorAll('.trip-mem-cb').forEach(cb => cb.checked = false);
+        };
+
+        window.editTrip = (id, d, t, a, c, mStr) => {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('editor-title').innerText = "💰 補記帳 / 修改內容";
+            document.getElementById('main-btn').innerText = "更新資料";
+            document.getElementById('cancel-btn').style.display = 'block';
+            document.getElementById('date').value = d;
+            document.getElementById('time').value = t;
+            document.getElementById('activity').value = a;
+            document.getElementById('cost').value = c > 0 ? c : '';
+            const mList = mStr.split(',');
+            document.querySelectorAll('.trip-mem-cb').forEach(cb => {
+                cb.checked = mList.includes(cb.value);
+            });
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            // 並刪除舊的，等一下儲存新的 (或是你可以改成用 updateDoc)
-            // 為了新手理解簡單，我們先用「填入後手動更新」
-            alert("已帶入行程資訊，請補上金額與勾選成員後再次按下「確認儲存」，並刪除舊的紀錄。");
-        }
-    };
-</script>
+        };
+
+        const q = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc"));
+        onSnapshot(q, (snapshot) => {
+            let listHtml = '';
+            let total = 0;
+            let personalData = {};
+            currentMembers.forEach(m => personalData[m] = 0);
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const mems = data.members || [];
+                const perCost = mems.length > 0 ? data.cost / mems.length : 0;
+                total += data.cost;
+                mems.forEach(m => { if(personalData[m] !== undefined) personalData[m] += perCost; });
+
+                const costStatus = data.cost > 0 
+                    ? `<span class="cost-badge">$${data.cost}</span>` 
+                    : `<span class="no-cost">未記帳</span>`;
+
+                listHtml += `<tr>
+                    <td><small>${data.date}</small><br><b>${data.time} ${data.activity}</b></td>
+                    <td style="text-align:right;">
+                        ${costStatus}<br>
+                        <div class="btn-edit" onclick="editTrip('${docSnap.id}','${data.date}','${data.time}','${data.activity}',${data.cost},'${mems.join(',')}')">💸 記帳/編輯</div>
+                    </td>
+                    <td><button onclick="deleteTrip('${docSnap.id}')" style="background:none;color:#ccc;width:auto;padding:0">✕</button></td>
+                </tr>`;
+            });
+
+            document.getElementById('trip-list').innerHTML = listHtml;
+            document.getElementById('total-val').innerText = "$" + total.toLocaleString();
+            let personHtml = '';
+            Object.keys(personalData).forEach(m => {
+                personHtml += `<div style="display:flex; justify-content:space-between; padding:15px; border-bottom:1px solid #eee; font-size:18px;">
+                    <span>${m}</span><b style="color:var(--success)">$${Math.round(personalData[m]).toLocaleString()}</b>
+                </div>`;
+            });
+            document.getElementById('personal-list').innerHTML = personHtml;
+        });
+
+        window.deleteTrip = async (id) => { if(confirm("確定刪除此筆行程？")) await deleteDoc(doc(db, "trips", id)); };
+    </script>
+</body>
+</html>
