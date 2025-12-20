@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { 
-            --glass: rgba(255, 255, 255, 0.78); 
+            --glass: rgba(255, 255, 255, 0.82); 
             --blur: blur(15px); 
             --accent: #2c3e50; 
             --flight-bg: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -15,20 +15,15 @@
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; 
-            padding-bottom: 120px;
+            margin: 0; padding-bottom: 120px;
             background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed;
-            background-size: cover;
-            min-height: 100vh;
+            background-size: cover; min-height: 100vh;
         }
 
         .card { 
-            background: var(--glass); 
-            backdrop-filter: var(--blur); 
-            -webkit-backdrop-filter: var(--blur);
+            background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
             padding: 20px; border-radius: 24px; margin: 15px; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.4);
         }
 
         .tab-content { display: none; }
@@ -36,157 +31,106 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         .header { text-align: center; color: white; text-shadow: 0 2px 12px rgba(0,0,0,0.5); padding: 45px 20px 10px; }
-        .header h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: 2px; }
+        .header h1 { margin: 0; font-size: 32px; font-weight: 800; }
 
-        /* 航班電子機票樣式 */
-        .flight-card {
-            background: var(--flight-bg);
-            border-radius: 20px;
-            padding: 18px;
-            margin: 15px;
-            color: white;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        .flight-header { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.8; margin-bottom: 12px; font-weight: bold; letter-spacing: 1px; }
-        .flight-main { display: flex; justify-content: space-between; align-items: center; }
-        .airport-group { text-align: center; }
-        .airport-code { font-size: 26px; font-weight: 900; margin: 0; }
-        .airport-time { font-size: 14px; opacity: 0.9; margin-top: 4px; }
-        .flight-path { flex: 1; text-align: center; position: relative; padding: 0 15px; }
-        .flight-path::after { content: ""; position: absolute; top: 50%; left: 10%; right: 10%; border-top: 1px dashed rgba(255,255,255,0.4); z-index: 1; }
-        .plane-icon { background: #2a5298; padding: 0 8px; position: relative; z-index: 2; font-size: 16px; }
+        /* 航班與行程樣式 */
+        .flight-card { background: var(--flight-bg); border-radius: 20px; padding: 18px; margin: 15px; color: white; }
+        .trip-item { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 18px 0; }
 
-        /* 輸入框美化 */
-        input { 
-            width: 100%; padding: 12px; margin: 6px 0; 
-            border: none; border-radius: 12px; background: rgba(255,255,255,0.6);
-            font-size: 14px; outline: none; box-sizing: border-box;
+        /* 懸浮按鈕 (FAB) */
+        .fab {
+            position: fixed; bottom: 110px; right: 25px;
+            width: 60px; height: 60px; background: var(--accent);
+            color: white; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 999; cursor: pointer;
         }
-        .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { 
-            width: 100%; padding: 15px; background: var(--accent); color: white; 
-            border: none; border-radius: 12px; font-weight: bold; margin-top: 12px; cursor: pointer;
+
+        /* 彈窗小卡 (Modal) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; z-index: 2000;
+            align-items: center; justify-content: center; backdrop-filter: blur(5px);
         }
+        .modal-card { width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto; }
+
+        /* 成員選取與付款人樣式 */
+        .member-chip { padding: 8px 16px; border-radius: 20px; background: #eee; font-size: 13px; cursor: pointer; margin: 4px; display: inline-block; transition: 0.3s; }
+        .member-chip.selected { background: var(--accent); color: white; }
+        select { width: 100%; padding: 12px; border-radius: 12px; border: none; background: rgba(255,255,255,0.8); margin: 8px 0; }
 
         /* 導覽列 */
         .nav-bar { 
             position: fixed; bottom: 25px; left: 20px; right: 20px;
-            background: rgba(255, 255, 255, 0.9); backdrop-filter: var(--blur);
-            height: 75px; border-radius: 37px; display: flex; 
+            background: rgba(255, 255, 255, 0.9); height: 75px; border-radius: 37px; display: flex; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.2); z-index: 1000;
         }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #95a5a6; cursor: pointer; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #95a5a6; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
 
-        /* 行程與標籤 */
-        .trip-item { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 18px 0; }
-        .member-chip { padding: 8px 18px; border-radius: 20px; background: rgba(255, 255, 255, 0.5); font-size: 13px; cursor: pointer; margin: 4px; display: inline-block; }
-        .member-chip.selected { background: var(--accent); color: white; }
-        .btn-edit-action { display: inline-block; margin-top: 12px; padding: 8px 20px; background: white; color: var(--accent); border: 2px solid var(--accent); border-radius: 12px; font-size: 14px; font-weight: bold; }
+        input { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 12px; background: rgba(255,255,255,0.8); box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Qiao 旅遊誌</h1>
-    </div>
+    <div class="header"><h1>Qiao 旅遊誌</h1></div>
 
     <div id="tab-home" class="tab-content active">
-        
-        <div class="flight-card">
-            <div class="flight-header">
-                <span><i class="fas fa-plane-departure"></i> OUTBOUND</span>
-                <span id="view-go-air">AIRLINE</span>
-            </div>
-            <div class="flight-main">
-                <div class="airport-group">
-                    <p class="airport-code" id="view-go-start-code">---</p>
-                    <p class="airport-time" id="view-go-start-time">--:--</p>
-                </div>
-                <div class="flight-path">
-                    <i class="fas fa-plane plane-icon"></i>
-                </div>
-                <div class="airport-group">
-                    <p class="airport-code" id="view-go-end-code">---</p>
-                    <p class="airport-time" id="view-go-end-time">--:--</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="flight-card" style="margin-top: -5px;">
-            <div class="flight-header">
-                <span><i class="fas fa-plane-arrival"></i> INBOUND</span>
-                <span id="view-back-air">AIRLINE</span>
-            </div>
-            <div class="flight-main">
-                <div class="airport-group">
-                    <p class="airport-code" id="view-back-start-code">---</p>
-                    <p class="airport-time" id="view-back-start-time">--:--</p>
-                </div>
-                <div class="flight-path">
-                    <i class="fas fa-plane plane-icon" style="transform: rotate(180deg);"></i>
-                </div>
-                <div class="airport-group">
-                    <p class="airport-code" id="view-back-end-code">---</p>
-                    <p class="airport-time" id="view-back-end-time">--:--</p>
-                </div>
-            </div>
-        </div>
-
+        <div id="flight-display"></div>
         <div class="card">
-            <strong style="font-size: 16px; color: #2c3e50;"><i class="fas fa-cog"></i> 旅程設定</strong>
+            <strong>⚙️ 旅程設定</strong>
             <input type="text" id="setup-trip-name" placeholder="旅行名稱">
-            <input type="text" id="setup-members" placeholder="成員名單 (用逗號隔開)">
-            
-            <p style="font-size: 12px; color: #7f8c8d; margin: 15px 0 5px;"><i class="fas fa-plane-departure"></i> 去程航班設定：</p>
-            <input type="text" id="go-air" placeholder="航空公司 (例：長榮航空)">
-            <div class="input-group">
-                <input type="text" id="go-start" placeholder="起飛機場 (TPE)">
-                <input type="time" id="go-start-t">
-            </div>
-            <div class="input-group">
-                <input type="text" id="go-end" placeholder="抵達機場 (NRT)">
-                <input type="time" id="go-end-t">
-            </div>
-
-            <p style="font-size: 12px; color: #7f8c8d; margin: 15px 0 5px;"><i class="fas fa-plane-arrival"></i> 回程航班設定：</p>
-            <input type="text" id="back-air" placeholder="航空公司 (例：星宇航空)">
-            <div class="input-group">
-                <input type="text" id="back-start" placeholder="起飛機場 (NRT)">
-                <input type="time" id="back-start-t">
-            </div>
-            <div class="input-group">
-                <input type="text" id="back-end" placeholder="抵達機場 (TPE)">
-                <input type="time" id="back-end-t">
-            </div>
-            
-            <button onclick="saveSettings()">儲存旅程設定</button>
+            <input type="text" id="setup-members" placeholder="成員 (用逗號隔開)">
+            <button onclick="saveSettings()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:12px; margin-top:10px;">儲存設定</button>
         </div>
     </div>
 
     <div id="tab-plan" class="tab-content">
-        <div class="card">
-            <strong>📅 行程規劃</strong>
-            <input type="hidden" id="edit-id">
-            <input type="date" id="date">
-            <div class="input-group"><input type="time" id="start-time"><input type="time" id="end-time"></div>
-            <input type="text" id="activity" placeholder="行程名稱">
-            <input type="number" id="cost" placeholder="費用">
-            <div id="dynamic-member-selection" style="margin-top: 10px;"></div>
-            <button onclick="saveTrip()">儲存行程</button>
-        </div>
         <div class="card"><div id="trip-list"></div></div>
+        <div class="fab" onclick="openModal()"><i class="fas fa-plus"></i></div>
     </div>
 
-    <div id="tab-files" class="tab-content"><div class="card"><strong>📎 雲端附件</strong><input type="text" id="link-name" placeholder="名稱"><input type="text" id="link-url" placeholder="網址"><button onclick="saveLink()">儲存連結</button></div><div id="link-list"></div></div>
-    <div id="tab-split" class="tab-content"><div class="card" style="text-align:center;"><p>總支出</p><h1 id="total-val" style="font-size:36px;">$0</h1></div><div class="card" id="personal-list"></div></div>
+    <div class="modal-overlay" id="modal">
+        <div class="card modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <strong id="modal-title">新增行程/花費</strong>
+                <i class="fas fa-times" onclick="closeModal()" style="cursor:pointer;"></i>
+            </div>
+            <input type="hidden" id="edit-id">
+            <input type="date" id="date">
+            <div style="display:flex; gap:10px;"><input type="time" id="start-time"><input type="time" id="end-time"></div>
+            <input type="text" id="activity" placeholder="地點/活動名稱">
+            <hr style="opacity:0.2; margin:15px 0;">
+            <input type="number" id="cost" placeholder="花費金額 (選填)">
+            
+            <label style="font-size:12px; color:#666;">誰付的錢？</label>
+            <select id="payer-select"></select>
+
+            <label style="font-size:12px; color:#666;">誰要分攤？ (點選成員)</label>
+            <div id="member-selection-area"></div>
+            
+            <button onclick="saveTrip()" style="width:100%; padding:15px; background:var(--accent); color:white; border:none; border-radius:12px; margin-top:15px; font-weight:bold;">儲存紀錄</button>
+        </div>
+    </div>
+
+    <div id="tab-split" class="tab-content">
+        <div class="card" style="text-align:center;">
+            <p>總支出</p>
+            <h1 id="total-val" style="font-size:36px; color:var(--accent);">$0</h1>
+        </div>
+        <div class="card">
+            <strong style="color:var(--accent);"><i class="fas fa-exchange-alt"></i> 清算建議</strong>
+            <div id="settlement-list" style="margin-top:15px;"></div>
+        </div>
+        <div class="card">
+            <strong>👤 個人消費總計</strong>
+            <div id="personal-list"></div>
+        </div>
+    </div>
 
     <div class="nav-bar">
         <div class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></div>
         <div class="nav-item" onclick="switchTab('tab-plan', this)"><i class="fas fa-calendar-alt"></i><span>行程</span></div>
-        <div class="nav-item" onclick="switchTab('tab-files', this)"><i class="fas fa-paperclip"></i><span>附件</span></div>
         <div class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-coins"></i><span>分帳</span></div>
     </div>
 
@@ -214,144 +158,116 @@
             el.classList.add('active');
         };
 
-        // 儲存設定
+        window.openModal = () => { document.getElementById('modal').style.display = 'flex'; };
+        window.closeModal = () => { document.getElementById('modal').style.display = 'none'; resetEditor(); };
+
         window.saveSettings = async () => {
-            const data = {
-                tripName: document.getElementById('setup-trip-name').value,
-                members: document.getElementById('setup-members').value.split(',').map(m => m.trim()).filter(m => m),
-                goAir: document.getElementById('go-air').value,
-                goStart: document.getElementById('go-start').value.toUpperCase(),
-                goStartT: document.getElementById('go-start-t').value,
-                goEnd: document.getElementById('go-end').value.toUpperCase(),
-                goEndT: document.getElementById('go-end-t').value,
-                backAir: document.getElementById('back-air').value,
-                backStart: document.getElementById('back-start').value.toUpperCase(),
-                backStartT: document.getElementById('back-start-t').value,
-                backEnd: document.getElementById('back-end').value.toUpperCase(),
-                backEndT: document.getElementById('back-end-t').value
-            };
-            await setDoc(doc(db, "settings", "currentTrip"), data);
-            alert("旅程與航班設定已儲存！");
+            const members = document.getElementById('setup-members').value.split(',').map(m => m.trim()).filter(m => m);
+            await setDoc(doc(db, "settings", "currentTrip"), { 
+                tripName: document.getElementById('setup-trip-name').value, 
+                members: members 
+            });
+            alert("設定儲存成功");
         };
 
-        // 監聽並顯示航班
         onSnapshot(doc(db, "settings", "currentTrip"), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                // 填回輸入框
-                document.getElementById('setup-trip-name').value = data.tripName || '';
-                document.getElementById('setup-members').value = (data.members || []).join(', ');
-                document.getElementById('go-air').value = data.goAir || '';
-                document.getElementById('go-start').value = data.goStart || '';
-                document.getElementById('go-start-t').value = data.goStartT || '';
-                document.getElementById('go-end').value = data.goEnd || '';
-                document.getElementById('go-end-t').value = data.goEndT || '';
-                document.getElementById('back-air').value = data.backAir || '';
-                document.getElementById('back-start').value = data.backStart || '';
-                document.getElementById('back-start-t').value = data.backStartT || '';
-                document.getElementById('back-end').value = data.backEnd || '';
-                document.getElementById('back-end-t').value = data.backEndT || '';
-
-                // 更新卡片
-                document.getElementById('view-go-air').innerText = data.goAir || 'AIRLINE';
-                document.getElementById('view-go-start-code').innerText = data.goStart || '---';
-                document.getElementById('view-go-start-time').innerText = data.goStartT || '--:--';
-                document.getElementById('view-go-end-code').innerText = data.goEnd || '---';
-                document.getElementById('view-go-end-time').innerText = data.goEndT || '--:--';
-
-                document.getElementById('view-back-air').innerText = data.backAir || 'AIRLINE';
-                document.getElementById('view-back-start-code').innerText = data.backStart || '---';
-                document.getElementById('view-back-start-time').innerText = data.backStartT || '--:--';
-                document.getElementById('view-back-end-code').innerText = data.backEnd || '---';
-                document.getElementById('view-back-end-time').innerText = data.backEndT || '--:--';
-                
                 currentMembers = data.members || [];
-                let html = '';
+                // 更新 UI 成員選取與付款人
+                let mHtml = ''; let sHtml = '<option value="">-- 選擇付款人 --</option>';
                 currentMembers.forEach(m => {
-                    html += `<label class="member-chip" onclick="this.classList.toggle('selected')"><input type="checkbox" class="trip-mem-cb" value="${m}" style="display:none;">${m}</label>`;
+                    mHtml += `<div class="member-chip" onclick="this.classList.toggle('selected')">${m}</div>`;
+                    sHtml += `<option value="${m}">${m}</option>`;
                 });
-                document.getElementById('dynamic-member-selection').innerHTML = html;
+                document.getElementById('member-selection-area').innerHTML = mHtml;
+                document.getElementById('payer-select').innerHTML = sHtml;
             }
         });
 
-        // 剩餘行程與分帳邏輯維持...
         window.saveTrip = async () => {
             const id = document.getElementById('edit-id').value;
+            const selectedMembers = Array.from(document.querySelectorAll('#member-selection-area .member-chip.selected')).map(el => el.innerText);
             const tripData = {
                 date: document.getElementById('date').value,
                 startTime: document.getElementById('start-time').value,
                 endTime: document.getElementById('end-time').value,
                 activity: document.getElementById('activity').value,
                 cost: Number(document.getElementById('cost').value || 0),
-                members: Array.from(document.querySelectorAll('.trip-mem-cb:checked')).map(cb => cb.value),
+                payer: document.getElementById('payer-select').value,
+                members: selectedMembers,
                 updatedAt: new Date()
             };
-            if(!tripData.date || !tripData.startTime || !tripData.activity) return alert("請填寫必填欄位");
+            if(!tripData.date || !tripData.activity) return alert("請填寫日期與地點");
             if(id) await updateDoc(doc(db, "trips", id), tripData);
             else { tripData.createdAt = new Date(); await addDoc(collection(db, "trips"), tripData); }
-            resetEditor();
+            closeModal();
         };
 
         window.resetEditor = () => {
             document.getElementById('edit-id').value = '';
-            ['date', 'start-time', 'end-time', 'activity', 'cost'].forEach(i => document.getElementById(i).value = '');
-            document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('selected'));
+            ['date','start-time','end-time','activity','cost','payer-select'].forEach(i => document.getElementById(i).value = '');
+            document.querySelectorAll('#member-selection-area .member-chip').forEach(c => c.classList.remove('selected'));
         };
 
-        window.editTrip = (id, d, st, et, a, c, mStr) => {
+        window.editTrip = (id, d, st, et, a, c, p, ms) => {
             document.getElementById('edit-id').value = id;
             document.getElementById('date').value = d; document.getElementById('start-time').value = st;
             document.getElementById('end-time').value = et; document.getElementById('activity').value = a;
-            document.getElementById('cost').value = c;
-            const mList = mStr ? mStr.split(',') : [];
-            document.querySelectorAll('.member-chip').forEach(chip => {
-                const cb = chip.querySelector('input');
-                if(mList.includes(cb.value)) { chip.classList.add('selected'); cb.checked = true; }
+            document.getElementById('cost').value = c; document.getElementById('payer-select').value = p;
+            const mList = ms ? ms.split(',') : [];
+            document.querySelectorAll('#member-selection-area .member-chip').forEach(chip => {
+                if(mList.includes(chip.innerText)) chip.classList.add('selected');
+                else chip.classList.remove('selected');
             });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            openModal();
         };
 
         onSnapshot(query(collection(db, "trips"), orderBy("date", "asc"), orderBy("startTime", "asc")), (snapshot) => {
-            let listHtml = '', total = 0, pTotal = {};
-            currentMembers.forEach(m => pTotal[m] = 0);
+            let listHtml = '', total = 0, balances = {};
+            currentMembers.forEach(m => balances[m] = 0);
+
             snapshot.forEach(docSnap => {
                 const d = docSnap.data(); const ms = d.members || [];
-                total += d.cost; 
-                ms.forEach(m => { if(pTotal[m]!==undefined) pTotal[m] += (d.cost / ms.length); });
+                total += d.cost;
+                if(d.cost > 0 && d.payer && ms.length > 0) {
+                    const share = d.cost / ms.length;
+                    balances[d.payer] += d.cost; // 付款人先加回總額
+                    ms.forEach(m => balances[m] -= share); // 每個參與者扣除分攤
+                }
 
                 listHtml += `
                     <div class="trip-item">
-                        <div class="trip-info">
-                            <span class="time-tag" style="font-size:12px; color:#7f8c8d;">${d.date} | ${d.startTime}${d.endTime ? ' ~ ' + d.endTime : ''}</span><br>
-                            <b style="font-size:18px;">${d.activity}</b>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                            <div class="btn-edit-action" onclick="editTrip('${docSnap.id}','${d.date}','${d.startTime}','${d.endTime}','${d.activity}',${d.cost},'${ms.join(',')}')">記帳 / 編輯</div>
-                            ${d.cost > 0 ? `<span style="font-weight:bold; color:var(--accent);">$${d.cost}</span>` : ''}
+                        <small>${d.date} ${d.startTime}</small><br>
+                        <b style="font-size:18px;">${d.activity}</b><br>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:8px;">
+                            <div onclick="editTrip('${docSnap.id}','${d.date}','${d.startTime}','${d.endTime}','${d.activity}',${d.cost},'${d.payer}','${ms.join(',')}')" style="color:var(--accent); font-weight:bold; cursor:pointer; background:white; padding:5px 15px; border-radius:10px; border:1px solid var(--accent);">編輯 / 記帳</div>
+                            ${d.cost > 0 ? `<span>$${d.cost} (${d.payer}付)</span>` : ''}
                         </div>
                     </div>`;
             });
+
             document.getElementById('trip-list').innerHTML = listHtml;
             document.getElementById('total-val').innerText = "$" + total.toLocaleString();
-            let pHtml = ''; Object.keys(pTotal).forEach(m => pHtml += `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;"><span>${m}</span><b>$${Math.round(pTotal[m]).toLocaleString()}</b></div>`);
-            document.getElementById('personal-list').innerHTML = pHtml;
-        });
+            
+            // 分帳核心演算法
+            let debtors = [], creditors = [];
+            for (let m in balances) {
+                if (balances[m] > 1) creditors.push({ name: m, amount: balances[m] });
+                else if (balances[m] < -1) debtors.push({ name: m, amount: Math.abs(balances[m]) });
+            }
 
-        window.saveLink = async () => {
-            const name = document.getElementById('link-name').value;
-            const url = document.getElementById('link-url').value;
-            await addDoc(collection(db, "links"), { name, url, createdAt: new Date() });
-            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
-        };
-
-        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snapshot) => {
-            let html = '';
-            snapshot.forEach(docSnap => {
-                const d = docSnap.data();
-                let fileId = d.url.includes('/d/') ? d.url.split('/d/')[1].split('/')[0] : '';
-                html += `<div class="card"><div style="display:flex; justify-content:space-between;"><b>${d.name}</b> <a href="${d.url}" target="_blank" style="color:var(--accent);"><i class="fas fa-external-link-alt"></i></a></div>${fileId ? `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w800" style="width:100%; border-radius:15px; margin-top:10px;">` : ''}</div>`;
+            let settleHtml = '';
+            debtors.forEach(d => {
+                creditors.forEach(c => {
+                    if (d.amount > 0 && c.amount > 0) {
+                        let pay = Math.min(d.amount, c.amount);
+                        settleHtml += `<div style="padding:10px 0; border-bottom:1px solid #eee;">💰 <b>${d.name}</b> 需支付 <b>$${Math.round(pay)}</b> 給 <b>${c.name}</b></div>`;
+                        d.amount -= pay; c.amount -= pay;
+                    }
+                });
             });
-            document.getElementById('link-list').innerHTML = html;
+            document.getElementById('settlement-list').innerHTML = settleHtml || '<p style="color:#999;">目前帳務平衡</p>';
         });
     </script>
 </body>
