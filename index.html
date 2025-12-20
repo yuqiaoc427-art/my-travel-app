@@ -1,135 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>旅遊行程表</title>
+    <title>我的旅遊規劃表</title>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 10px; background: #fdfdfd; }
-        .header { background: #333; color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f4f7f6; margin: 0; padding: 15px; }
+        .container { max-width: 900px; margin: auto; }
         
-        /* 輸入區域 */
-        .input-section { background: #eee; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
-        .input-group { display: flex; flex-wrap: wrap; gap: 5px; }
-        .input-group input { flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        /* 標題與總額 */
+        .header-box { background: #2c3e50; color: white; padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-box h2 { margin: 0; font-size: 20px; }
+        .total-amount { font-size: 1.2em; font-weight: bold; color: #f1c40f; }
 
-        /* 表格設計 */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 500px; font-size: 14px; }
-        th { background: #555; color: white; padding: 10px; text-align: left; }
-        td { border-bottom: 1px solid #eee; padding: 10px; vertical-align: top; }
-        tr:nth-child(even) { background: #fafafa; }
-        
-        /* 狀態標籤 */
-        .cost-text { color: #d9534f; font-weight: bold; }
-        .link-text { color: #0275d8; text-decoration: none; font-size: 12px; }
-        .btn-del { color: #ccc; border: none; background: none; cursor: pointer; float: right; }
+        /* 輸入區域 */
+        .input-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        button.add-btn { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 5px; margin-top: 15px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button.add-btn:hover { background: #219150; }
+
+        /* 表格樣式 */
+        .table-wrapper { background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background-color: #ecf0f1; color: #2c3e50; padding: 12px; text-align: left; border-bottom: 2px solid #bdc3c7; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; color: #34495e; }
+        tr:hover { background-color: #f9f9f9; }
+
+        /* 功能性樣式 */
+        .note-cell { font-size: 12px; color: #7f8c8d; max-width: 200px; word-break: break-all; }
+        .link-tag { display: inline-block; background: #3498db; color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; font-size: 11px; margin-top: 5px; }
+        .btn-del { color: #e74c3c; border: 1px solid #e74c3c; background: transparent; padding: 3px 7px; border-radius: 4px; cursor: pointer; }
+        .btn-del:hover { background: #e74c3c; color: white; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2 style="margin:0">我的旅遊行程表</h2>
-        <div style="font-size: 14px; margin-top:5px;">總支出：<span id="total-amount">$0</span></div>
+<div class="container">
+    <div class="header-box">
+        <h2>✈️ 旅遊行程清單</h2>
+        <div class="total-amount">總計支出: <span id="total-sum">$0</span></div>
     </div>
 
-    <div class="input-section">
-        <strong>➕ 新增行程</strong>
-        <div class="input-group">
+    <div class="input-card">
+        <div class="input-row">
             <input type="date" id="date">
-            <input type="text" id="time" placeholder="時間(09:00)">
+            <input type="text" id="time" placeholder="時間 (例 09:00)">
             <input type="text" id="activity" placeholder="地點/活動">
-            <input type="text" id="note" placeholder="備註(訂房號等)">
+            <input type="text" id="note" placeholder="備註 (飯店編號等)">
             <input type="number" id="cost" placeholder="費用">
-            <input type="text" id="fileUrl" placeholder="檔案連結">
+            <input type="text" id="fileUrl" placeholder="檔案連結 (URL)">
         </div>
-        <button onclick="saveData()">新增至清單</button>
+        <button class="add-btn" onclick="saveData()">＋ 儲存並加入表格</button>
     </div>
 
-    <div class="table-container">
+    <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th width="15%">日期</th>
-                    <th width="12%">時間</th>
-                    <th width="25%">地點</th>
-                    <th width="30%">備註/檔案</th>
-                    <th width="18%">費用</th>
+                    <th>日期</th>
+                    <th>時間</th>
+                    <th>地點/活動</th>
+                    <th>備註與檔案</th>
+                    <th>金額</th>
+                    <th>操作</th>
                 </tr>
             </thead>
-            <tbody id="list-body">
+            <tbody id="trip-tbody">
                 </tbody>
         </table>
     </div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
-            authDomain: "my-travel-app-b029c.firebaseapp.com",
-            projectId: "my-travel-app-b029c",
-            storageBucket: "my-travel-app-b029c.firebasestorage.app",
-            messagingSenderId: "898590101576",
-            appId: "1:898590101576:web:7c1916bb7ebbada144487d"
-        };
+    // 已經幫你填好你的 Firebase 設定
+    const firebaseConfig = {
+        apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
+        authDomain: "my-travel-app-b029c.firebaseapp.com",
+        projectId: "my-travel-app-b029c",
+        storageBucket: "my-travel-app-b029c.firebasestorage.app",
+        messagingSenderId: "898590101576",
+        appId: "1:898590101576:web:7c1916bb7ebbada144487d"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        // 存檔功能
-        window.saveData = async () => {
-            const date = document.getElementById('date').value;
-            const time = document.getElementById('time').value;
-            const activity = document.getElementById('activity').value;
-            const note = document.getElementById('note').value;
-            const cost = document.getElementById('cost').value || 0;
-            const fileUrl = document.getElementById('fileUrl').value;
+    // 儲存資料
+    window.saveData = async () => {
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const activity = document.getElementById('activity').value;
+        const note = document.getElementById('note').value;
+        const cost = document.getElementById('cost').value || 0;
+        const fileUrl = document.getElementById('fileUrl').value;
 
-            if(date && activity) {
-                await addDoc(collection(db, "trips"), { 
-                    date, time, activity, note, cost: parseFloat(cost), fileUrl, createdAt: new Date() 
-                });
-                ['time', 'activity', 'note', 'cost', 'fileUrl'].forEach(id => document.getElementById(id).value = '');
-            } else {
-                alert("請至少輸入日期與地點！");
-            }
-        };
-
-        // 刪除功能
-        window.deleteItem = async (id) => {
-            if(confirm("確定要刪除這筆行程嗎？")) {
-                await deleteDoc(doc(db, "trips", id));
-            }
-        };
-
-        // 即時讀取
-        const q = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc"));
-        onSnapshot(q, (snapshot) => {
-            let html = '';
-            let total = 0;
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const fileLink = data.fileUrl ? `<br><a href="${data.fileUrl}" target="_blank" class="link-text">🔗 查看檔案</a>` : '';
-                
-                html += `
-                    <tr>
-                        <td>${data.date}</td>
-                        <td>${data.time}</td>
-                        <td><b>${data.activity}</b></td>
-                        <td>${data.note}${fileLink}</td>
-                        <td>
-                            <span class="cost-text">$${data.cost}</span>
-                            <button class="btn-del" onclick="deleteItem('${doc.id}')">✕</button>
-                        </td>
-                    </tr>`;
-                total += data.cost;
+        if(date && activity) {
+            await addDoc(collection(db, "trips"), {
+                date, time, activity, note, cost: parseFloat(cost), fileUrl, createdAt: new Date()
             });
-            document.getElementById('list-body').innerHTML = html;
-            document.getElementById('total-amount').innerText = '$' + total.toLocaleString();
+            // 清空輸入
+            ['time', 'activity', 'note', 'cost', 'fileUrl'].forEach(id => document.getElementById(id).value = '');
+        } else {
+            alert("請填寫日期與地點！");
+        }
+    };
+
+    // 刪除資料
+    window.deleteItem = async (id) => {
+        if(confirm("確定刪除此筆記錄嗎？")) {
+            await deleteDoc(doc(db, "trips", id));
+        }
+    };
+
+    // 即時監聽資料庫，並依日期與時間排序
+    const q = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc"));
+    onSnapshot(q, (snapshot) => {
+        let html = '';
+        let total = 0;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const linkHtml = data.fileUrl ? `<br><a href="${data.fileUrl}" target="_blank" class="link-tag">🔗 查看附件</a>` : '';
+            
+            html += `
+                <tr>
+                    <td>${data.date}</td>
+                    <td>${data.time}</td>
+                    <td><strong>${data.activity}</strong></td>
+                    <td class="note-cell">${data.note} ${linkHtml}</td>
+                    <td style="color: #e67e22; font-weight: bold;">$${data.cost}</td>
+                    <td><button class="btn-del" onclick="deleteItem('${doc.id}')">刪除</button></td>
+                </tr>`;
+            total += data.cost;
         });
-    </script>
+        document.getElementById('trip-tbody').innerHTML = html;
+        document.getElementById('total-sum').innerText = '$' + total.toLocaleString();
+    });
+</script>
+
 </body>
 </html>
