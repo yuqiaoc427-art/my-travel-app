@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Qiao 旅遊誌 - 進階智慧版</title>
+    <title>Qiao 旅遊誌 - 智慧優化版</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     
@@ -18,41 +18,42 @@
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
         #weather-box { background: rgba(0,0,0,0.35); color: white; border-radius: 15px; padding: 10px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 8px; font-size: 14px; backdrop-filter: blur(5px); min-height: 40px; }
 
-        /* Boarding Pass */
-        .boarding-pass { background: #fff; border-radius: 20px; margin: 15px 5px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-left: 8px solid var(--accent); }
-        .ticket-top { background: var(--accent); color: white; padding: 10px 15px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
-        .ticket-mid { padding: 25px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .airport-code { font-size: 32px; font-weight: 900; color: var(--accent); margin: 0; }
-        .ticket-btm { padding: 15px 20px; background: #fafafa; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 1px dashed #eee; }
+        /* Boarding Pass - 縮小且精緻化 */
+        .boarding-pass { background: #fff; border-radius: 15px; margin: 10px 5px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-left: 5px solid var(--accent); max-width: 95%; margin-left: auto; margin-right: auto; }
+        .ticket-top { background: var(--accent); color: white; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; }
+        .ticket-mid { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .airport-code { font-size: 24px; font-weight: 900; color: var(--accent); margin: 0; }
+        .ticket-btm { padding: 10px 15px; background: #fafafa; display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 5px; border-top: 1px dashed #ddd; font-size: 10px; }
+        .ticket-val { font-weight: bold; color: #222; font-size: 12px; display: block; }
 
-        /* 日期捲軸 - 修改為上下排列 */
+        /* 日期捲軸 */
         .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 12px; scrollbar-width: none; }
         .date-item { min-width: 65px; height: 90px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
         .date-item.active { background: var(--accent); color: white; border: none; box-shadow: 0 5px 15px rgba(30,60,114,0.3); }
         .date-item b { font-size: 16px; margin-bottom: 4px; }
         .date-item span { font-size: 12px; opacity: 0.8; }
 
-        /* 行程卡片 - 字體大小同步優化 */
-        .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: grab; }
-        .itinerary-card:active { cursor: grabbing; }
+        /* 行程卡片 */
+        .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .time-text { font-weight: 800; font-size: 18px; color: var(--accent); display: block; margin-bottom: 2px; }
+        .stay-tag { font-size: 11px; background: rgba(30,60,114,0.1); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-left: 5px; vertical-align: middle; }
         .location-text { font-size: 18px; font-weight: bold; color: #333; }
         .desc-text { font-size: 14px; color: #666; margin-top: 4px; display: block; }
         
         .btn-action { padding: 8px 15px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; width: 80px; margin-bottom: 5px; }
         .commute-info { text-align: center; color: white; font-size: 12px; margin: 5px 0; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
 
-        .fab { position: fixed; bottom: 110px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 900; border: none; }
-        .nav-bar { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(255,255,255,0.95); height: 75px; border-radius: 38px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbb; text-decoration: none; font-size: 11px; }
-        .nav-item.active { color: var(--accent); font-weight: bold; }
+        /* 底部導覽列 - 加大選項 */
+        .nav-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: rgba(255,255,255,0.98); height: 85px; border-radius: 42px; display: flex; box-shadow: 0 12px 35px rgba(0,0,0,0.25); z-index: 1000; border: 1px solid rgba(0,0,0,0.05); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; text-decoration: none; font-size: 13px; transition: 0.2s; }
+        .nav-item i { font-size: 28px; margin-bottom: 5px; }
+        .nav-item.active { color: var(--accent); font-weight: 900; transform: translateY(-3px); }
 
+        .fab { position: fixed; bottom: 120px; right: 25px; width: 65px; height: 65px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 26px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 900; border: none; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; font-family: inherit; }
-        
-        .pac-container { z-index: 3000 !important; border-radius: 12px; }
-        .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: block; }
     </style>
 </head>
 <body>
@@ -100,7 +101,7 @@
         <h3>📝 編輯行程計畫</h3>
         <input type="hidden" id="edit-id">
         <input type="text" id="plan-location" placeholder="輸入地點名稱 (Google 建議)">
-        <textarea id="plan-desc" rows="3" placeholder="活動說明 (例如：需提前預約、參考店家等)"></textarea>
+        <textarea id="plan-desc" rows="3" placeholder="活動說明"></textarea>
         <div style="display:flex; gap:10px;"><input type="time" id="plan-start"><input type="time" id="plan-end"></div>
         <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
@@ -110,8 +111,8 @@
         <h3>✈️ 登機證設定</h3>
         <select id="f-type"><option value="go">去程航班</option><option value="back">回程航班</option></select>
         <input type="text" id="f-air" placeholder="航空公司"><input type="text" id="f-no" placeholder="航班號碼">
-        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛地"><input type="time" id="f-from-t"></div>
-        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="目的地"><input type="time" id="f-to-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛 (TPE)"><input type="time" id="f-from-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="抵達 (NRT)"><input type="time" id="f-to-t"></div>
         <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
@@ -157,7 +158,18 @@
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
         let currentMembers = [], selectedDate = "";
 
-        // --- GPS 定位天氣 ---
+        // 工具：計算時差
+        function getTimeDiff(s, e) {
+            if(!s || !e) return "";
+            const [sh, sm] = s.split(':').map(Number);
+            const [eh, em] = e.split(':').map(Number);
+            let diff = (eh * 60 + em) - (sh * 60 + sm);
+            if(diff < 0) diff += 1440;
+            const h = Math.floor(diff/60), m = diff%60;
+            return `停留 ${h}時${m}分`;
+        }
+
+        // 天氣 GPS
         async function updateWeather(fallbackLoc) {
             const weatherBox = document.getElementById('weather-box');
             const getW = async (p) => {
@@ -174,17 +186,10 @@
             } else if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`);
         }
 
-        // --- 行程功能：增加拖曳與時間排序 ---
+        // 行程功能
         window.saveItinerary = async () => {
             if(!selectedDate) return alert("請選日期");
-            const data = { 
-                date: selectedDate, 
-                location: document.getElementById('plan-location').value, 
-                desc: document.getElementById('plan-desc').value, // 新增說明欄位
-                start: document.getElementById('plan-start').value, 
-                end: document.getElementById('plan-end').value, 
-                updatedAt: new Date() 
-            };
+            const data = { date: selectedDate, location: document.getElementById('plan-location').value, desc: document.getElementById('plan-desc').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, updatedAt: new Date() };
             const id = document.getElementById('edit-id').value;
             if(id) await updateDoc(doc(db, "itinerary", id), data);
             else await addDoc(collection(db, "itinerary"), data);
@@ -197,7 +202,6 @@
             const snap = await getDocs(q);
             const listEl = document.getElementById('itinerary-list');
             let html = '', docs = snap.docs;
-            
             if(docs.length > 0) updateWeather(docs[0].data().location);
 
             for(let i=0; i<docs.length; i++) {
@@ -205,7 +209,7 @@
                 html += `
                     <div class="itinerary-card" data-id="${id}">
                         <div style="flex:1;">
-                            <span class="time-text">${d.start} - ${d.end}</span>
+                            <span class="time-text">${d.start} - ${d.end}<span class="stay-tag">${getTimeDiff(d.start, d.end)}</span></span>
                             <span class="location-text">${d.location}</span>
                             ${d.desc ? `<span class="desc-text">${d.desc}</span>` : ''}
                         </div>
@@ -220,9 +224,7 @@
                 }
             }
             listEl.innerHTML = html || '<p style="text-align:center; color:white;">無行程</p>';
-            
-            // 初始化拖曳功能
-            new Sortable(listEl, { animation: 150, ghostClass: 'blue-background-class' });
+            new Sortable(listEl, { animation: 150, delay: 200, delayOnTouchOnly: true }); // 長按 200ms 拖曳
         }
 
         async function getCommute(o, d) {
@@ -235,18 +237,7 @@
             });
         }
 
-        window.editPlan = async (id) => {
-            const ds = await getDoc(doc(db, "itinerary", id));
-            const d = ds.data();
-            document.getElementById('edit-id').value = id;
-            document.getElementById('plan-location').value = d.location;
-            document.getElementById('plan-desc').value = d.desc || "";
-            document.getElementById('plan-start').value = d.start;
-            document.getElementById('plan-end').value = d.end;
-            openModal('modal-itinerary');
-        };
-
-        // --- 首頁、日期與基礎邏輯 ---
+        // 首頁資料
         window.saveBaseSettings = async () => {
             const data = { tripName: document.getElementById('input-trip-name').value, members: document.getElementById('input-members').value.split(','), start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value };
             await setDoc(doc(db, "settings", "currentTrip"), data);
@@ -269,50 +260,45 @@
                 const dStr = curr.toISOString().split('T')[0];
                 const mmdd = (curr.getMonth()+1) + '/' + curr.getDate();
                 const day = curr.toLocaleDateString('zh-TW', { weekday: 'short' });
-                html += `
-                    <div class="date-item ${selectedDate==dStr?'active':''}" onclick="window.selectDate('${dStr}')">
-                        <b>${mmdd}</b>
-                        <span>${day}</span>
-                    </div>`;
+                html += `<div class="date-item ${selectedDate==dStr?'active':''}" onclick="window.selectDate('${dStr}')"><b>${mmdd}</b><span>${day}</span></div>`;
                 curr.setDate(curr.getDate() + 1);
             }
             document.getElementById('date-scroll').innerHTML = html;
             if(!selectedDate) window.selectDate(s);
         }
 
-        window.selectDate = (d) => {
-            selectedDate = d;
-            document.querySelectorAll('.date-item').forEach(el => {
-                const b = el.querySelector('b').innerText;
-                const dObj = new Date(d);
-                el.classList.toggle('active', b == ((dObj.getMonth()+1)+'/'+dObj.getDate()));
-            });
-            refreshItinerary();
-        };
-
-        // --- 航班、附件與分帳 (保留原有穩定邏輯) ---
+        // 航班浮窗精簡化
         onSnapshot(collection(db, "flights"), (snap) => {
             let html = '';
             snap.forEach(dSnap => {
                 const f = dSnap.data();
-                html += `<div class="boarding-pass"><div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'去程':'回程'}</span></div>
-                    <div class="ticket-mid"><p class="airport-code">${f.from}</p><i class="fas fa-plane" style="color:#eee"></i><p class="airport-code">${f.to}</p></div>
-                    <div class="ticket-btm"><div>航班 <b class="ticket-val">${f.no}</b></div><div>時間 <b class="ticket-val">${f.fromT}</b></div></div></div>`;
+                // 計算飛行長度
+                const [sh, sm] = f.fromT.split(':').map(Number);
+                const [eh, em] = f.toT.split(':').map(Number);
+                let diff = (eh * 60 + em) - (sh * 60 + sm);
+                if(diff < 0) diff += 1440;
+                const duration = `${Math.floor(diff/60)}h ${diff%60}m`;
+
+                html += `<div class="boarding-pass">
+                    <div class="ticket-top"><span>${f.air} ${f.no}</span><span>${f.type=='go'?'OUTBOUND':'INBOUND'}</span></div>
+                    <div class="ticket-mid">
+                        <div style="text-align:left;"><p class="airport-code">${f.from}</p><span style="font-size:12px;font-weight:bold;">${f.fromT}</span></div>
+                        <div style="text-align:center;flex:1;position:relative;">
+                            <span style="font-size:9px;color:#999;position:absolute;top:-12px;left:50%;transform:translateX(-50%);">${duration}</span>
+                            <i class="fas fa-plane" style="color:#eee;font-size:18px;"></i>
+                        </div>
+                        <div style="text-align:right;"><p class="airport-code">${f.to}</p><span style="font-size:12px;font-weight:bold;">${f.toT}</span></div>
+                    </div>
+                </div>`;
             });
             document.getElementById('flight-display-area').innerHTML = html;
         });
 
-        window.saveFlight = async () => {
-            const type = document.getElementById('f-type').value;
-            await setDoc(doc(db, "flights", type), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type });
-            closeModal();
-        };
-
+        // 附件與分帳維持原有邏輯
         window.saveLink = async () => {
             await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
             document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
         };
-
         onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
             let html = '';
             snap.forEach(d => {
@@ -362,6 +348,30 @@
         };
         window.openModal = (id) => document.getElementById(id).style.display = 'flex';
         window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        window.selectDate = (d) => {
+            selectedDate = d;
+            document.querySelectorAll('.date-item').forEach(el => {
+                const b = el.querySelector('b').innerText;
+                const dObj = new Date(d);
+                el.classList.toggle('active', b == ((dObj.getMonth()+1)+'/'+dObj.getDate()));
+            });
+            refreshItinerary();
+        };
+        window.saveFlight = async () => {
+            const type = document.getElementById('f-type').value;
+            await setDoc(doc(db, "flights", type), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type });
+            closeModal();
+        };
+        window.editPlan = async (id) => {
+            const ds = await getDoc(doc(db, "itinerary", id));
+            const d = ds.data();
+            document.getElementById('edit-id').value = id;
+            document.getElementById('plan-location').value = d.location;
+            document.getElementById('plan-desc').value = d.desc || "";
+            document.getElementById('plan-start').value = d.start;
+            document.getElementById('plan-end').value = d.end;
+            openModal('modal-itinerary');
+        };
     </script>
 </body>
 </html>
