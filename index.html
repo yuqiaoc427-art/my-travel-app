@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅遊管家 Pro+</title>
+    <title>旅遊管家 App-雲端連結版</title>
     <style>
-        :root { --primary: #007bff; --bg: #f4f7f6; --success: #28a745; --warning: #ffc107; --info: #17a2b8; }
+        :root { --primary: #007bff; --bg: #f4f7f6; --success: #28a745; --warning: #ffc107; --drive: #1da1f2; }
         body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 85px; background: var(--bg); }
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
@@ -22,7 +22,8 @@
         td { padding: 12px 5px; border-bottom: 1px solid #eee; }
         .cost-badge { color: white; background: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
         .btn-edit { background: var(--warning); color: #212529; padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; text-decoration: none; }
-        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+        .drive-btn { background: var(--drive); color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -34,8 +35,8 @@
         </div>
         <div class="card">
             <strong>⚙️ 旅行基礎設定</strong>
-            <input type="text" id="setup-trip-name" placeholder="旅行名稱">
-            <input type="text" id="setup-members" placeholder="成員名字 (逗號隔開)">
+            <input type="text" id="setup-trip-name" placeholder="旅行名稱 (例：曼谷美食團)">
+            <input type="text" id="setup-members" placeholder="成員名字 (逗號隔開，例：阿明,小華)">
             <button onclick="saveSettings()">儲存設定</button>
         </div>
     </div>
@@ -53,20 +54,20 @@
             </div>
             <button id="main-btn" onclick="saveTrip()">儲存行程</button>
         </div>
-        <div class="card"><table style="width:100%"><tbody id="trip-list"></tbody></table></div>
+        <div class="card"><table><tbody id="trip-list"></tbody></table></div>
     </div>
 
     <div id="tab-files" class="tab-content">
         <div class="card">
-            <strong>📁 上傳附件 (訂房/機票)</strong>
-            <input type="text" id="file-desc" placeholder="檔案描述 (例：飯店確認單)">
-            <input type="file" id="file-input" style="border:none;">
-            <button id="upload-btn" onclick="uploadFile()" style="background:var(--info)">開始上傳</button>
-            <progress id="upload-progress" value="0" max="100" style="width:100%; display:none;"></progress>
+            <strong>📎 貼上雲端硬碟連結</strong>
+            <p style="font-size:11px; color:gray; margin:0;">請在 Google Drive 開啟分享權限後，將連結貼於下方</p>
+            <input type="text" id="link-name" placeholder="檔案名稱 (例：機票確認單)">
+            <input type="text" id="link-url" placeholder="連結網址 (https://...)">
+            <button onclick="saveLink()" style="background:var(--drive)">儲存連結</button>
         </div>
         <div class="card">
-            <h3>檔案列表</h3>
-            <div id="file-list"></div>
+            <h3 style="margin-top:0;">附件清單</h3>
+            <div id="link-list"></div>
         </div>
     </div>
 
@@ -87,20 +88,18 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
             authDomain: "my-travel-app-b029c.firebaseapp.com",
             projectId: "my-travel-app-b029c",
-            storageBucket: "my-travel-app-b029c.firebasestorage.app",
+            storageBucket: "my-travel-app-b029c.appspot.com",
             messagingSenderId: "898590101576",
             appId: "1:898590101576:web:7c1916bb7ebbada144487d"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app);
         let currentMembers = [];
 
         window.switchTab = (id, el) => {
@@ -168,7 +167,7 @@
             snapshot.forEach(docSnap => {
                 const d = docSnap.data(); const ms = d.members || []; const pCost = ms.length > 0 ? d.cost / ms.length : 0;
                 total += d.cost; ms.forEach(m => { if(pTotal[m]!==undefined) pTotal[m] += pCost; });
-                listHtml += `<tr><td><small>${d.date}</small><br><b>${d.time} ${d.activity}</b></td><td style="text-align:right;">${d.cost>0?`<span class="cost-badge">$${d.cost}</span>`:`<small>未記帳</small>`}<br><div class="btn-edit" onclick="editTrip('${docSnap.id}','${d.date}','${d.time}','${d.activity}',${d.cost},'${ms.join(',')}')">記帳</div></td><td><button onclick="deleteTrip('${docSnap.id}')" style="background:none;color:#ccc;width:auto;">✕</button></td></tr>`;
+                listHtml += `<tr><td><small>${d.date}</small><br><b>${d.time} ${d.activity}</b></td><td style="text-align:right;">${d.cost>0?`<span class="cost-badge">$${d.cost}</span>`:`<small>未記帳</small>`}<br><div class="btn-edit" onclick="editTrip('${docSnap.id}','${d.date}','${d.time}','${d.activity}',${d.cost},'${ms.join(',')}')">編輯</div></td><td><button onclick="deleteTrip('${docSnap.id}')" style="background:none;color:#ccc;width:auto;">✕</button></td></tr>`;
             });
             document.getElementById('trip-list').innerHTML = listHtml;
             document.getElementById('total-val').innerText = "$" + total.toLocaleString();
@@ -178,42 +177,26 @@
 
         window.deleteTrip = async (id) => { if(confirm("刪除？")) await deleteDoc(doc(db, "trips", id)); };
 
-        // 附件上傳邏輯
-        window.uploadFile = () => {
-            const file = document.getElementById('file-input').files[0];
-            const desc = document.getElementById('file-desc').value;
-            if(!file || !desc) return alert("請填寫描述並選擇檔案");
-
-            const storageRef = ref(storage, 'files/' + Date.now() + "_" + file.name);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-            const prog = document.getElementById('upload-progress');
-            prog.style.display = 'block';
-
-            uploadTask.on('state_changed', 
-                (snapshot) => prog.value = (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
-                (error) => alert("上傳失敗"), 
-                () => {
-                    getDownloadURL(uploadTask.snapshot.ref).then((url) => {
-                        addDoc(collection(db, "files"), { name: desc, url: url, createdAt: new Date() });
-                        alert("上傳成功！");
-                        prog.style.display = 'none';
-                        document.getElementById('file-desc').value = '';
-                        document.getElementById('file-input').value = '';
-                    });
-                }
-            );
+        // 附件連結邏輯
+        window.saveLink = async () => {
+            const name = document.getElementById('link-name').value;
+            const url = document.getElementById('link-url').value;
+            if(!name || !url) return alert("請輸入名稱與網址");
+            await addDoc(collection(db, "links"), { name, url, createdAt: new Date() });
+            document.getElementById('link-name').value = '';
+            document.getElementById('link-url').value = '';
         };
 
-        onSnapshot(query(collection(db, "files"), orderBy("createdAt", "desc")), (snapshot) => {
+        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snapshot) => {
             let html = '';
             snapshot.forEach(docSnap => {
                 const d = docSnap.data();
-                html += `<div class="file-item"><span>${d.name}</span><div><a href="${d.url}" target="_blank" style="color:var(--info);text-decoration:none;font-weight:bold;">查看</a> <button onclick="deleteFile('${docSnap.id}')" style="background:none;color:#ccc;width:auto;margin-left:10px;">✕</button></div></div>`;
+                html += `<div class="file-item"><span>${d.name}</span><div><a href="${d.url}" target="_blank" class="drive-btn">開啟連結</a> <button onclick="deleteLink('${docSnap.id}')" style="background:none;color:#ccc;width:auto;margin-left:10px;">✕</button></div></div>`;
             });
-            document.getElementById('file-list').innerHTML = html;
+            document.getElementById('link-list').innerHTML = html;
         });
 
-        window.deleteFile = async (id) => { if(confirm("刪除檔案？")) await deleteDoc(doc(db, "files", id)); };
+        window.deleteLink = async (id) => { if(confirm("刪除連結？")) await deleteDoc(doc(db, "links", id)); };
     </script>
 </body>
 </html>
