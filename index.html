@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Qiao 旅遊誌</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 引入 SortableJS -->
+    <!-- 引入 SortableJS 用於拖曳功能 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     
     <style>
@@ -17,7 +17,8 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
-        #weather-box { background: rgba(0,0,0,0.35); color: white; border-radius: 15px; padding: 10px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 8px; font-size: 14px; backdrop-filter: blur(5px); min-height: 40px; }
+        /* 天氣顯示區域 */
+        #weather-box { background: rgba(0,0,0,0.35); color: white; border-radius: 15px; padding: 8px 12px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 6px; font-size: 13px; backdrop-filter: blur(5px); min-height: 38px; }
 
         /* 登機證浮窗 */
         .boarding-pass { background: #fff; border-radius: 15px; margin: 10px 5px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-left: 5px solid var(--accent); max-width: 95%; margin-left: auto; margin-right: auto; }
@@ -27,24 +28,24 @@
         .ticket-btm { padding: 10px 15px; background: #fafafa; display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 5px; border-top: 1px dashed #ddd; font-size: 10px; }
         .ticket-val { font-weight: bold; color: #222; font-size: 12px; display: block; }
 
-        /* 日期選擇器 */
-        .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 12px; scrollbar-width: none; }
+        /* 日期選擇器 - 字體適中 */
+        .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 10px; scrollbar-width: none; }
         .date-item { min-width: 60px; height: 85px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
         .date-item.active { background: var(--accent); color: white; border: none; box-shadow: 0 5px 15px rgba(30,60,114,0.3); }
         .date-item b { font-size: 15px; margin-bottom: 3px; }
         .date-item span { font-size: 11px; opacity: 0.8; }
 
-        /* 行程卡片 */
+        /* 行程卡片樣式與字體適中化 */
         .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 16px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; }
         .delete-btn-tl { position: absolute; top: 8px; left: 8px; color: var(--danger); font-size: 16px; cursor: pointer; z-index: 10; opacity: 0.7; }
 
         .type-icon { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; margin-right: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); flex-shrink: 0; }
         
         .info-col { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-        /* 調整時間字體至適中 (15px) */
+        /* 時間字體適中 (15px) */
         .time-row { font-weight: 700; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 5px; }
         .stay-tag { font-size: 10px; background: rgba(30,60,114,0.1); color: var(--accent); padding: 1px 6px; border-radius: 8px; font-weight: bold; }
-        /* 調整地點字體至適中 (16px) */
+        /* 地點字體適中 (16px) */
         .location-text { font-size: 16px; font-weight: bold; color: #333; line-height: 1.3; }
         .desc-text { font-size: 13px; color: #666; line-height: 1.4; }
         
@@ -52,7 +53,7 @@
         .btn-action { padding: 7px 10px; border-radius: 9px; border: none; font-size: 11px; font-weight: bold; color: white; cursor: pointer; width: 65px; }
         .commute-info { text-align: center; color: white; font-size: 11px; margin: 4px 0; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
 
-        /* 導覽列 */
+        /* 導覽列 - 緊湊版 */
         .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(255,255,255,0.98); height: 55px; border-radius: 28px; display: flex; box-shadow: 0 8px 25px rgba(0,0,0,0.2); z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; text-decoration: none; font-size: 10px; }
         .nav-item i { font-size: 18px; margin-bottom: 2px; }
@@ -64,7 +65,6 @@
         .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #eee; border-radius: 12px; font-size: 15px; box-sizing: border-box; font-family: inherit; }
         
-        /* Google 地點建議清單 */
         .pac-container { z-index: 9999 !important; border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: inherit; margin-top: 5px; }
         
         .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: block; }
@@ -75,7 +75,7 @@
 
     <div class="header"><h1 id="dynamic-trip-name">旅遊誌</h1></div>
 
-    <!-- 首頁 -->
+    <!-- 1. 首頁 -->
     <div id="tab-home" class="tab-content active">
         <div id="flight-display-area"></div>
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
@@ -88,15 +88,15 @@
         <button class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></button>
     </div>
 
-    <!-- 行程頁 -->
+    <!-- 2. 行程頁 -->
     <div id="tab-plan" class="tab-content">
-        <div id="weather-box">正在抓取當地天氣...</div>
+        <div id="weather-box">正在請求 GPS 定位...</div>
         <div class="date-container" id="date-scroll"></div>
         <div id="itinerary-list"></div>
         <button class="fab" onclick="openModal('modal-itinerary')"><i class="fas fa-plus"></i></button>
     </div>
 
-    <!-- 附件頁 -->
+    <!-- 3. 附件頁 -->
     <div id="tab-files" class="tab-content">
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
             <strong>📎 雲端附件</strong>
@@ -107,13 +107,13 @@
         <div id="link-list"></div>
     </div>
 
-    <!-- 分帳頁 -->
+    <!-- 4. 分帳頁 -->
     <div id="tab-split" class="tab-content">
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px; text-align:center;">
             <p style="margin:0; color:#666;">旅程總支出</p>
             <h1 id="total-val">$0</h1>
             <div id="personal-list"></div>
-            <div id="settle-suggestions" class="settle-card">正在計算建議...</div>
+            <div id="settle-suggestions" class="settle-card">正在計算結算建議...</div>
         </div>
     </div>
 
@@ -157,6 +157,7 @@
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
 
+    <!-- 底部導覽列 -->
     <div class="nav-bar">
         <a href="javascript:void(0)" class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-plan', this)"><i class="fas fa-calendar-alt"></i><span>行程</span></a>
@@ -164,7 +165,7 @@
         <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-coins"></i><span>分帳</span></a>
     </div>
 
-    <!-- 腳本 -->
+    <!-- Google 地點搜尋腳本 -->
     <script>
         window.initAutocomplete = function() {
             const input = document.getElementById('plan-location');
@@ -200,31 +201,65 @@
             dinner: 'fa-moon'
         };
 
-        // --- GPS 天氣修正版 ---
+        // --- GPS 使用者定位天氣優化版 ---
         async function updateWeather(fallbackLoc) {
             const weatherBox = document.getElementById('weather-box');
-            const getW = async (p) => {
+            
+            const getW = async (params) => {
                 try {
-                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?${p}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`);
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?${params}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`);
                     const d = await res.json();
                     if(d.cod===200) { 
-                        weatherBox.innerHTML = `<img src="https://openweathermap.org/img/wn/${d.weather[0].icon}.png" width="28"><b>${d.name}: ${Math.round(d.main.temp)}°C</b>`; 
+                        // 顯示定位圖示與所在城市名稱
+                        weatherBox.innerHTML = `
+                            <i class="fas fa-location-arrow" style="font-size:12px;opacity:0.8;margin-right:2px;"></i>
+                            <img src="https://openweathermap.org/img/wn/${d.weather[0].icon}.png" width="28">
+                            <b>${d.name}: ${Math.round(d.main.temp)}°C</b>
+                        `; 
                         return true; 
                     }
                     return false;
                 } catch(e){return false;}
             };
+
+            // 1. 優先抓取使用者手機 GPS 位置
             if(navigator.geolocation) {
-                // 增加 enableHighAccuracy 以解決定位異常問題
                 navigator.geolocation.getCurrentPosition(
-                    async(pos)=> { await getW(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`); },
-                    async()=>{ if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`); }, 
-                    { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+                    async(pos)=> { 
+                        // GPS 定位成功，使用當前經緯度
+                        await getW(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`); 
+                    },
+                    async()=>{ 
+                        // GPS 失敗 (被拒絕或收訊差)，改用行程地點作為備案 (Fallback)
+                        if (fallbackLoc) {
+                            await tryFallbackWeather(fallbackLoc, getW);
+                        } else {
+                            weatherBox.innerText = "請開啟 GPS 定位";
+                        }
+                    }, 
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
-            } else if(fallbackLoc) await getW(`q=${encodeURIComponent(fallbackLoc.split(/[ ,，、]/)[0])}`);
+            } else if(fallbackLoc) {
+                // 不支援 GPS 時的備案
+                await tryFallbackWeather(fallbackLoc, getW);
+            }
         }
 
-        // --- 行程功能 ---
+        // 輔助函式：處理天氣搜尋 Fallback 邏輯
+        async function tryFallbackWeather(loc, fetchFn) {
+            if(!loc) return;
+            // 過濾地點名稱提高 OpenWeather 匹配率
+            let city = loc.split(/[ ,，、]/)[0];
+            const match = loc.match(/.*?(市|縣|區|町|村)/);
+            if (match) city = match[0].split(/市|縣|區|町|村/).pop() || match[0];
+
+            let success = await fetchFn(`q=${encodeURIComponent(city)}`);
+            if(!success) {
+                await fetchFn(`q=${encodeURIComponent(city.substring(0,2))}`);
+            }
+        }
+
+        // --- 行程與其它核心邏輯 ---
         window.saveItinerary = async () => {
             if(!selectedDate) return alert("請選日期");
             const data = { 
@@ -248,7 +283,9 @@
             const snap = await getDocs(q);
             const listEl = document.getElementById('itinerary-list');
             let html = '', docs = snap.docs;
-            if(docs.length > 0) updateWeather(docs[0].data().location);
+            
+            // 每次重新整理行程時也更新天氣（優先 GPS）
+            updateWeather(docs.length > 0 ? docs[0].data().location : null);
 
             for(let i=0; i<docs.length; i++) {
                 const d = docs[i].data(), id = docs[i].id;
@@ -292,71 +329,7 @@
             openModal('modal-itinerary');
         };
 
-        // --- 附件 ---
-        window.saveLink = async () => {
-            await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
-            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
-        };
-        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
-            let html = '';
-            snap.forEach(d => {
-                const data = d.data(), id = d.id;
-                let fId = data.url.includes('/d/') ? data.url.split('/d/')[1].split('/')[0] : '';
-                let pre = fId ? `<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img">` : '';
-                html += `
-                    <div class="itinerary-card" style="padding:15px;">
-                        <div class="delete-btn-tl" style="top:5px; left:5px;" onclick="window.deleteLink('${id}')"><i class="fas fa-times-circle"></i></div>
-                        <div style="flex:1; padding-left:15px;">
-                            <b style="font-size:15px;">${data.name}</b><br>
-                            <a href="${data.url}" target="_blank" style="color:var(--accent); font-size:11px;">開啟連結 <i class="fas fa-external-link-alt"></i></a>
-                            ${pre}
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('link-list').innerHTML = html;
-        });
-        window.deleteLink = async (id) => { if(confirm("確定刪除此附件？")) await deleteDoc(doc(db, "links", id)); };
-
-        // --- 分帳 ---
-        async function refreshSettlement() {
-            const snap = await getDocs(collection(db, "expenses"));
-            let total = 0, balances = {};
-            currentMembers.forEach(m => balances[m] = 0);
-            snap.forEach(d => {
-                const data = d.data(); total += data.amount;
-                balances[data.payer] += data.amount;
-                const per = data.amount / data.splitTo.length;
-                data.splitTo.forEach(m => balances[m] -= per);
-            });
-            document.getElementById('total-val').innerText = "$" + Math.round(total).toLocaleString();
-            let html = '';
-            Object.keys(balances).forEach(m => {
-                const b = Math.round(balances[m]);
-                const c = b >= 0 ? "#27ae60" : "#e74c3c";
-                html += `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;"><span>${m}</span><b style="color:${c}">${b>=0?'+':''}${b.toLocaleString()}</b></div>`;
-            });
-            document.getElementById('personal-list').innerHTML = html;
-            calculateSettle(balances);
-        }
-
-        function calculateSettle(balances) {
-            let debtors = [], creditors = [];
-            Object.keys(balances).forEach(m => {
-                if (balances[m] < -1) debtors.push({ name: m, amount: -balances[m] });
-                else if (balances[m] > 1) creditors.push({ name: m, amount: balances[m] });
-            });
-            let sug = "<strong>💡 結算建議：</strong><br>";
-            let i=0, j=0;
-            while(i < debtors.length && j < creditors.length) {
-                let p = Math.min(debtors[i].amount, creditors[j].amount);
-                sug += `${debtors[i].name} ➡️ 給 ${creditors[j].name} <b>$${Math.round(p).toLocaleString()}</b><br>`;
-                debtors[i].amount -= p; creditors[j].amount -= p;
-                if(debtors[i].amount < 1) i++; if(creditors[j].amount < 1) j++;
-            }
-            document.getElementById('settle-suggestions').innerHTML = debtors.length === 0 ? "帳目已結清" : sug;
-        }
-
-        // --- 基礎工具 ---
+        // --- 其他工具 ---
         function getTimeDiff(s, e) {
             if(!s || !e) return "";
             const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number);
@@ -412,6 +385,7 @@
             refreshItinerary();
         };
 
+        // --- 登機證、附件與分帳 (維持邏輯) ---
         onSnapshot(collection(db, "flights"), (snap) => {
             let html = '';
             snap.forEach(dSnap => {
@@ -419,14 +393,10 @@
                 const [sh, sm] = f.fromT.split(':').map(Number), [eh, em] = f.toT.split(':').map(Number);
                 let diff = (eh * 60 + em) - (sh * 60 + sm);
                 if(diff < 0) diff += 1440;
-                html += `<div class="boarding-pass">
-                    <div class="ticket-top"><span>${f.air} ${f.no}</span><span>${f.type=='go'?'OUTBOUND':'INBOUND'}</span></div>
-                    <div class="ticket-mid">
-                        <div style="text-align:left;"><p class="airport-code">${f.from}</p><span style="font-size:12px;font-weight:bold;">${f.fromT}</span></div>
-                        <div style="text-align:center;flex:1;position:relative;"><span style="font-size:9px;color:#999;position:absolute;top:-12px;left:50%;transform:translateX(-50%);">${Math.floor(diff/60)}h ${diff%60}m</span><i class="fas fa-plane" style="color:#eee;font-size:18px;"></i></div>
-                        <div style="text-align:right;"><p class="airport-code">${f.to}</p><span style="font-size:12px;font-weight:bold;">${f.toT}</span></div>
-                    </div>
-                </div>`;
+                html += `<div class="boarding-pass"><div class="ticket-top"><span>${f.air} ${f.no}</span><span>${f.type=='go'?'OUTBOUND':'INBOUND'}</span></div>
+                    <div class="ticket-mid"><div style="text-align:left;"><p class="airport-code">${f.from}</p><span style="font-size:12px;font-weight:bold;">${f.fromT}</span></div>
+                    <div style="text-align:center;flex:1;position:relative;"><span style="font-size:9px;color:#999;position:absolute;top:-12px;left:50%;transform:translateX(-50%);">${Math.floor(diff/60)}h ${diff%60}m</span><i class="fas fa-plane" style="color:#eee;font-size:18px;"></i></div>
+                    <div style="text-align:right;"><p class="airport-code">${f.to}</p><span style="font-size:12px;font-weight:bold;">${f.toT}</span></div></div></div>`;
             });
             document.getElementById('flight-display-area').innerHTML = html;
         });
@@ -436,6 +406,61 @@
             await setDoc(doc(db, "flights", t), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type: t });
             closeModal();
         };
+
+        window.saveLink = async () => {
+            await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
+            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
+        };
+
+        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
+            let html = '';
+            snap.forEach(d => {
+                const data = d.data(), id = d.id;
+                let fId = data.url.includes('/d/') ? data.url.split('/d/')[1].split('/')[0] : '';
+                let pre = fId ? `<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img">` : '';
+                html += `<div class="itinerary-card" style="padding:15px;"><div class="delete-btn-tl" style="top:5px; left:5px;" onclick="window.deleteLink('${id}')"><i class="fas fa-times-circle"></i></div><div style="flex:1; padding-left:15px;"><b style="font-size:15px;">${data.name}</b><br><a href="${data.url}" target="_blank" style="color:var(--accent); font-size:11px;">開啟連結 <i class="fas fa-external-link-alt"></i></a>${pre}</div></div>`;
+            });
+            document.getElementById('link-list').innerHTML = html;
+        });
+        window.deleteLink = async (id) => { if(confirm("確定刪除此附件？")) await deleteDoc(doc(db, "links", id)); };
+
+        async function refreshSettlement() {
+            const snap = await getDocs(collection(db, "expenses"));
+            let total = 0, balances = {};
+            currentMembers.forEach(m => balances[m] = 0);
+            snap.forEach(d => {
+                const data = d.data(); total += data.amount;
+                balances[data.payer] += data.amount;
+                const per = data.amount / data.splitTo.length;
+                data.splitTo.forEach(m => balances[m] -= per);
+            });
+            document.getElementById('total-val').innerText = "$" + Math.round(total).toLocaleString();
+            let html = '';
+            Object.keys(balances).forEach(m => {
+                const b = Math.round(balances[m]);
+                const c = b >= 0 ? "#27ae60" : "#e74c3c";
+                html += `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;"><span>${m}</span><b style="color:${c}">${b>=0?'+':''}${b.toLocaleString()}</b></div>`;
+            });
+            document.getElementById('personal-list').innerHTML = html;
+            calculateSettle(balances);
+        }
+
+        function calculateSettle(balances) {
+            let debtors = [], creditors = [];
+            Object.keys(balances).forEach(m => {
+                if (balances[m] < -1) debtors.push({ name: m, amount: -balances[m] });
+                else if (balances[m] > 1) creditors.push({ name: m, amount: balances[m] });
+            });
+            let sug = "<strong>💡 結算建議：</strong><br>";
+            let i=0, j=0;
+            while(i < debtors.length && j < creditors.length) {
+                let p = Math.min(debtors[i].amount, creditors[j].amount);
+                sug += `${debtors[i].name} ➡️ 給 ${creditors[j].name} <b>$${Math.round(p).toLocaleString()}</b><br>`;
+                debtors[i].amount -= p; creditors[j].amount -= p;
+                if(debtors[i].amount < 1) i++; if(creditors[j].amount < 1) j++;
+            }
+            document.getElementById('settle-suggestions').innerHTML = debtors.length === 0 ? "帳目已結清" : sug;
+        }
 
         window.openPayment = (id) => {
             document.getElementById('pay-trip-id').value = id;
