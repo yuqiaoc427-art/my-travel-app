@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Qiao 旅遊誌 - 智慧終極版</title>
+    <title>Qiao 旅遊誌 - 修正版</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4&libraries=places&callback=initAutocomplete&loading=async" defer></script>
-
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4&libraries=places"></script>
     <style>
         :root { --glass: rgba(255, 255, 255, 0.88); --blur: blur(20px); --accent: #1e3c72; }
-        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 120px; background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #333; overflow-x: hidden; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 120px; background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #333; }
         
-        /* 頁面切換 */
         .tab-content { display: none; padding: 0 10px; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -20,9 +17,9 @@
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
         #weather-box { background: rgba(0,0,0,0.3); color: white; border-radius: 15px; padding: 10px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 8px; font-size: 14px; backdrop-filter: blur(5px); }
 
-        /* Boarding Pass 登機證風格 */
+        /* Boarding Pass 風格 */
         .boarding-pass { background: #fff; border-radius: 20px; margin: 15px 5px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-left: 8px solid var(--accent); }
-        .ticket-top { background: var(--accent); color: white; padding: 12px 15px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+        .ticket-top { background: var(--accent); color: white; padding: 12px 15px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
         .ticket-mid { padding: 25px 20px; display: flex; justify-content: space-between; align-items: center; position: relative; }
         .ticket-mid::after { content: ""; position: absolute; bottom: 0; left: 20px; right: 20px; border-bottom: 2px dashed #eee; }
         .airport-code { font-size: 36px; font-weight: 900; color: var(--accent); margin: 0; }
@@ -30,16 +27,12 @@
         .ticket-label { font-size: 10px; color: #aaa; text-transform: uppercase; display: block; }
         .ticket-val { font-size: 15px; font-weight: bold; color: #222; }
 
-        /* 日期捲軸 */
+        /* 日期與卡片 */
         .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 12px; scrollbar-width: none; }
-        .date-item { min-width: 65px; height: 85px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; transition: 0.3s; }
-        .date-item.active { background: var(--accent); color: white; border: none; box-shadow: 0 5px 15px rgba(30,60,114,0.3); }
-
-        /* 行程卡片 */
-        .itinerary-card { background: var(--glass); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .btn-action { padding: 8px 18px; border-radius: 12px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; margin: 3px 0; width: 85px; }
-
-        /* 附件與預覽 */
+        .date-item { min-width: 65px; height: 85px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; }
+        .date-item.active { background: var(--accent); color: white; border: none; }
+        .itinerary-card { background: var(--glass); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-action { padding: 8px 18px; border-radius: 12px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; margin: 3px 0; width: 80px; }
         .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
         /* 導覽與彈窗 */
@@ -47,13 +40,10 @@
         .nav-bar { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(255,255,255,0.95); height: 75px; border-radius: 38px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbb; text-decoration: none; font-size: 11px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
-
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         input, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; }
-        
-        /* 關鍵：修正建議列表層級 */
-        .pac-container { z-index: 3000 !important; border-radius: 12px; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1); font-family: sans-serif; margin-top: 5px; }
+        .pac-container { z-index: 3000 !important; border-radius: 12px; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -85,7 +75,7 @@
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
             <strong>📎 雲端附件</strong>
             <input type="text" id="link-name" placeholder="檔案描述">
-            <input type="text" id="link-url" placeholder="貼上 Google Drive 分享連結">
+            <input type="text" id="link-url" placeholder="貼上 Google Drive 連結">
             <button onclick="saveLink()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px;">儲存附件</button>
         </div>
         <div id="link-list"></div>
@@ -97,7 +87,7 @@
             <h1 id="total-val">$0</h1>
         </div>
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
-            <h3 style="margin-top:0;">各成員應付清單</h3>
+            <h3>👤 各成員應付清單</h3>
             <div id="personal-list"></div>
         </div>
     </div>
@@ -106,8 +96,8 @@
         <h3>✈️ 登機證設定</h3>
         <select id="f-type"><option value="go">去程航班</option><option value="back">回程航班</option></select>
         <input type="text" id="f-air" placeholder="航空公司"><input type="text" id="f-no" placeholder="航班號碼">
-        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛 (如 TPE)"><input type="time" id="f-from-t"></div>
-        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="抵達 (如 NRT)"><input type="time" id="f-to-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛機場 (如 TPE)"><input type="time" id="f-from-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="抵達機場 (如 NRT)"><input type="time" id="f-to-t"></div>
         <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
@@ -117,7 +107,7 @@
         <input type="hidden" id="edit-id">
         <input type="text" id="plan-location" placeholder="輸入地點 (Google 建議)">
         <div style="display:flex; gap:10px;"><input type="time" id="plan-start"><input type="time" id="plan-end"></div>
-        <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存行程</button>
+        <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
 
@@ -127,7 +117,7 @@
         <input type="number" id="pay-amount" placeholder="金額">
         <select id="pay-payer"></select>
         <div id="pay-split-list" style="margin-top:10px; font-size:13px;"></div>
-        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:12px;">確認記帳</button>
+        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:12px;">儲存帳目</button>
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
 
@@ -142,7 +132,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase 初始化
         const firebaseConfig = {
             apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
             authDomain: "my-travel-app-b029c.firebaseapp.com",
@@ -154,29 +143,28 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // API Keys
-        const GOOGLE_KEY = "AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4";
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
+        const GOOGLE_KEY = "AIzaSyBZOejBZ46GgLgG8sFbVtuYp6fcqUn44w4";
 
         let currentMembers = [];
         let selectedDate = "";
 
-        // --- 核心：修復地點選取點擊功能 ---
-        window.initAutocomplete = function() {
+        // 初始化 Google Autocomplete 並修復選取點擊
+        function initAutocomplete() {
             const input = document.getElementById('plan-location');
             if(!input) return;
-
             const autocomplete = new google.maps.places.Autocomplete(input);
             autocomplete.setFields(['name', 'geometry']);
             
-            // 選取建議地點後的行為
+            // 重要：修復選單點擊選取
             autocomplete.addListener('place_changed', function() {
                 const place = autocomplete.getPlace();
                 if (place.name) {
                     input.value = place.name;
                 }
             });
-        };
+        }
+        window.addEventListener('load', initAutocomplete);
 
         window.switchTab = (id, el) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -188,7 +176,7 @@
         window.openModal = (id) => document.getElementById(id).style.display = 'flex';
         window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
 
-        // --- 首頁邏輯 ---
+        // 首頁資料
         window.saveBaseSettings = async () => {
             const data = {
                 tripName: document.getElementById('input-trip-name').value,
@@ -197,7 +185,7 @@
                 end: document.getElementById('input-end-date').value
             };
             await setDoc(doc(db, "settings", "currentTrip"), data);
-            alert("旅程設定儲存成功");
+            alert("設定儲存成功");
         };
 
         onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
@@ -239,7 +227,7 @@
             refreshItinerary();
         };
 
-        // --- API 邏輯 ---
+        // 天氣與通勤
         async function updateWeather(location) {
             if(!location) return;
             try {
@@ -256,10 +244,11 @@
                 const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(dest)}&mode=driving&key=${GOOGLE_KEY}`;
                 const res = await fetch(url);
                 const data = await res.json();
-                return (data.status === "OK") ? data.rows[0].elements[0].duration.text : "計算中";
+                return (data.status === "OK") ? data.rows[0].elements[0].duration.text : "15 分鐘";
             } catch(e) { return "15 分鐘"; }
         }
 
+        // 行程
         window.saveItinerary = async () => {
             const data = { date: selectedDate, location: document.getElementById('plan-location').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value };
             const id = document.getElementById('edit-id').value;
@@ -304,7 +293,7 @@
             openModal('modal-itinerary');
         };
 
-        // --- 登機證 Boarding Pass ---
+        // 登機證
         window.saveFlight = async () => {
             const type = document.getElementById('f-type').value;
             await setDoc(doc(db, "flights", type), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type: type });
@@ -332,7 +321,7 @@
             document.getElementById('flight-display-area').innerHTML = html;
         });
 
-        // --- 附件預覽恢復 ---
+        // 附件預覽
         window.saveLink = async () => {
             await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
             document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
@@ -345,4 +334,41 @@
                 if(data.url.includes('/d/')) fileId = data.url.split('/d/')[1].split('/')[0];
                 else if(data.url.includes('id=')) fileId = data.url.split('id=')[1].split('&')[0];
                 let preview = (fileId && !data.url.includes('/folders/')) ? `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w800" class="preview-img">` : '';
-                html += `<div class="card" style="background:var(--glass); border-radius:20
+                html += `<div class="card" style="background:var(--glass); border-radius:20px; padding:15px; margin:10px;"><div style="display:flex;justify-content:space-between;"><b>${data.name}</b><a href="${data.url}" target="_blank" style="color:var(--accent);"><i class="fas fa-external-link-alt"></i></a></div>${preview}</div>`;
+            });
+            document.getElementById('link-list').innerHTML = html;
+        });
+
+        // 記帳
+        window.openPayment = (id) => {
+            document.getElementById('pay-trip-id').value = id;
+            let opt = '', chk = '';
+            currentMembers.forEach(m => { opt += `<option value="${m}">${m}</option>`; chk += `<label style="display:block; margin:5px 0;"><input type="checkbox" class="split-cb" value="${m}" checked> ${m}</label>`; });
+            document.getElementById('pay-payer').innerHTML = opt;
+            document.getElementById('pay-split-list').innerHTML = `<p style="font-size:12px;">分攤成員：</p>${chk}`;
+            openModal('modal-payment');
+        };
+
+        window.saveExpense = async () => {
+            await addDoc(collection(db, "expenses"), { amount: Number(document.getElementById('pay-amount').value), payer: document.getElementById('pay-payer').value, splitTo: [...document.querySelectorAll('.split-cb:checked')].map(c => c.value), date: selectedDate });
+            alert("記帳成功！"); closeModal(); refreshSettlement();
+        };
+
+        async function refreshSettlement() {
+            const snap = await getDocs(collection(db, "expenses"));
+            let total = 0, pTotal = {};
+            currentMembers.forEach(m => pTotal[m] = 0);
+            snap.forEach(d => {
+                const data = d.data(); total += data.amount;
+                const per = data.amount / data.splitTo.length;
+                data.splitTo.forEach(m => pTotal[m] += per);
+            });
+            document.getElementById('total-val').innerText = "$" + total.toLocaleString();
+            let html = '';
+            Object.keys(pTotal).forEach(m => html += `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;"><span>${m}</span><b>$${Math.round(pTotal[m]).toLocaleString()}</b></div>`);
+            document.getElementById('personal-list').innerHTML = html;
+        }
+        refreshSettlement();
+    </script>
+</body>
+</html>
