@@ -14,41 +14,37 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
-
-        /* Boarding Pass Style */
+        
+        /* 登機證 */
         .boarding-pass { background: #fff; border-radius: 20px; margin: 15px 5px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .ticket-top { background: var(--accent); color: white; padding: 10px 15px; font-size: 11px; display: flex; justify-content: space-between; }
+        .ticket-top { background: var(--accent); color: white; padding: 10px 15px; font-size: 12px; display: flex; justify-content: space-between; }
         .ticket-mid { padding: 20px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; position: relative; }
         .airport-code { font-size: 28px; font-weight: 800; color: var(--accent); margin: 0; }
-        .ticket-btm { padding: 12px 15px; background: #fdfdfd; display: grid; grid-template-columns: repeat(3, 1fr); font-size: 11px; }
 
-        /* Date Scroll Buttons */
+        /* 日期按鈕 */
         .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 12px; scrollbar-width: none; }
         .date-item { min-width: 65px; height: 80px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; }
-        .date-item.active { background: var(--accent); color: white; }
-        .date-item b { font-size: 17px; }
-        .date-item span { font-size: 11px; margin-top: 2px; }
+        .date-item.active { background: var(--accent); color: white; border: none; }
+        .date-item b { font-size: 16px; display: block; }
+        .date-item span { font-size: 12px; margin-top: 4px; }
 
-        /* Itinerary Card */
+        /* 行程卡片 */
         .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center; }
-        .trip-info b { font-size: 18px; display: block; }
-        .commute-tag { text-align: center; font-size: 12px; color: white; background: rgba(0,0,0,0.4); width: fit-content; margin: 5px auto; padding: 4px 12px; border-radius: 20px; }
+        .action-btns { display: flex; flex-direction: column; gap: 8px; }
+        .btn-sm { padding: 8px 15px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; color: white; cursor: pointer; }
 
-        .card-actions { display: flex; flex-direction: column; gap: 8px; }
-        .action-btn { padding: 8px 15px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; color: white; }
-        .btn-edit { background: #3498db; }
-        .btn-pay { background: #27ae60; }
-
-        /* FAB & Modal */
-        .fab { position: fixed; bottom: 100px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; z-index: 900; }
+        /* 彈窗 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 85%; max-width: 400px; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #eee; border-radius: 12px; box-sizing: border-box; }
-        .modal-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; }
+        .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
+        input, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; border-radius: 12px; box-sizing: border-box; }
 
+        .fab { position: fixed; bottom: 110px; right: 25px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 900; }
+
+        /* 導覽列 */
         .nav-bar { position: fixed; bottom: 25px; left: 20px; right: 20px; background: rgba(255,255,255,0.95); height: 75px; border-radius: 38px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; text-decoration: none; font-size: 11px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -57,65 +53,75 @@
 
     <div id="tab-home" class="tab-content active">
         <div id="flight-display-area"></div>
-        
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
             <strong style="font-size:18px;">旅程基礎設定</strong>
             <input type="text" id="input-trip-name" placeholder="旅行名稱">
             <input type="text" id="input-members" placeholder="成員 (用逗號隔開)">
             <div style="display:flex; gap:10px;">
-                <div style="flex:1;"><small>開始日期</small><input type="date" id="input-start-date"></div>
-                <div style="flex:1;"><small>結束日期</small><input type="date" id="input-end-date"></div>
+                <input type="date" id="input-start-date" title="開始日期">
+                <input type="date" id="input-end-date" title="結束日期">
             </div>
-            <button class="modal-btn" style="background:var(--accent); color:white;" onclick="saveBaseSettings()">儲存旅程</button>
+            <button onclick="saveBaseSettings()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:12px; font-weight:bold;">儲存旅程</button>
         </div>
-        
         <div class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></div>
     </div>
 
     <div id="tab-plan" class="tab-content">
         <h3 style="color:white; text-align:center;">每日行程</h3>
         <div class="date-container" id="date-scroll"></div>
-        <div id="weather-box" style="text-align:center; color:white; margin-bottom:15px;"></div>
         <div id="itinerary-list"></div>
         <div class="fab" onclick="openModal('modal-itinerary')"><i class="fas fa-plus"></i></div>
     </div>
 
-    <div id="modal-flight" class="modal-overlay">
-        <div class="modal-content">
-            <h3>✈️ 新增航班資訊</h3>
-            <select id="f-type"><option value="go">去程航班</option><option value="back">回程航班</option></select>
-            <input type="text" id="f-air" placeholder="航空公司"><input type="text" id="f-no" placeholder="航班號碼">
-            <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛 (TPE)"><input type="time" id="f-from-t"></div>
-            <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="抵達 (NRT)"><input type="time" id="f-to-t"></div>
-            <button class="modal-btn" style="background:var(--accent); color:white;" onclick="saveFlight()">儲存登機證</button>
-            <button class="modal-btn" style="background:#f5f5f5;" onclick="closeModal()">取消</button>
+    <div id="tab-files" class="tab-content">
+        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
+            <strong>📎 雲端附件</strong>
+            <input type="text" id="link-name" placeholder="檔案描述">
+            <input type="text" id="link-url" placeholder="貼上 Google Drive 連結">
+            <button onclick="saveLink()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px;">儲存附件</button>
+        </div>
+        <div id="link-list"></div>
+    </div>
+
+    <div id="tab-split" class="tab-content">
+        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px; text-align:center;">
+            <p style="margin:0; color:#666;">總支出</p>
+            <h1 id="total-val" style="margin:10px 0; color:var(--accent);">$0</h1>
+        </div>
+        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
+            <h3 style="margin-top:0;">👤 各成員應付總額</h3>
+            <div id="personal-list"></div>
         </div>
     </div>
 
-    <div id="modal-itinerary" class="modal-overlay">
-        <div class="modal-content">
-            <h3>📝 編輯行程計畫</h3>
-            <input type="hidden" id="edit-id">
-            <div style="display:flex; gap:10px;"><input type="time" id="plan-start"><input type="time" id="plan-end"></div>
-            <input type="text" id="plan-location" placeholder="地點名稱">
-            <button class="modal-btn" style="background:var(--accent); color:white;" onclick="saveItinerary()">儲存行程</button>
-            <button class="modal-btn" style="background:#f5f5f5;" onclick="closeModal()">取消</button>
-        </div>
-    </div>
+    <div id="modal-flight" class="modal-overlay"><div class="modal-content">
+        <h3>✈️ 新增航班</h3>
+        <select id="f-type"><option value="go">去程</option><option value="back">回程</option></select>
+        <input type="text" id="f-air" placeholder="航空公司"><input type="text" id="f-no" placeholder="航班號碼">
+        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="起飛機場"><input type="time" id="f-from-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="抵達機場"><input type="time" id="f-to-t"></div>
+        <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:10px;">儲存</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:10px;">取消</button>
+    </div></div>
 
-    <div id="modal-payment" class="modal-overlay">
-        <div class="modal-content">
-            <h3>💰 記帳分攤</h3>
-            <input type="hidden" id="pay-trip-id"><input type="number" id="pay-amount" placeholder="金額">
-            <select id="pay-payer"></select>
-            <div id="pay-split-list" style="margin-top:10px;"></div>
-            <button class="modal-btn" style="background:#27ae60; color:white;" onclick="saveExpense()">確認記帳</button>
-            <button class="modal-btn" style="background:#f5f5f5;" onclick="closeModal()">取消</button>
-        </div>
-    </div>
+    <div id="modal-itinerary" class="modal-overlay"><div class="modal-content">
+        <h3>📝 編輯行程計畫</h3>
+        <input type="hidden" id="edit-id">
+        <input type="text" id="plan-location" placeholder="地點名稱">
+        <div style="display:flex; gap:10px;"><input type="time" id="plan-start"><input type="time" id="plan-end"></div>
+        <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:10px;">儲存</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:10px;">取消</button>
+    </div></div>
 
-    <div id="tab-files" class="tab-content"></div>
-    <div id="tab-split" class="tab-content"></div>
+    <div id="modal-payment" class="modal-overlay"><div class="modal-content">
+        <h3>💰 記帳</h3>
+        <input type="hidden" id="pay-trip-id">
+        <input type="number" id="pay-amount" placeholder="金額">
+        <select id="pay-payer"></select>
+        <div id="pay-split-list" style="margin-top:10px;"></div>
+        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:10px;">儲存</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:10px;">取消</button>
+    </div></div>
 
     <div class="nav-bar">
         <a href="javascript:void(0)" class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></a>
@@ -141,7 +147,6 @@
 
         let currentMembers = [];
         let selectedDate = "";
-        let tripRange = { start: "", end: "" };
 
         window.switchTab = (id, el) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -153,14 +158,14 @@
         window.openModal = (id) => document.getElementById(id).style.display = 'flex';
         window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
 
-        // 首頁設定與日期區間計算
+        // 1. 首頁設定 (含起迄日期)
         window.saveBaseSettings = async () => {
             const name = document.getElementById('input-trip-name').value;
-            const members = document.getElementById('input-members').value.split(',').map(m => m.trim());
+            const members = document.getElementById('input-members').value.split(',').map(m => m.trim()).filter(m => m);
             const start = document.getElementById('input-start-date').value;
             const end = document.getElementById('input-end-date').value;
             await setDoc(doc(db, "settings", "currentTrip"), { tripName: name, members, start, end });
-            alert("設定已儲存");
+            alert("旅程設定成功");
         };
 
         onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
@@ -172,62 +177,183 @@
                 document.getElementById('input-start-date').value = d.start || "";
                 document.getElementById('input-end-date').value = d.end || "";
                 currentMembers = d.members || [];
-                tripRange = { start: d.start, end: d.end };
-                renderDateScroll();
+                generateDateButtons(d.start, d.end);
             }
         });
 
-        function renderDateScroll() {
-            if (!tripRange.start || !tripRange.end) return;
+        // 生成日期按鈕
+        function generateDateButtons(start, end) {
+            if(!start || !end) return;
             let html = '';
-            let current = new Date(tripRange.start);
-            const stop = new Date(tripRange.end);
-            
-            while (current <= stop) {
+            let current = new Date(start);
+            const stop = new Date(end);
+            while(current <= stop) {
                 const dStr = current.toISOString().split('T')[0];
-                const mmdd = (current.getMonth() + 1) + '/' + current.getDate();
-                const dayStr = current.toLocaleDateString('zh-TW', { weekday: 'short' });
-                html += `<div class="date-item ${selectedDate == dStr ? 'active' : ''}" onclick="selectDate('${dStr}')"><b>${mmdd}</b><span>${dayStr}</span></div>`;
+                const mmdd = (current.getMonth()+1) + '/' + current.getDate();
+                const day = current.toLocaleDateString('zh-TW', { weekday: 'short' });
+                html += `<div class="date-item ${selectedDate==dStr?'active':''}" onclick="selectDate('${dStr}')"><b>${mmdd}</b><span>${day}</span></div>`;
                 current.setDate(current.getDate() + 1);
             }
             document.getElementById('date-scroll').innerHTML = html;
-            if (!selectedDate) selectDate(tripRange.start);
+            if(!selectedDate && start) selectDate(start);
         }
 
         window.selectDate = (d) => {
             selectedDate = d;
-            renderDateScroll();
-            renderItineraryList();
+            document.querySelectorAll('.date-item').forEach(el => {
+                const bText = el.querySelector('b').innerText;
+                const dObj = new Date(d);
+                el.classList.toggle('active', bText == ((dObj.getMonth()+1)+'/'+dObj.getDate()));
+            });
+            refreshItinerary();
         };
 
-        // 航班與行程列表 (邏輯與前版一致，確保 ID 正確)
+        // 2. 航班功能
+        window.saveFlight = async () => {
+            const type = document.getElementById('f-type').value;
+            await setDoc(doc(db, "flights", type), {
+                air: document.getElementById('f-air').value,
+                no: document.getElementById('f-no').value,
+                from: document.getElementById('f-from').value.toUpperCase(),
+                fromT: document.getElementById('f-from-t').value,
+                to: document.getElementById('f-to').value.toUpperCase(),
+                toT: document.getElementById('f-to-t').value,
+                type
+            });
+            closeModal();
+        };
+
         onSnapshot(collection(db, "flights"), (snap) => {
             let html = '';
             snap.forEach(d => {
                 const f = d.data();
-                html += `<div class="boarding-pass"><div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'去程':'回程'}</span></div><div class="ticket-mid"><div style="text-align:left;"><p class="airport-code">${f.from}</p><span>${f.fromT}</span></div><i class="fas fa-plane" style="color:#eee; font-size:24px;"></i><div style="text-align:right;"><p class="airport-code">${f.to}</p><span>${f.toT}</span></div></div><div class="ticket-btm"><div>航班<br><b>${f.no}</b></div><div>GATE<br><b>TBA</b></div><div>SEAT<br><b>ANY</b></div></div></div>`;
+                html += `
+                    <div class="boarding-pass">
+                        <div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'去程':'回程'}</span></div>
+                        <div class="ticket-mid">
+                            <div style="text-align:left;"><p class="airport-code">${f.from}</p><span>${f.fromT}</span></div>
+                            <i class="fas fa-plane" style="color:#eee; font-size:24px;"></i>
+                            <div style="text-align:right;"><p class="airport-code">${f.to}</p><span>${f.toT}</span></div>
+                        </div>
+                        <div style="padding:10px 15px; background:#f9f9f9; display:grid; grid-template-columns:1fr 1fr 1fr; font-size:11px;">
+                            <div>FLIGHT<br><b>${f.no}</b></div><div>GATE<br><b>TBA</b></div><div>SEAT<br><b>ANY</b></div>
+                        </div>
+                    </div>`;
             });
             document.getElementById('flight-display-area').innerHTML = html;
         });
 
-        // 行程與分攤邏輯... (略，維持前版本之正確實作)
+        // 3. 行程功能
         window.saveItinerary = async () => {
-            const data = { date: selectedDate, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, location: document.getElementById('plan-location').value };
-            await addDoc(collection(db, "itinerary"), data);
+            const data = {
+                date: selectedDate,
+                start: document.getElementById('plan-start').value,
+                end: document.getElementById('plan-end').value,
+                location: document.getElementById('plan-location').value
+            };
+            const id = document.getElementById('edit-id').value;
+            if(id) await updateDoc(doc(db, "itinerary", id), data);
+            else await addDoc(collection(db, "itinerary"), data);
             closeModal();
+            refreshItinerary();
         };
 
-        async function renderItineraryList() {
-            const qItin = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
-            const snap = await getDocs(qItin);
+        async function refreshItinerary() {
+            const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
+            const snap = await getDocs(q);
             let html = '';
-            snap.docs.forEach((d, i) => {
-                const item = d.data();
-                html += `<div class="itinerary-card"><div class="trip-info"><span>${item.start} - ${item.end}</span><b>${item.location}</b></div><div class="card-actions"><button class="action-btn btn-edit">編輯</button><button class="action-btn btn-pay">記帳</button></div></div>`;
-                if (i < snap.docs.length - 1) html += `<div class="commute-tag"><i class="fas fa-car"></i> 約 15 分鐘</div>`;
-            });
-            document.getElementById('itinerary-list').innerHTML = html || '<p style="text-align:center; color:white; opacity:0.6;">本日尚無行程</p>';
+            const docs = snap.docs;
+            for(let i=0; i<docs.length; i++) {
+                const d = docs[i].data();
+                const id = docs[i].id;
+                const stay = calcStay(d.start, d.end);
+                html += `
+                    <div class="itinerary-card">
+                        <div style="flex:1;">
+                            <small>${d.start} - ${d.end} (${stay})</small><br>
+                            <b style="font-size:18px;">${d.location}</b>
+                        </div>
+                        <div class="action-btns">
+                            <button class="btn-sm" style="background:#3498db" onclick="editPlan('${id}')">編輯</button>
+                            <button class="btn-sm" style="background:#27ae60" onclick="openPayment('${id}')">記帳</button>
+                        </div>
+                    </div>`;
+                if(i < docs.length - 1) html += `<div style="text-align:center; color:white; font-size:12px; margin:5px 0;"><i class="fas fa-car"></i> 汽車約 15 分鐘</div>`;
+            }
+            document.getElementById('itinerary-list').innerHTML = html || '<p style="text-align:center; color:white; opacity:0.6;">無行程</p>';
         }
+
+        function calcStay(s, e) {
+            if(!s || !e) return "0m";
+            const [sh, sm] = s.split(':').map(Number);
+            const [eh, em] = e.split(':').map(Number);
+            let diff = (eh*60+em) - (sh*60+sm);
+            if(diff < 0) diff += 1440;
+            return Math.floor(diff/60) + "h " + (diff%60) + "m";
+        }
+
+        window.editPlan = async (id) => {
+            const d = (await getDoc(doc(db, "itinerary", id))).data();
+            document.getElementById('edit-id').value = id;
+            document.getElementById('plan-location').value = d.location;
+            document.getElementById('plan-start').value = d.start;
+            document.getElementById('plan-end').value = d.end;
+            openModal('modal-itinerary');
+        };
+
+        // 4. 記帳與分帳功能
+        window.openPayment = (id) => {
+            document.getElementById('pay-trip-id').value = id;
+            let opt = '', chk = '';
+            currentMembers.forEach(m => {
+                opt += `<option value="${m}">${m}</option>`;
+                chk += `<label style="display:block;"><input type="checkbox" class="split-cb" value="${m}" checked> ${m}</label>`;
+            });
+            document.getElementById('pay-payer').innerHTML = opt;
+            document.getElementById('pay-split-list').innerHTML = `<p style="font-size:12px;margin:5px 0;">分攤對象：</p>${chk}`;
+            openModal('modal-payment');
+        };
+
+        window.saveExpense = async () => {
+            const amount = Number(document.getElementById('pay-amount').value);
+            const payer = document.getElementById('pay-payer').value;
+            const splitTo = [...document.querySelectorAll('.split-cb:checked')].map(c => c.value);
+            await addDoc(collection(db, "expenses"), { amount, payer, splitTo, tripId: document.getElementById('pay-trip-id').value, date: selectedDate });
+            alert("記帳成功"); closeModal(); refreshSettlement();
+        };
+
+        async function refreshSettlement() {
+            const snap = await getDocs(collection(db, "expenses"));
+            let total = 0, pTotal = {};
+            currentMembers.forEach(m => pTotal[m] = 0);
+            snap.forEach(d => {
+                const data = d.data();
+                total += data.amount;
+                const per = data.amount / data.splitTo.length;
+                data.splitTo.forEach(m => pTotal[m] += per);
+            });
+            document.getElementById('total-val').innerText = "$" + total.toLocaleString();
+            let html = '';
+            Object.keys(pTotal).forEach(m => html += `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;"><span>${m}</span><b>$${Math.round(pTotal[m]).toLocaleString()}</b></div>`);
+            document.getElementById('personal-list').innerHTML = html;
+        }
+        refreshSettlement();
+
+        // 5. 附件功能
+        window.saveLink = async () => {
+            await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: new Date() });
+            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
+        };
+        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
+            let html = '';
+            snap.forEach(d => {
+                const data = d.data();
+                let fileId = data.url.includes('/d/') ? data.url.split('/d/')[1].split('/')[0] : '';
+                html += `<div class="card" style="background:var(--glass); border-radius:20px; padding:15px; margin:10px 5px;"><div style="display:flex;justify-content:space-between;"><b>${data.name}</b><a href="${data.url}" target="_blank" style="color:var(--accent);"><i class="fas fa-external-link-alt"></i></a></div>${fileId?`<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w800" style="width:100%;border-radius:12px;margin-top:10px;">`:''}</div>`;
+            });
+            document.getElementById('link-list').innerHTML = html;
+        });
+
     </script>
 </body>
 </html>
