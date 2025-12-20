@@ -8,153 +8,162 @@
     <style>
         :root { 
             --glass: rgba(255, 255, 255, 0.85); 
-            --blur: blur(15px); 
-            --accent: #1e3c72;
-            --ticket-bg: #ffffff;
+            --blur: blur(20px); 
+            --accent: #1e3c72; 
         }
         
         body { 
-            font-family: -apple-system, sans-serif; 
-            margin: 0; padding-bottom: 110px;
+            font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 120px;
             background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed;
             background-size: cover; min-height: 100vh;
         }
 
         /* 頂部標題 */
-        .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 30px 20px 10px; }
-        .header h1 { margin: 0; font-size: 26px; letter-spacing: 2px; }
+        .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
+        .header h1 { margin: 0; font-size: 28px; }
 
-        /* Boarding Pass 樣式 */
+        /* 登機證樣式 */
         .boarding-pass {
-            background: var(--ticket-bg); border-radius: 16px; margin: 10px 15px; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15); overflow: hidden; position: relative;
+            background: #fff; border-radius: 16px; margin: 15px; overflow: hidden;
+            display: flex; flex-direction: column; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
-        .ticket-top { background: var(--accent); color: white; padding: 8px 15px; font-size: 11px; display: flex; justify-content: space-between; font-weight: bold; }
-        .ticket-body { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .city-code { font-size: 28px; font-weight: 800; color: var(--accent); margin: 0; }
-        .ticket-divider { border-top: 2px dashed #eee; margin: 0 15px; height: 1px; position: relative; }
-        .ticket-footer { background: #fdfdfd; padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; font-size: 11px; }
+        .ticket-head { background: var(--accent); color: white; padding: 10px 15px; font-size: 12px; display: flex; justify-content: space-between; }
+        .ticket-main { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #ddd; }
+        .city-box b { font-size: 24px; color: var(--accent); display: block; }
+        .ticket-foot { padding: 10px 15px; background: #f9f9f9; display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 11px; }
 
-        /* 日期切換器 */
-        .date-scroller { display: flex; overflow-x: auto; padding: 10px 15px; gap: 10px; scrollbar-width: none; }
-        .date-btn { 
-            flex: 0 0 65px; background: var(--glass); backdrop-filter: var(--blur);
-            padding: 10px 0; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.3);
-            cursor: pointer; transition: 0.3s;
+        /* 日期選擇器按鈕 */
+        .date-scroll { display: flex; overflow-x: auto; padding: 10px 15px; gap: 10px; scrollbar-width: none; }
+        .date-btn {
+            background: var(--glass); backdrop-filter: var(--blur);
+            min-width: 65px; height: 75px; border-radius: 15px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #333; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0;
         }
         .date-btn.active { background: var(--accent); color: white; }
-        .date-btn span { display: block; font-size: 14px; font-weight: bold; }
-        .date-btn small { font-size: 11px; opacity: 0.8; }
+        .date-btn span { font-size: 11px; margin-top: 4px; }
 
-        /* 行程浮窗 */
-        .trip-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 20px; margin: 10px 15px; padding: 15px; position: relative; }
-        .trip-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .trip-content { flex: 1; }
-        .trip-actions { display: flex; flex-direction: column; gap: 8px; margin-left: 10px; }
-        .btn-mini { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; color: white; width: 60px; }
-        .btn-edit { background: #34495e; }
-        .btn-cash { background: #27ae60; }
+        /* 行程卡片 */
+        .trip-card {
+            background: var(--glass); backdrop-filter: var(--blur);
+            border-radius: 20px; margin: 15px; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: relative;
+        }
+        .commute-info { text-align: center; font-size: 12px; color: #555; margin: -5px 0 10px; }
         
-        /* 通勤時間 */
-        .commute-info { text-align: center; padding: 5px 0; font-size: 12px; color: #555; }
+        .action-btns { display: flex; flex-direction: column; gap: 8px; }
+        .btn-sm { 
+            padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; 
+            font-weight: bold; cursor: pointer; color: white;
+        }
+        .btn-edit { background: #3498db; }
+        .btn-pay { background: #27ae60; }
 
-        /* 底部按鈕 */
-        .fab { 
-            position: fixed; bottom: 100px; right: 20px; width: 56px; height: 56px;
-            background: var(--accent); color: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 24px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 999;
+        /* 浮動新增按鈕 */
+        .fab {
+            position: fixed; bottom: 100px; right: 20px;
+            width: 56px; height: 56px; background: var(--accent);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 999;
         }
 
-        /* 導覽列 */
-        .nav-bar { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(255,255,255,0.9); height: 70px; border-radius: 35px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbb; }
-        .nav-item.active { color: var(--accent); font-weight: bold; }
-
-        /* Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 90%; border-radius: 20px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+        /* 彈窗樣式 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
+        }
+        .modal-body { background: white; width: 90%; border-radius: 20px; padding: 20px; max-height: 80vh; overflow-y: auto; }
         
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+
+        /* 導覽列 */
+        .nav-bar { position: fixed; bottom: 20px; left: 20px; right: 20px; background: white; height: 70px; border-radius: 35px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbb; text-decoration: none; }
+        .nav-item.active { color: var(--accent); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header"><h1 id="top-title">旅遊誌</h1></div>
+    <div class="header"><h1 id="trip-title-display">旅遊誌</h1></div>
 
     <div id="tab-home" class="tab-content active">
-        <div id="flight-display-area"></div>
-        <div class="card" style="margin-top:20px;">
-            <strong>⚙️ 旅程設定</strong>
-            <input type="text" id="setup-trip-name" placeholder="輸入行程名稱">
-            <input type="text" id="setup-members" placeholder="成員 (用逗號隔開)">
-            <button onclick="saveSettings()">儲存旅程</button>
+        <div id="boarding-pass-area"></div>
+        
+        <div style="background:rgba(255,255,255,0.8); margin:15px; padding:20px; border-radius:20px;">
+            <strong>⚙️ 旅程基礎設定</strong>
+            <input type="text" id="set-trip-name" placeholder="旅行名稱">
+            <input type="text" id="set-members" placeholder="成員 (用逗號隔開)">
+            <button onclick="saveBaseSettings()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px;">儲存設定</button>
         </div>
-        <div class="fab" onclick="showModal('modal-flight')"><i class="fas fa-plus"></i></div>
+        
+        <div class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></div>
     </div>
 
     <div id="tab-plan" class="tab-content">
-        <div class="header"><h1>每日行程</h1></div>
-        <div class="date-scroller" id="date-buttons"></div>
-        <div id="weather-area" style="text-align:center; color:white; padding:5px;"></div>
-        <div id="trip-items-area"></div>
-        <div class="fab" onclick="showModal('modal-trip')"><i class="fas fa-plus"></i></div>
-    </div>
-
-    <div id="tab-split" class="tab-content"><div class="card" id="personal-list"></div></div>
-
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></div>
-        <div class="nav-item" onclick="switchTab('tab-plan', this)"><i class="fas fa-calendar-alt"></i><span>行程</span></div>
-        <div class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-coins"></i><span>分帳</span></div>
-    </div>
-
-    <div id="modal-flight" class="modal">
-        <div class="modal-content">
-            <h3>輸入航班資訊</h3>
-            <input type="text" id="fl-air" placeholder="航空公司">
-            <input type="text" id="fl-no" placeholder="航班號碼">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                <input type="text" id="fl-start" placeholder="起飛機場 (TPE)"><input type="time" id="fl-start-t">
-                <input type="text" id="fl-end" placeholder="抵達機場 (NRT)"><input type="time" id="fl-end-t">
-            </div>
-            <select id="fl-type"><option value="go">去程</option><option value="back">回程</option></select>
-            <button onclick="saveFlight()">儲存航班</button>
-            <button onclick="closeModal()" style="background:#ccc;">關閉</button>
-        </div>
+        <h3 style="color:white; text-align:center;">每日行程</h3>
+        <div class="date-scroll" id="date-scroll-bar"></div>
+        <div id="weather-info" style="text-align:center; color:white; margin:10px 0;"></div>
+        <div id="daily-itinerary"></div>
+        <div class="fab" onclick="openModal('modal-trip')"><i class="fas fa-plus"></i></div>
     </div>
 
     <div id="modal-trip" class="modal">
-        <div class="modal-content">
-            <h3 id="trip-modal-title">編輯行程計畫</h3>
-            <input type="hidden" id="edit-trip-id">
+        <div class="modal-body">
+            <h3>編輯行程計畫</h3>
+            <input type="hidden" id="edit-id">
             <input type="date" id="trip-date">
-            <input type="text" id="trip-place" placeholder="地點名稱">
-            <div style="display:flex; gap:5px;">
-                <input type="time" id="trip-start"><input type="time" id="trip-end">
-            </div>
-            <button onclick="saveTrip()">儲存行程</button>
-            <button onclick="closeModal()" style="background:#ccc;">關閉</button>
+            <input type="time" id="start-time">
+            <input type="time" id="end-time">
+            <input type="text" id="location" placeholder="地點名稱 (例：東京鐵塔)">
+            <button onclick="saveTrip()" style="width:100%; background:var(--accent); color:white; border:none; padding:12px; border-radius:10px;">儲存計畫</button>
+            <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:10px;">取消</button>
         </div>
     </div>
 
-    <div id="modal-cash" class="modal">
-        <div class="modal-content">
+    <div id="modal-pay" class="modal">
+        <div class="modal-body">
             <h3>行程記帳</h3>
-            <input type="hidden" id="cash-trip-id">
-            <input type="number" id="cash-amount" placeholder="金額">
-            <select id="cash-payer"></select>
-            <div id="cash-members"></div>
-            <button onclick="saveCash()">確認儲存</button>
-            <button onclick="closeModal()" style="background:#ccc;">關閉</button>
+            <input type="hidden" id="pay-trip-id">
+            <input type="number" id="pay-amount" placeholder="花費金額">
+            <select id="payer-select"></select>
+            <div id="split-members-check" style="margin-top:10px;"></div>
+            <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; border:none; padding:12px; border-radius:10px; margin-top:15px;">確認扣款</button>
+            <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:10px;">取消</button>
         </div>
+    </div>
+
+    <div id="modal-flight" class="modal">
+        <div class="modal-body">
+            <h3>新增航班資訊</h3>
+            <select id="flight-type"><option value="go">去程航班</option><option value="back">回程航班</option></select>
+            <input type="text" id="f-air" placeholder="航空公司">
+            <input type="text" id="f-no" placeholder="航班號碼">
+            <input type="text" id="f-from" placeholder="起飛機場 (TPE)">
+            <input type="time" id="f-from-t">
+            <input type="text" id="f-to" placeholder="抵達機場 (NRT)">
+            <input type="time" id="f-to-t">
+            <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; border:none; padding:12px; border-radius:10px;">儲存航班</button>
+            <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:10px;">取消</button>
+        </div>
+    </div>
+
+    <div id="tab-split" class="tab-content">
+        <div id="settlement-area" class="card"></div>
+    </div>
+
+    <div class="nav-bar">
+        <a href="#" class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></a>
+        <a href="#" class="nav-item" onclick="switchTab('tab-plan', this)"><i class="fas fa-calendar-alt"></i><span>行程</span></a>
+        <a href="#" class="nav-item" onclick="switchTab('tab-files', this)"><i class="fas fa-paperclip"></i><span>附件</span></a>
+        <a href="#" class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-coins"></i><span>分帳</span></a>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, deleteDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Firebase 設定與初始化 (沿用原設定)
         const firebaseConfig = {
             apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
             authDomain: "my-travel-app-b029c.firebaseapp.com",
@@ -165,190 +174,213 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        let currentTripName = "";
-        let members = [];
+
+        let currentMembers = [];
         let selectedDate = "";
 
-        // 工具函數
+        // 通用功能
         window.switchTab = (id, el) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             el.classList.add('active');
         };
-        window.showModal = (id) => document.getElementById(id).style.display = 'flex';
+
+        window.openModal = (id) => document.getElementById(id).style.display = 'flex';
         window.closeModal = () => document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
 
-        // 1. 首頁與設定
-        window.saveSettings = async () => {
-            const name = document.getElementById('setup-trip-name').value;
-            const mems = document.getElementById('setup-members').value.split(',').map(m => m.trim());
-            await setDoc(doc(db, "settings", "currentTrip"), { tripName: name, members: mems });
-            alert("旅程已設定");
+        // 首頁設定
+        window.saveBaseSettings = async () => {
+            const name = document.getElementById('set-trip-name').value;
+            const members = document.getElementById('set-members').value.split(',').map(m => m.trim());
+            await setDoc(doc(db, "settings", "currentTrip"), { tripName: name, members });
+            alert("設定儲存成功");
         };
 
-        onSnapshot(doc(db, "settings", "currentTrip"), (ds) => {
-            if (ds.exists()) {
-                const d = ds.data();
-                currentTripName = d.tripName;
-                members = d.members;
-                document.getElementById('top-title').innerText = currentTripName || "旅遊誌";
-                // 更新記帳付款人選項
-                const payerSelect = document.getElementById('cash-payer');
-                payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
+        onSnapshot(doc(db, "settings", "currentTrip"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('trip-title-display').innerText = data.tripName;
+                currentMembers = data.members;
+                updatePaySelects();
             }
         });
 
-        // 2. 航班邏輯
+        // 航班功能 (Boarding Pass)
         window.saveFlight = async () => {
+            const type = document.getElementById('flight-type').value;
             const data = {
-                air: document.getElementById('fl-air').value,
-                no: document.getElementById('fl-no').value,
-                start: document.getElementById('fl-start').value,
-                startT: document.getElementById('fl-start-t').value,
-                end: document.getElementById('fl-end').value,
-                endT: document.getElementById('fl-end-t').value,
-                type: document.getElementById('fl-type').value,
-                createdAt: new Date()
+                air: document.getElementById('f-air').value,
+                no: document.getElementById('f-no').value,
+                from: document.getElementById('f-from').value.toUpperCase(),
+                fromT: document.getElementById('f-from-t').value,
+                to: document.getElementById('f-to').value.toUpperCase(),
+                toT: document.getElementById('f-to-t').value,
+                type: type
             };
-            await addDoc(collection(db, "flights"), data);
+            await setDoc(doc(db, "settings", "flight_" + type), data);
             closeModal();
         };
 
-        onSnapshot(query(collection(db, "flights"), orderBy("createdAt", "desc")), (snap) => {
-            let html = '';
-            snap.forEach(docSnap => {
-                const f = docSnap.data();
-                html += `
-                <div class="boarding-pass">
-                    <div class="ticket-top"><span>${f.air}</span><span>${f.type=='go'?'去程':'回程'}</span></div>
-                    <div class="ticket-body">
-                        <div><p class="city-code">${f.start}</p><p style="font-weight:bold;">${f.startT}</p></div>
-                        <div style="color:#ddd; font-size:20px;"><i class="fas fa-plane"></i></div>
-                        <div style="text-align:right;"><p class="city-code">${f.end}</p><p style="font-weight:bold;">${f.endT}</p></div>
-                    </div>
-                    <div class="ticket-divider"></div>
-                    <div class="ticket-footer">
-                        <div><span style="color:#999;">FLIGHT</span><br><b>${f.no}</b></div>
-                        <div style="text-align:right;"><button onclick="deleteDoc(doc(db,'flights','${docSnap.id}'))" style="background:none; color:#ccc; border:none; width:auto; padding:0;">✕</button></div>
-                    </div>
-                </div>`;
+        ['go', 'back'].forEach(t => {
+            onSnapshot(doc(db, "settings", "flight_" + t), (ds) => {
+                renderBoardingPass();
             });
-            document.getElementById('flight-display-area').innerHTML = html;
         });
 
-        // 3. 行程與日期切換
-        const dayNames = ["周日","周一","周二","周三","周四","周五","周六"];
-        onSnapshot(query(collection(db, "trips"), orderBy("date", "asc")), (snap) => {
-            const dates = [];
-            snap.forEach(d => { if(!dates.includes(d.data().date)) dates.push(d.data().date); });
-            
-            let btnHtml = '';
-            dates.forEach(d => {
-                const dateObj = new Date(d);
-                const active = selectedDate == d ? 'active' : '';
-                btnHtml += `
-                    <div class="date-btn ${active}" onclick="selectDate('${d}')">
-                        <span>${(dateObj.getMonth()+1)+'/'+dateObj.getDate()}</span>
-                        <small>${dayNames[dateObj.getDay()]}</small>
-                    </div>`;
-            });
-            document.getElementById('date-buttons').innerHTML = btnHtml;
-            if(selectedDate) renderDayTrips();
-        });
-
-        window.selectDate = (date) => {
-            selectedDate = date;
-            document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
-            renderDayTrips();
-            getWeather(date);
-        };
-
-        async function renderDayTrips() {
-            const qTrip = query(collection(db, "trips"), where("date", "==", selectedDate), orderBy("start", "asc"));
-            const snap = await getDocs(qTrip);
+        async function renderBoardingPass() {
             let html = '';
-            let lastPlace = "";
-
-            for (const docSnap of snap.docs) {
-                const t = docSnap.data();
-                const id = docSnap.id;
-                
-                // 計算停留時間
-                const diff = (new Date(`2000-01-01 ${t.end}`) - new Date(`2000-01-01 ${t.start}`)) / 60000;
-                const dur = diff > 0 ? `(${Math.floor(diff/60)}h ${diff%60}m)` : "";
-
-                // 通勤時間 (暫時用模擬，若要真實請串接 Distance Matrix API)
-                if(lastPlace) {
-                    html += `<div class="commute-info"><i class="fas fa-car"></i> 預估 25 分鐘</div>`;
+            const types = ['go', 'back'];
+            for (let t of types) {
+                const ds = await getDocs(query(collection(db, "settings"), where("__name__", "==", "flight_" + t)));
+                if (!ds.empty) {
+                    const d = ds.docs[0].data();
+                    html += `
+                        <div class="boarding-pass">
+                            <div class="ticket-head"><span>${d.air}</span><span>${d.type=='go'?'OUTBOUND':'INBOUND'}</span></div>
+                            <div class="ticket-main">
+                                <div class="city-box"><b>${d.from}</b>${d.fromT}</div>
+                                <i class="fas fa-plane" style="color:#ddd; font-size:24px;"></i>
+                                <div class="city-box" style="text-align:right;"><b>${d.to}</b>${d.toT}</div>
+                            </div>
+                            <div class="ticket-foot">
+                                <div>FLIGHT<br><b>${d.no}</b></div>
+                                <div>GATE<br><b>TBA</b></div>
+                                <div>SEAT<br><b>ANY</b></div>
+                            </div>
+                        </div>`;
                 }
-
-                html += `
-                <div class="trip-card">
-                    <div class="trip-header">
-                        <div class="trip-content">
-                            <small style="color:#7f8c8d;">${t.start} ~ ${t.end} ${dur}</small>
-                            <h3 style="margin:5px 0; color:#2c3e50;">${t.place}</h3>
-                            ${t.cost ? `<span style="color:#27ae60; font-weight:bold;">💰 $${t.cost}</span>` : ''}
-                        </div>
-                        <div class="trip-actions">
-                            <button class="btn-mini btn-edit" onclick="editTripForm('${id}')">編輯</button>
-                            <button class="btn-mini btn-cash" onclick="cashTripForm('${id}')">記帳</button>
-                        </div>
-                    </div>
-                </div>`;
-                lastPlace = t.place;
             }
-            document.getElementById('trip-items-area').innerHTML = html;
+            document.getElementById('boarding-pass-area').innerHTML = html;
         }
 
-        // 4. 編輯與記帳
+        // 行程功能：日期捲軸與計算
+        onSnapshot(query(collection(db, "trips"), orderBy("date", "asc")), (snapshot) => {
+            const dates = [...new Set(snapshot.docs.map(d => d.data().date))];
+            renderDateScroll(dates);
+            if (!selectedDate && dates.length > 0) selectDate(dates[0]);
+            renderDailyItinerary(snapshot.docs);
+        });
+
+        function renderDateScroll(dates) {
+            let html = '';
+            dates.forEach(d => {
+                const dt = new Date(d);
+                const day = dt.toLocaleDateString('zh-TW', { weekday: 'short' });
+                const mmdd = (dt.getMonth()+1) + '/' + dt.getDate();
+                html += `
+                    <div class="date-btn ${selectedDate==d?'active':''}" onclick="selectDate('${d}')">
+                        <b>${mmdd}</b><span>${day}</span>
+                    </div>`;
+            });
+            document.getElementById('date-scroll-bar').innerHTML = html;
+        }
+
+        window.selectDate = (d) => {
+            selectedDate = d;
+            document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+            renderDateScroll([...document.querySelectorAll('.date-btn b')].map(b => {
+                const parts = b.innerText.split('/');
+                return new Date().getFullYear() + '-' + parts[0].padStart(2,'0') + '-' + parts[1].padStart(2,'0');
+            }));
+            fetchWeather(d);
+            // 重新渲染行程列表...
+        };
+
+        // 模擬天氣 (串接 OpenWeatherMap 需要 API Key)
+        function fetchWeather(date) {
+            document.getElementById('weather-info').innerHTML = `<i class="fas fa-sun"></i> 24°C 晴天`;
+        }
+
+        // 行程保存
         window.saveTrip = async () => {
             const data = {
                 date: document.getElementById('trip-date').value,
-                place: document.getElementById('trip-place').value,
-                start: document.getElementById('trip-start').value,
-                end: document.getElementById('trip-end').value,
+                startT: document.getElementById('start-time').value,
+                endT: document.getElementById('end-time').value,
+                location: document.getElementById('location').value,
+                createdAt: new Date()
             };
-            const id = document.getElementById('edit-trip-id').value;
+            const id = document.getElementById('edit-id').value;
             if(id) await updateDoc(doc(db, "trips", id), data);
             else await addDoc(collection(db, "trips"), data);
             closeModal();
         };
 
-        window.editTripForm = async (id) => {
-            const ds = await getDocs(query(collection(db, "trips")));
-            const t = ds.docs.find(d => d.id == id).data();
-            document.getElementById('edit-trip-id').value = id;
-            document.getElementById('trip-date').value = t.date;
-            document.getElementById('trip-place').value = t.place;
-            document.getElementById('trip-start').value = t.start;
-            document.getElementById('trip-end').value = t.end;
-            showModal('modal-trip');
-        };
-
-        window.cashTripForm = (id) => {
-            document.getElementById('cash-trip-id').value = id;
-            document.getElementById('cash-members').innerHTML = members.map(m => `
-                <label><input type="checkbox" class="cash-m-cb" value="${m}" checked> ${m}</label>
-            `).join(' ');
-            showModal('modal-cash');
-        };
-
-        window.saveCash = async () => {
-            const id = document.getElementById('cash-trip-id').value;
-            const amount = Number(document.getElementById('cash-amount').value);
-            const payer = document.getElementById('cash-payer').value;
-            const splitMems = Array.from(document.querySelectorAll('.cash-m-cb:checked')).map(c => c.value);
-            await updateDoc(doc(db, "trips", id), { cost: amount, payer, splitWith: splitMems });
-            closeModal();
-            renderDayTrips();
-        };
-
-        // 5. 天氣 (模擬)
-        function getWeather(date) {
-            document.getElementById('weather-area').innerHTML = `<i class="fas fa-sun"></i> 24°C 晴天`;
+        // 渲染行程與通勤計算
+        async function renderDailyItinerary(docs) {
+            let html = '';
+            const filtered = docs.filter(d => d.data().date === selectedDate).sort((a,b) => a.data().startT.localeCompare(b.data().startT));
+            
+            for(let i=0; i<filtered.length; i++) {
+                const d = filtered[i].data();
+                const id = filtered[i].id;
+                
+                // 計算停留時間
+                const stay = calcStay(d.startT, d.endT);
+                
+                html += `
+                    <div class="trip-card">
+                        <div style="flex:1;">
+                            <small>${d.startT} - ${d.endT} (${stay})</small><br>
+                            <b style="font-size:18px;">${d.location}</b>
+                        </div>
+                        <div class="action-btns">
+                            <button class="btn-sm btn-edit" onclick="editTrip('${id}')">編輯</button>
+                            <button class="btn-sm btn-pay" onclick="openPay('${id}')">記帳</button>
+                        </div>
+                    </div>`;
+                
+                // 計算與下一個行程的通勤
+                if(i < filtered.length - 1) {
+                    const commute = await getCommuteTime(d.location, filtered[i+1].data().location);
+                    html += `<div class="commute-info"><i class="fas fa-car"></i> ${commute}</div>`;
+                }
+            }
+            document.getElementById('daily-itinerary').innerHTML = html;
         }
+
+        function calcStay(s, e) {
+            if(!s || !e) return "未知";
+            const [sh, sm] = s.split(':').map(Number);
+            const [eh, em] = e.split(':').map(Number);
+            let diff = (eh*60+em) - (sh*60+sm);
+            return Math.floor(diff/60) + "h " + (diff%60) + "m";
+        }
+
+        // Google Maps 距離矩陣 API
+        async function getCommuteTime(origin, dest) {
+            return "約 25 分鐘"; // 這裡需實作 Google Distance Matrix API
+        }
+
+        // 記帳與分帳邏輯 (沿用並優化)
+        window.openPay = (tripId) => {
+            document.getElementById('pay-trip-id').value = tripId;
+            openModal('modal-pay');
+        };
+
+        function updatePaySelects() {
+            let opt = '', chk = '';
+            currentMembers.forEach(m => {
+                opt += `<option value="${m}">${m}</option>`;
+                chk += `<label><input type="checkbox" class="split-cb" value="${m}" checked> ${m}</label> `;
+            });
+            document.getElementById('payer-select').innerHTML = opt;
+            document.getElementById('split-members-check').innerHTML = chk;
+        }
+
+        window.saveExpense = async () => {
+            const amount = Number(document.getElementById('pay-amount').value);
+            const payer = document.getElementById('payer-select').value;
+            const splitTo = [...document.querySelectorAll('.split-cb:checked')].map(c => c.value);
+            const tripId = document.getElementById('pay-trip-id').value;
+
+            await addDoc(collection(db, "expenses"), {
+                tripId, amount, payer, splitTo, date: selectedDate
+            });
+            alert("記帳成功");
+            closeModal();
+        };
 
     </script>
 </body>
