@@ -3,74 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅遊助手 App</title>
+    <title>旅遊小幫手</title>
     <style>
-        :root { --primary: #007bff; --bg: #f8f9fa; }
-        body { font-family: sans-serif; margin: 0; padding-bottom: 70px; background: var(--bg); }
-        
-        /* 頁籤內容控制 */
+        :root { --primary: #007bff; --bg: #f4f7f6; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 70px; background: var(--bg); }
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
-
-        /* 底部導覽列 */
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
-        .nav-item { flex: 1; text-align: center; padding: 15px 0; cursor: pointer; color: #666; font-weight: bold; }
-        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); }
-
-        /* 表格樣式 */
-        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { border-bottom: 2px solid #eee; padding: 10px; text-align: left; background: #fff; position: sticky; top: 0; }
-        td { border-bottom: 1px solid #eee; padding: 10px; }
-        input, button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .nav-item { flex: 1; text-align: center; padding: 12px 0; cursor: pointer; color: #666; font-size: 12px; }
+        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); font-weight: bold; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; }
+        input, button { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; }
+        
+        /* 動態勾選區 */
+        .member-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+        .member-item { background: #eee; padding: 8px; border-radius: 5px; display: flex; align-items: center; }
+        .member-item input { width: auto; margin-right: 8px; }
 
-        /* 費用分攤樣式 */
-        .split-box { text-align: center; padding: 20px; }
-        .total-val { font-size: 32px; color: #d9534f; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        td, th { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: left; }
+        .cost { color: #d9534f; font-weight: bold; }
+        .names { font-size: 11px; color: #888; }
     </style>
 </head>
 <body>
 
-    <div id="tab-plan" class="tab-content active">
-        <div class="card">
-            <strong>➕ 新增行程</strong>
-            <input type="date" id="date">
-            <input type="text" id="time" placeholder="時間(09:00)">
-            <input type="text" id="activity" placeholder="地點/活動">
-            <input type="text" id="note" placeholder="備註">
-            <input type="number" id="cost" placeholder="金額">
-            <button id="saveBtn">新增</button>
+    <div id="tab-home" class="tab-content active">
+        <div class="card" style="text-align:center;">
+            <h1 id="display-trip-name">點擊下方設定旅行</h1>
+            <p id="display-members">尚未設定成員</p>
         </div>
-        
-        <div class="card" style="overflow-x: auto;">
+        <div class="card">
+            <strong>⚙️ 設定本次旅行</strong>
+            <input type="text" id="setup-trip-name" placeholder="旅行名稱 (例：東京五日遊)">
+            <input type="text" id="setup-members" placeholder="成員名字 (請用逗號隔開，例：小明,美美,小華)">
+            <button onclick="saveSettings()">儲存設定</button>
+        </div>
+    </div>
+
+    <div id="tab-plan" class="tab-content">
+        <div class="card">
+            <strong>➕ 新增行程 & 支出</strong>
+            <input type="date" id="date">
+            <input type="text" id="time" placeholder="時間">
+            <input type="text" id="activity" placeholder="活動地點">
+            <input type="number" id="cost" placeholder="金額 (無則留空)">
+            <div style="font-size:12px; margin-top:10px;">誰參與了這項花費？</div>
+            <div id="dynamic-member-selection" class="member-grid">
+                </div>
+            <button onclick="saveTrip()">加入行程</button>
+        </div>
+        <div class="card" style="overflow-x:auto;">
             <table>
-                <thead><tr><th>日期</th><th>地點</th><th>費用</th><th>操作</th></tr></thead>
-                <tbody id="list-body"></tbody>
+                <tbody id="trip-list"></tbody>
             </table>
         </div>
     </div>
 
     <div id="tab-split" class="tab-content">
-        <div class="card split-box">
-            <p>總花費金額</p>
-            <div class="total-val" id="total-val">$0</div>
-            <hr>
-            <p>分攤人數</p>
-            <input type="number" id="people-count" value="2" oninput="calculateSplit()">
-            <p style="margin-top:20px;">每人應付</p>
-            <div class="total-val" id="per-person" style="color: #28a745;">$0</div>
+        <div class="card" style="text-align:center; background:#333; color:white;">
+            <p>總支出</p>
+            <h1 id="total-val">$0</h1>
+        </div>
+        <div class="card">
+            <h3>👤 個人應付明細</h3>
+            <div id="personal-list"></div>
         </div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('tab-plan', this)">🗺️ 行程</div>
-        <div class="nav-item" onclick="switchTab('tab-split', this)">💰 分攤</div>
+        <div class="nav-item active" onclick="switchTab('tab-home', this)">🏠 首頁</div>
+        <div class="nav-item" onclick="switchTab('tab-plan', this)">🗺️ 行程</div>
+        <div class="nav-item" onclick="switchTab('tab-split', this)">💰 分帳</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCcXPvCma5TilSjZfAGYJg8n8ZfAAsqNtE",
@@ -83,63 +93,107 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        let globalTotal = 0;
+        let currentMembers = [];
 
-        // 切換分頁邏輯
-        window.switchTab = (tabId, el) => {
+        // 1. 分頁切換
+        window.switchTab = (id, el) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+            document.getElementById(id).classList.add('active');
             el.classList.add('active');
         };
 
-        // 儲存功能
-        document.getElementById('saveBtn').onclick = async () => {
-            const date = document.getElementById('date').value;
-            const activity = document.getElementById('activity').value;
-            if(!date || !activity) return alert("請填寫日期與地點");
+        // 2. 儲存首頁設定 (旅行名稱 & 成員)
+        window.saveSettings = async () => {
+            const name = document.getElementById('setup-trip-name').value;
+            const membersRaw = document.getElementById('setup-members').value;
+            const memberArray = membersRaw.split(',').map(m => m.trim()).filter(m => m);
             
+            if(!name || memberArray.length === 0) return alert("請輸入名稱與成員");
+            
+            await setDoc(doc(db, "settings", "currentTrip"), {
+                tripName: name,
+                members: memberArray
+            });
+            alert("設定成功！");
+        };
+
+        // 3. 監聽設定更新 (同步到行程頁面的勾選框)
+        onSnapshot(doc(db, "settings", "currentTrip"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('display-trip-name').innerText = data.tripName;
+                document.getElementById('display-members').innerText = "成員：" + data.members.join(', ');
+                currentMembers = data.members;
+                
+                // 動態產生行程頁面的勾選框
+                let html = '';
+                data.members.forEach(m => {
+                    html += `<div class="member-item"><input type="checkbox" class="trip-mem-cb" value="${m}">${m}</div>`;
+                });
+                document.getElementById('dynamic-member-selection').innerHTML = html;
+            }
+        });
+
+        // 4. 新增行程
+        window.saveTrip = async () => {
+            const activity = document.getElementById('activity').value;
+            const date = document.getElementById('date').value;
+            const cost = Number(document.getElementById('cost').value || 0);
+            const selected = Array.from(document.querySelectorAll('.trip-mem-cb:checked')).map(cb => cb.value);
+
+            if(!date || !activity) return alert("請填寫日期與行程");
+            if(cost > 0 && selected.length === 0) return alert("請勾選分攤成員");
+
             await addDoc(collection(db, "trips"), {
-                date, activity, 
+                date, activity, cost,
                 time: document.getElementById('time').value,
-                note: document.getElementById('note').value,
-                cost: Number(document.getElementById('cost').value || 0),
+                members: selected,
                 createdAt: new Date()
             });
-            ['time','activity','note','cost'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('activity').value = '';
+            document.getElementById('cost').value = '';
+            document.querySelectorAll('.trip-mem-cb').forEach(cb => cb.checked = false);
         };
 
-        // 刪除功能
-        window.deleteItem = async (id) => {
-            if(confirm("確定刪除？")) await deleteDoc(doc(db, "trips", id));
-        };
-
-        // 計算分攤
-        window.calculateSplit = () => {
-            const people = document.getElementById('people-count').value || 1;
-            const perPerson = globalTotal / people;
-            document.getElementById('per-person').innerText = '$' + Math.round(perPerson).toLocaleString();
-        };
-
-        // 讀取資料
+        // 5. 監聽行程與計算分帳
         const q = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc"));
         onSnapshot(q, (snapshot) => {
-            let html = '';
-            globalTotal = 0;
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                html += `<tr>
-                    <td>${data.date}<br><small>${data.time}</small></td>
-                    <td><b>${data.activity}</b><br><small>${data.note}</small></td>
-                    <td>$${data.cost}</td>
-                    <td><button onclick="deleteItem('${doc.id}')" style="background:none; color:red; width:auto; border:none; padding:0">✕</button></td>
+            let listHtml = '';
+            let total = 0;
+            let personalData = {};
+            currentMembers.forEach(m => personalData[m] = 0);
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const mems = data.members || [];
+                const perCost = mems.length > 0 ? data.cost / mems.length : 0;
+                
+                total += data.cost;
+                mems.forEach(m => { if(personalData[m] !== undefined) personalData[m] += perCost; });
+
+                listHtml += `<tr>
+                    <td>${data.date}<br><b>${data.activity}</b></td>
+                    <td><span class="cost">$${data.cost}</span><br><span class="names">${mems.join(',')}</span></td>
+                    <td><button onclick="deleteTrip('${docSnap.id}')" style="background:none;color:#ccc;width:auto;padding:0">✕</button></td>
                 </tr>`;
-                globalTotal += Number(data.cost);
             });
-            document.getElementById('list-body').innerHTML = html;
-            document.getElementById('total-val').innerText = '$' + globalTotal.toLocaleString();
-            calculateSplit();
+
+            document.getElementById('trip-list').innerHTML = listHtml;
+            document.getElementById('total-val').innerText = "$" + total.toLocaleString();
+
+            let personHtml = '';
+            Object.keys(personalData).forEach(m => {
+                personHtml += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
+                    <span>${m}</span><b>$${Math.round(personalData[m]).toLocaleString()}</b>
+                </div>`;
+            });
+            document.getElementById('personal-list').innerHTML = personHtml;
         });
+
+        window.deleteTrip = async (id) => {
+            if(confirm("確定刪除？")) await deleteDoc(doc(db, "trips", id));
+        };
     </script>
 </body>
 </html>
