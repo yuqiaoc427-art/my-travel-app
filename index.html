@@ -3,41 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅遊管家 App-雲端連結版</title>
+    <title>我的質感旅遊誌</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary: #007bff; --bg: #f4f7f6; --success: #28a745; --warning: #ffc107; --drive: #1da1f2; }
-        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 85px; background: var(--bg); }
-        .tab-content { display: none; padding: 15px; }
-        .tab-content.active { display: block; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .nav-item { flex: 1; text-align: center; padding: 12px 0; cursor: pointer; color: #666; font-size: 11px; }
-        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); font-weight: bold; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; }
-        input, button { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .member-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
-        .member-item { background: #f8f9fa; padding: 10px; border-radius: 8px; display: flex; align-items: center; border: 1px solid #eee; }
-        .member-item input { width: auto; margin-right: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        td { padding: 12px 5px; border-bottom: 1px solid #eee; }
-        .cost-badge { color: white; background: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-        .btn-edit { background: var(--warning); color: #212529; padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; text-decoration: none; }
-        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .drive-btn { background: var(--drive); color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; font-weight: bold; }
+        :root { --glass: rgba(255, 255, 255, 0.85); --blur: blur(12px); --accent: #2c3e50; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; 
+            padding-bottom: 100px;
+            /* 背景圖：你可以更換下方 URL 成你喜歡的照片 */
+            background: url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=2070') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+        }
+
+        /* 毛玻璃卡片效果 */
+        .card { 
+            background: var(--glass); 
+            backdrop-filter: var(--blur); 
+            -webkit-backdrop-filter: var(--blur);
+            padding: 20px; 
+            border-radius: 24px; 
+            margin: 15px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 頂部標題 */
+        .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.3); padding-top: 40px; }
+        .header h1 { margin: 0; font-size: 28px; }
+
+        /* 輸入框美化 */
+        input, select { 
+            width: 100%; padding: 12px 15px; margin: 8px 0; 
+            border: none; border-radius: 12px; background: rgba(255,255,255,0.5);
+            font-size: 14px; outline: none; box-sizing: border-box;
+        }
+        button { 
+            width: 100%; padding: 14px; background: var(--accent); color: white; 
+            border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; cursor: pointer;
+        }
+
+        /* 導覽列美化 - 圓角浮動式 */
+        .nav-bar { 
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            background: var(--glass); backdrop-filter: var(--blur);
+            height: 70px; border-radius: 35px; display: flex; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000;
+        }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #7f8c8d; cursor: pointer; }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; }
+        .nav-item span { font-size: 10px; }
+        .nav-item.active { color: #2c3e50; font-weight: bold; }
+
+        /* 行程列表樣式 */
+        .trip-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding: 12px 0; }
+        .trip-item:last-child { border-bottom: none; }
+        .cost-badge { background: #2c3e50; color: white; padding: 4px 10px; border-radius: 8px; font-size: 12px; }
+
+        /* 圖片預覽 */
+        .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; object-fit: cover; }
     </style>
 </head>
 <body>
 
+    <div class="header">
+        <h1 id="top-title">旅程載入中...</h1>
+    </div>
+
     <div id="tab-home" class="tab-content active">
-        <div class="card" style="text-align:center; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; padding: 40px 15px;">
-            <h2 id="display-trip-name">載入中...</h2>
-            <p id="display-members" style="opacity: 0.8;">請先設定成員</p>
-        </div>
-        <div class="card">
-            <strong>⚙️ 旅行基礎設定</strong>
-            <input type="text" id="setup-trip-name" placeholder="旅行名稱 (例：曼谷美食團)">
-            <input type="text" id="setup-members" placeholder="成員名字 (逗號隔開，例：阿明,小華)">
-            <button onclick="saveSettings()">儲存設定</button>
+        <div class="card" style="text-align: center;">
+            <p id="display-members">請至下方設定成員名單</p>
+            <input type="text" id="setup-trip-name" placeholder="這趟旅程叫什麼名字？">
+            <input type="text" id="setup-members" placeholder="成員名字 (逗號隔開，例：小明,美美)">
+            <button onclick="saveSettings()">儲存旅程設定</button>
         </div>
     </div>
 
@@ -46,43 +91,45 @@
             <strong id="editor-title">📅 新增行程</strong>
             <input type="hidden" id="edit-id">
             <input type="date" id="date">
-            <input type="text" id="time" placeholder="時間">
-            <input type="text" id="activity" placeholder="地點/活動">
-            <div style="border-top:1px dashed #ccc; margin-top:10px; padding-top:10px;">
-                <input type="number" id="cost" placeholder="金額">
-                <div id="dynamic-member-selection" class="member-grid"></div>
+            <input type="text" id="time" placeholder="時間 (例如：10:00)">
+            <input type="text" id="activity" placeholder="活動地點">
+            <div style="margin-top:10px; border-top: 1px dashed #ccc; padding-top:10px;">
+                <input type="number" id="cost" placeholder="費用金額">
+                <div id="dynamic-member-selection" style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;"></div>
             </div>
-            <button id="main-btn" onclick="saveTrip()">儲存行程</button>
+            <button onclick="saveTrip()" id="main-btn">儲存</button>
         </div>
-        <div class="card"><table><tbody id="trip-list"></tbody></table></div>
+        <div class="card" id="trip-list-container">
+            <div id="trip-list"></div>
+        </div>
     </div>
 
     <div id="tab-files" class="tab-content">
         <div class="card">
-            <strong>📎 貼上雲端硬碟連結</strong>
-            <p style="font-size:11px; color:gray; margin:0;">請在 Google Drive 開啟分享權限後，將連結貼於下方</p>
-            <input type="text" id="link-name" placeholder="檔案名稱 (例：機票確認單)">
-            <input type="text" id="link-url" placeholder="連結網址 (https://...)">
-            <button onclick="saveLink()" style="background:var(--drive)">儲存連結</button>
+            <strong>📎 附件連結 (Google Drive)</strong>
+            <input type="text" id="link-name" placeholder="檔案名稱">
+            <input type="text" id="link-url" placeholder="分享連結">
+            <button onclick="saveLink()">新增附件</button>
         </div>
-        <div class="card">
-            <h3 style="margin-top:0;">附件清單</h3>
-            <div id="link-list"></div>
-        </div>
+        <div id="link-list"></div>
     </div>
 
     <div id="tab-split" class="tab-content">
-        <div class="card" style="text-align:center; background:#212529; color:white;">
-            <p style="margin:0;">總花費</p><h1 id="total-val">$0</h1>
+        <div class="card" style="text-align:center;">
+            <p style="margin:0; color:#666;">總花費</p>
+            <h1 id="total-val" style="margin:5px 0; color:#2c3e50;">$0</h1>
         </div>
-        <div class="card"><div id="personal-list"></div></div>
+        <div class="card">
+            <h3 style="margin-top:0;">各成員應付</h3>
+            <div id="personal-list"></div>
+        </div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('tab-home', this)">🏠首頁</div>
-        <div class="nav-item" onclick="switchTab('tab-plan', this)">🗺️行程</div>
-        <div class="nav-item" onclick="switchTab('tab-files', this)">📎附件</div>
-        <div class="nav-item" onclick="switchTab('tab-split', this)">💰分帳</div>
+        <div class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></div>
+        <div class="nav-item" onclick="switchTab('tab-plan', this)"><i class="fas fa-map-marked-alt"></i><span>行程</span></div>
+        <div class="nav-item" onclick="switchTab('tab-files', this)"><i class="fas fa-paperclip"></i><span>附件</span></div>
+        <div class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-wallet"></i><span>分帳</span></div>
     </div>
 
     <script type="module">
@@ -109,27 +156,25 @@
             el.classList.add('active');
         };
 
-        // 首頁邏輯
         window.saveSettings = async () => {
             const name = document.getElementById('setup-trip-name').value;
             const members = document.getElementById('setup-members').value.split(',').map(m => m.trim()).filter(m => m);
             await setDoc(doc(db, "settings", "currentTrip"), { tripName: name, members: members });
-            alert("設定成功");
+            alert("設定成功！");
         };
 
         onSnapshot(doc(db, "settings", "currentTrip"), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                document.getElementById('display-trip-name').innerText = data.tripName;
+                document.getElementById('top-title').innerText = data.tripName;
                 document.getElementById('display-members').innerText = "成員：" + data.members.join(', ');
                 currentMembers = data.members;
                 let html = '';
-                data.members.forEach(m => html += `<div class="member-item"><input type="checkbox" class="trip-mem-cb" value="${m}">${m}</div>`);
+                data.members.forEach(m => html += `<label style="font-size:12px;"><input type="checkbox" class="trip-mem-cb" value="${m}">${m}</label>`);
                 document.getElementById('dynamic-member-selection').innerHTML = html;
             }
         });
 
-        // 行程邏輯
         window.saveTrip = async () => {
             const id = document.getElementById('edit-id').value;
             const tripData = {
@@ -160,79 +205,46 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        const q = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc"));
-        onSnapshot(q, (snapshot) => {
+        onSnapshot(query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc")), (snapshot) => {
             let listHtml = '', total = 0, pTotal = {};
             currentMembers.forEach(m => pTotal[m] = 0);
             snapshot.forEach(docSnap => {
                 const d = docSnap.data(); const ms = d.members || []; const pCost = ms.length > 0 ? d.cost / ms.length : 0;
                 total += d.cost; ms.forEach(m => { if(pTotal[m]!==undefined) pTotal[m] += pCost; });
-                listHtml += `<tr><td><small>${d.date}</small><br><b>${d.time} ${d.activity}</b></td><td style="text-align:right;">${d.cost>0?`<span class="cost-badge">$${d.cost}</span>`:`<small>未記帳</small>`}<br><div class="btn-edit" onclick="editTrip('${docSnap.id}','${d.date}','${d.time}','${d.activity}',${d.cost},'${ms.join(',')}')">編輯</div></td><td><button onclick="deleteTrip('${docSnap.id}')" style="background:none;color:#ccc;width:auto;">✕</button></td></tr>`;
+                listHtml += `<div class="trip-item">
+                    <div><small>${d.date} ${d.time}</small><br><b>${d.activity}</b></div>
+                    <div style="text-align:right;">
+                        ${d.cost > 0 ? `<span class="cost-badge">$${d.cost}</span>` : `<small style="color:#aaa">未記帳</small>`}<br>
+                        <span style="font-size:10px; cursor:pointer; color:#3498db;" onclick="editTrip('${docSnap.id}','${d.date}','${d.time}','${d.activity}',${d.cost},'${ms.join(',')}')">記帳/編輯</span>
+                    </div>
+                </div>`;
             });
             document.getElementById('trip-list').innerHTML = listHtml;
             document.getElementById('total-val').innerText = "$" + total.toLocaleString();
-            let pHtml = ''; Object.keys(pTotal).forEach(m => pHtml += `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee;"><span>${m}</span><b>$${Math.round(pTotal[m]).toLocaleString()}</b></div>`);
+            let pHtml = ''; Object.keys(pTotal).forEach(m => pHtml += `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;"><span>${m}</span><b>$${Math.round(pTotal[m]).toLocaleString()}</b></div>`);
             document.getElementById('personal-list').innerHTML = pHtml;
         });
 
-        window.deleteTrip = async (id) => { if(confirm("刪除？")) await deleteDoc(doc(db, "trips", id)); };
-
-        // 附件連結邏輯
         window.saveLink = async () => {
             const name = document.getElementById('link-name').value;
             const url = document.getElementById('link-url').value;
-            if(!name || !url) return alert("請輸入名稱與網址");
             await addDoc(collection(db, "links"), { name, url, createdAt: new Date() });
-            document.getElementById('link-name').value = '';
-            document.getElementById('link-url').value = '';
+            document.getElementById('link-name').value = ''; document.getElementById('link-url').value = '';
         };
 
         onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snapshot) => {
-    let html = '';
-    snapshot.forEach(docSnap => {
-        const d = docSnap.data();
-        let previewHtml = '';
-
-        // 優化的 Google Drive 圖片代碼轉換
-        if (d.url.includes('drive.google.com')) {
-            // 抓取連結中的 ID 部分
-            const parts = d.url.split('/');
-            let fileId = '';
-            
-            // 處理不同的 Google Drive 網址格式
-            if (d.url.includes('/d/')) {
-                fileId = d.url.split('/d/')[1].split('/')[0];
-            } else if (d.url.includes('id=')) {
-                fileId = d.url.split('id=')[1].split('&')[0];
-            }
-
-            // 如果成功取得 ID，且不是資料夾（資料夾網址通常含 /folders/）
-            if (fileId && !d.url.includes('/folders/')) {
-                // 使用 Google Drive 官方預覽圖 API (輸出縮圖)
-                const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
-                previewHtml = `
-                    <div style="margin-top:10px; background:#eee; border-radius:8px; overflow:hidden; text-align:center;">
-                        <img src="${thumbnailUrl}" style="max-width:100%; display:block; margin:auto;" alt="預覽圖">
-                    </div>`;
-            }
-        }
-
-        html += `
-            <div class="card" style="padding:12px; border: 1px solid #eee;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:#333;">${d.name}</strong>
-                    <a href="${d.url}" target="_blank" class="drive-btn" style="background:#4285F4; color:white; padding:5px 12px; border-radius:4px; text-decoration:none; font-size:12px;">開啟</a>
-                </div>
-                ${previewHtml}
-                <div style="text-align:right; margin-top:8px;">
-                    <button onclick="deleteLink('${docSnap.id}')" style="background:none; color:#bbb; border:none; cursor:pointer; font-size:12px;">✕ 刪除</button>
-                </div>
-            </div>`;
-    });
-    document.getElementById('link-list').innerHTML = html;
-});
-
-        window.deleteLink = async (id) => { if(confirm("刪除連結？")) await deleteDoc(doc(db, "links", id)); };
+            let html = '';
+            snapshot.forEach(docSnap => {
+                const d = docSnap.data();
+                let fileId = d.url.includes('/d/') ? d.url.split('/d/')[1].split('/')[0] : '';
+                let preview = fileId ? `<img src="https://drive.google.com/thumbnail?id=${fileId}&sz=w800" class="preview-img">` : '';
+                html += `<div class="card">
+                    <div style="display:flex; justify-content:space-between;"><b>${d.name}</b> <a href="${d.url}" target="_blank" style="color:#2c3e50;"><i class="fas fa-external-link-alt"></i></a></div>
+                    ${preview}
+                </div>`;
+            });
+            document.getElementById('link-list').innerHTML = html;
+        });
     </script>
 </body>
 </html>
