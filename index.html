@@ -2,51 +2,70 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的旅遊行程表</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>旅遊助手 App</title>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 10px; background: #fdfdfd; }
-        .header { background: #333; color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
-        .input-section { background: #eee; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .input-group { display: flex; flex-wrap: wrap; gap: 5px; }
-        .input-group input { flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button#saveBtn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer; font-weight: bold; font-size: 16px; }
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 500px; font-size: 14px; }
-        th { background: #555; color: white; padding: 10px; text-align: left; }
+        :root { --primary: #007bff; --bg: #f8f9fa; }
+        body { font-family: sans-serif; margin: 0; padding-bottom: 70px; background: var(--bg); }
+        
+        /* 頁籤內容控制 */
+        .tab-content { display: none; padding: 15px; }
+        .tab-content.active { display: block; }
+
+        /* 底部導覽列 */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .nav-item { flex: 1; text-align: center; padding: 15px 0; cursor: pointer; color: #666; font-weight: bold; }
+        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); }
+
+        /* 表格樣式 */
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { border-bottom: 2px solid #eee; padding: 10px; text-align: left; background: #fff; position: sticky; top: 0; }
         td { border-bottom: 1px solid #eee; padding: 10px; }
-        .btn-del { color: #ff4444; border: 1px solid #ff4444; background: none; padding: 2px 5px; border-radius: 3px; cursor: pointer; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; }
+
+        /* 費用分攤樣式 */
+        .split-box { text-align: center; padding: 20px; }
+        .total-val { font-size: 32px; color: #d9534f; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2 style="margin:0">我的旅遊行程表</h2>
-        <div>總支出：<span id="total-amount">$0</span></div>
-    </div>
-
-    <div class="input-section">
-        <strong>➕ 新增行程</strong>
-        <div class="input-group">
+    <div id="tab-plan" class="tab-content active">
+        <div class="card">
+            <strong>➕ 新增行程</strong>
             <input type="date" id="date">
             <input type="text" id="time" placeholder="時間(09:00)">
             <input type="text" id="activity" placeholder="地點/活動">
             <input type="text" id="note" placeholder="備註">
-            <input type="number" id="cost" placeholder="費用">
-            <input type="text" id="fileUrl" placeholder="檔案連結">
+            <input type="number" id="cost" placeholder="金額">
+            <button id="saveBtn">新增</button>
         </div>
-        <button id="saveBtn">新增至清單</button>
+        
+        <div class="card" style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>日期</th><th>地點</th><th>費用</th><th>操作</th></tr></thead>
+                <tbody id="list-body"></tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>日期</th><th>時間</th><th>地點</th><th>備註/檔案</th><th>費用</th><th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="list-body"></tbody>
-        </table>
+    <div id="tab-split" class="tab-content">
+        <div class="card split-box">
+            <p>總花費金額</p>
+            <div class="total-val" id="total-val">$0</div>
+            <hr>
+            <p>分攤人數</p>
+            <input type="number" id="people-count" value="2" oninput="calculateSplit()">
+            <p style="margin-top:20px;">每人應付</p>
+            <div class="total-val" id="per-person" style="color: #28a745;">$0</div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('tab-plan', this)">🗺️ 行程</div>
+        <div class="nav-item" onclick="switchTab('tab-split', this)">💰 分攤</div>
     </div>
 
     <script type="module">
@@ -64,56 +83,62 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        let globalTotal = 0;
 
-        // 改用監聽器方式，解決 saveData is not defined 的問題
-        document.getElementById('saveBtn').addEventListener('click', async () => {
+        // 切換分頁邏輯
+        window.switchTab = (tabId, el) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+        };
+
+        // 儲存功能
+        document.getElementById('saveBtn').onclick = async () => {
             const date = document.getElementById('date').value;
-            const time = document.getElementById('time').value;
             const activity = document.getElementById('activity').value;
-            const note = document.getElementById('note').value;
-            const cost = document.getElementById('cost').value || 0;
-            const fileUrl = document.getElementById('fileUrl').value;
-
-            if(date && activity) {
-                try {
-                    await addDoc(collection(db, "trips"), { 
-                        date, time, activity, note, cost: parseFloat(cost), fileUrl, createdAt: new Date() 
-                    });
-                    // 清空欄位
-                    ['time', 'activity', 'note', 'cost', 'fileUrl'].forEach(id => document.getElementById(id).value = '');
-                } catch (e) {
-                    alert("儲存失敗：" + e.message);
-                }
-            } else {
-                alert("請填寫日期與地點");
-            }
-        });
+            if(!date || !activity) return alert("請填寫日期與地點");
+            
+            await addDoc(collection(db, "trips"), {
+                date, activity, 
+                time: document.getElementById('time').value,
+                note: document.getElementById('note').value,
+                cost: Number(document.getElementById('cost').value || 0),
+                createdAt: new Date()
+            });
+            ['time','activity','note','cost'].forEach(id => document.getElementById(id).value = '');
+        };
 
         // 刪除功能
         window.deleteItem = async (id) => {
             if(confirm("確定刪除？")) await deleteDoc(doc(db, "trips", id));
         };
 
+        // 計算分攤
+        window.calculateSplit = () => {
+            const people = document.getElementById('people-count').value || 1;
+            const perPerson = globalTotal / people;
+            document.getElementById('per-person').innerText = '$' + Math.round(perPerson).toLocaleString();
+        };
+
         // 讀取資料
         const q = query(collection(db, "trips"), orderBy("date", "asc"), orderBy("time", "asc"));
         onSnapshot(q, (snapshot) => {
             let html = '';
-            let total = 0;
+            globalTotal = 0;
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const fileLink = data.fileUrl ? `<br><a href="${data.fileUrl}" target="_blank">🔗 檔案</a>` : '';
                 html += `<tr>
-                    <td>${data.date}</td>
-                    <td>${data.time}</td>
-                    <td><b>${data.activity}</b></td>
-                    <td>${data.note}${fileLink}</td>
+                    <td>${data.date}<br><small>${data.time}</small></td>
+                    <td><b>${data.activity}</b><br><small>${data.note}</small></td>
                     <td>$${data.cost}</td>
-                    <td><button class="btn-del" onclick="deleteItem('${doc.id}')">✕</button></td>
+                    <td><button onclick="deleteItem('${doc.id}')" style="background:none; color:red; width:auto; border:none; padding:0">✕</button></td>
                 </tr>`;
-                total += Number(data.cost);
+                globalTotal += Number(data.cost);
             });
             document.getElementById('list-body').innerHTML = html;
-            document.getElementById('total-amount').innerText = '$' + total.toLocaleString();
+            document.getElementById('total-val').innerText = '$' + globalTotal.toLocaleString();
+            calculateSplit();
         });
     </script>
 </body>
