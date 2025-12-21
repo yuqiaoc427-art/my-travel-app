@@ -63,8 +63,6 @@
         .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #eee; border-radius: 12px; font-size: 15px; box-sizing: border-box; font-family: inherit; }
         
-        .pac-container { z-index: 9999 !important; border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: inherit; margin-top: 5px; }
-        
         /* 匯率與成員管理樣式 */
         .currency-card { background: var(--glass); border-radius: 24px; padding: 20px; margin: 15px 5px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .member-row { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 15px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); }
@@ -73,7 +71,7 @@
         .member-info input { margin: 0; padding: 8px; font-size: 13px; }
         .member-info select { margin: 0; padding: 5px; font-size: 12px; height: 32px; }
 
-        .preview-img { width: 100%; border-radius: 15px; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: block; }
+        .pac-container { z-index: 9999 !important; border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: inherit; margin-top: 5px; }
         .settle-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 12px; border-radius: 10px; margin-top: 15px; font-size: 14px; text-align: left; }
         .btn-danger-outline { width: 100%; padding: 12px; background: white; color: var(--danger); border: 2px solid var(--danger); border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; }
     </style>
@@ -93,7 +91,7 @@
             <input type="text" id="input-trip-name" placeholder="例如：115 北海道之旅">
             
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 10px 5px;">
-                <span style="font-size:12px; color:#666;">成員與頭像設定</span>
+                <span style="font-size:12px; color:#666;">成員設定</span>
                 <button onclick="addMemberRow()" style="background:var(--accent); color:white; border:none; padding:5px 12px; border-radius:8px; font-size:11px; font-weight:bold;">+ 新增成員</button>
             </div>
             
@@ -147,7 +145,7 @@
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
             <strong>📎 雲端附件</strong>
             <input type="text" id="link-name" placeholder="檔案描述">
-            <input type="text" id="link-url" placeholder="貼上 Google Drive 連結">
+            <input type="text" id="link-url" placeholder="貼上分享連結">
             <button onclick="saveLink()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px;">儲存附件</button>
         </div>
         <div id="link-list"></div>
@@ -159,7 +157,7 @@
             <p style="margin:0; color:#666;">旅程總支出</p>
             <h1 id="total-val">$0</h1>
             <div id="personal-list"></div>
-            <div id="settle-suggestions" class="settle-card">計算建議中...</div>
+            <div id="settle-suggestions" class="settle-card">正在計算建議...</div>
         </div>
     </div>
 
@@ -185,7 +183,8 @@
     <div id="modal-flight" class="modal-overlay"><div class="modal-content">
         <h3>✈️ 登機證設定</h3>
         <select id="f-type"><option value="go">去程</option><option value="back">回程</option></select>
-        <input type="text" id="f-air" placeholder="航空公司"><input type="text" id="f-no" placeholder="航班號碼">
+        <input type="text" id="f-air" placeholder="航空公司">
+        <input type="text" id="f-no" placeholder="航班號碼">
         <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="TPE"><input type="time" id="f-from-t"></div>
         <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="CTS"><input type="time" id="f-to-t"></div>
         <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
@@ -193,10 +192,10 @@
     </div></div>
 
     <div id="modal-reset" class="modal-overlay"><div class="modal-content">
-        <h3 style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> 確定清除資料？</h3>
-        <p>這會重置目前所有的行程與帳目。</p>
+        <h3 style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> 確定重設資料？</h3>
+        <p>這將永久清除所有目前旅程的資料。</p>
         <button onclick="resetAllData()" style="width:100%; background:var(--danger); color:white; padding:12px; border:none; border-radius:12px; font-weight:bold;">是的，清除</button>
-        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">保留返回</button>
     </div></div>
 
     <div id="modal-payment" class="modal-overlay"><div class="modal-content">
@@ -245,16 +244,16 @@
         let currentMembers = [], selectedDate = "";
         let exchangeRate = 0.22;
 
-        // 北海道動物圖片選單
+        // 使用實體公開連結的北海道動物頭像
         const AVATAR_OPTIONS = [
-            { name: '北狐', url: 'image_5252f4.png' },
-            { name: '蝦夷小飛鼠', url: 'image_525023.png' },
-            { name: '蝦夷鳴兔', url: 'image_525047.png' },
-            { name: '蝦夷鹿', url: 'image_525041.png' },
-            { name: '丹頂鶴', url: 'image_525332.png' },
-            { name: '棕熊', url: 'image_525310.png' },
-            { name: '銀喉長尾山雀', url: 'image_52532b.png' },
-            { name: '虎頭海鵰', url: 'image_5252ee.png' }
+            { name: '北狐', url: 'https://images.unsplash.com/photo-1516934024742-b461fba4760a?w=100&h=100&fit=crop' },
+            { name: '蝦夷小飛鼠', url: 'https://images.unsplash.com/photo-1507356102280-305608778f8c?w=100&h=100&fit=crop' },
+            { name: '蝦夷鳴兔', url: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=100&h=100&fit=crop' },
+            { name: '蝦夷鹿', url: 'https://images.unsplash.com/photo-1484406566174-9da000fda645?w=100&h=100&fit=crop' },
+            { name: '丹頂鶴', url: 'https://images.unsplash.com/photo-1612140417641-7a71f0217983?w=100&h=100&fit=crop' },
+            { name: '棕熊', url: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=100&h=100&fit=crop' },
+            { name: '銀喉長尾山雀', url: 'https://images.unsplash.com/photo-1552728089-57bdde30eba3?w=100&h=100&fit=crop' },
+            { name: '虎頭海鵰', url: 'https://images.unsplash.com/photo-1543444983-500742183c5e?w=100&h=100&fit=crop' }
         ];
 
         const typeIcons = {
@@ -277,7 +276,7 @@
             row.innerHTML = `
                 <img src="${avatar}" class="member-avatar-preview" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
                 <div class="member-info">
-                    <input type="text" class="member-name-input" value="${name}" placeholder="成員姓名">
+                    <input type="text" class="member-name-input" value="${name}" placeholder="旅伴姓名">
                     <select class="member-avatar-select" onchange="this.parentElement.previousElementSibling.src = this.value">
                         ${optionsHtml}
                     </select>
@@ -305,26 +304,13 @@
             else jpyInput.value = (twdInput.value / exchangeRate).toFixed(2);
         };
 
-        // --- 重置 ---
-        window.resetAllData = async () => {
-            const collectionsToClear = ["itinerary", "expenses", "links", "flights"];
-            try {
-                for (const colName of collectionsToClear) {
-                    const snap = await getDocs(collection(db, colName));
-                    for (const d of snap.docs) await deleteDoc(doc(db, colName, d.id));
-                }
-                await deleteDoc(doc(db, "settings", "currentTrip"));
-                window.location.reload();
-            } catch (e) { alert("重設失敗。"); }
-        };
-
         // --- GPS 與天氣 ---
         async function updateWeather(fallbackLoc) {
             const weatherBox = document.getElementById('weather-box');
             const getW = async (params) => {
                 try {
                     const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?${params}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`);
-                    const data = await res.json();
+                    const d = await res.json();
                     if(d.cod===200) { 
                         weatherBox.innerHTML = `<i class="fas fa-location-arrow" style="font-size:11px;opacity:0.7;"></i> <img src="https://openweathermap.org/img/wn/${d.weather[0].icon}.png" width="28"><b>${d.name}: ${Math.round(d.main.temp)}°C</b>`; 
                         return true; 
@@ -427,7 +413,7 @@
             const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number);
             let diff = (eh * 60 + em) - (sh * 60 + sm);
             if(diff < 0) diff += 1440;
-            return `停留 ${Math.floor(diff/60)}h${diff%60}m`;
+            return `停留 ${Math.floor(diff/60)}時${diff%60}分`;
         }
 
         async function getCommute(o, d) {
@@ -491,6 +477,7 @@
             refreshItinerary();
         };
 
+        // --- 航班與附件 ---
         onSnapshot(collection(db, "flights"), (snap) => {
             let html = '';
             snap.forEach(dSnap => {
@@ -533,6 +520,7 @@
         });
         window.deleteLink = async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "links", id)); };
 
+        // --- 分帳 ---
         async function refreshSettlement() {
             const snap = await getDocs(collection(db, "expenses"));
             let total = 0, balances = {};
@@ -583,6 +571,18 @@
         window.saveExpense = async () => {
             await addDoc(collection(db, "expenses"), { amount: Number(document.getElementById('pay-amount').value), payer: document.getElementById('pay-payer').value, splitTo: [...document.querySelectorAll('.split-cb:checked')].map(c => c.value), date: selectedDate });
             alert("帳目已紀錄。"); closeModal(); refreshSettlement();
+        };
+
+        window.resetAllData = async () => {
+            const collectionsToClear = ["itinerary", "expenses", "links", "flights"];
+            try {
+                for (const colName of collectionsToClear) {
+                    const snap = await getDocs(collection(db, colName));
+                    for (const d of snap.docs) await deleteDoc(doc(db, colName, d.id));
+                }
+                await deleteDoc(doc(db, "settings", "currentTrip"));
+                window.location.reload();
+            } catch (e) { alert("重設失敗。"); }
         };
 
         window.switchTab = (id, el) => {
