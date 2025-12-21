@@ -1,13 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { TripSettings, Flight, Member } from '../types';
-import { setDoc, doc } from 'firebase/firestore';
-import { db } from '../services/firebase';
-import BoardingPass from './BoardingPass';
-import { Input } from './ui/Input';
-import { Button } from './ui/Button';
-import SnowEffect from './SnowEffect';
+import React, { useState, useEffect, useRef } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getFirestore, doc, setDoc, onSnapshot, collection, 
+  query, orderBy, addDoc, getDocs, where, deleteDoc, updateDoc, getDoc 
+} from 'firebase/firestore';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { LucidePlane, LucideMapPin, LucideUtensils, LucideCoffee, LucideMoon, LucideHotel, LucideNavigation, LucideTrash2, LucideX, LucideRefreshCw, LucideCoins, LucideChevronRight } from 'lucide-react';
+import Sortable from 'sortablejs';
 
-// 旅伴頭像選項 - 已更新為您提供的 8 張圖片
+// --- Firebase 配置 ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'qiao-travel-app';
+
+// --- 頭像選項 ---
 const AVATAR_OPTIONS = [
   { name: '頭像 1', url: 'image_5252f4.png' },
   { name: '頭像 2', url: 'image_525023.png' },
@@ -19,23 +27,93 @@ const AVATAR_OPTIONS = [
   { name: '頭像 8', url: 'image_5252ee.png' }
 ];
 
-interface HomeTabProps {
-  settings: TripSettings;
-  flights: Flight[];
-  onReset: () => void;
-}
+const TYPE_ICONS = {
+  attraction: <LucideMapPin size={20} />,
+  hotel: <LucideHotel size={20} />,
+  flight: <LucidePlane size={20} />,
+  breakfast: <LucideCoffee size={20} />,
+  lunch: <LucideUtensils size={20} />,
+  dinner: <LucideMoon size={20} />,
+};
 
-const HomeTab: React.FC<HomeTabProps> = ({ settings, flights, onReset }) => {
+// --- 工具函數 ---
+const getTimeDiff = (s, e) => {
+  if (!s || !e) return "";
+  const [sh, sm] = s.split(':').map(Number);
+  const [eh, em] = e.split(':').map(Number);
+  let diff = (eh * 60 + em) - (sh * 60 + sm);
+  if (diff < 0) diff += 1440;
+  return `停留 ${Math.floor(diff / 60)}時${diff % 60}分`;
+};
+
+// --- 主要 App 組件 ---
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('home');
+  const [settings, setSettings] = useState({ tripName: '', start: '', end: '', members: [] });
+  const [flights, setFlights] = useState([]);
+  const [itinerary, setItinerary] = useState([]);
+  const [links, setLinks] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [weather, setWeather] = useState(null);
   const [exchangeRate, setExchangeRate] = useState(0.22);
-  const [jpy, setJpy] = useState('');
-  const [twd, setTwd] = useState('');
-  const [localSettings, setLocalSettings] = useState<TripSettings>(settings);
-  const [isFlightModalOpen, setIsFlightModalOpen] = useState(false);
 
+  // 初始化 Auth
   useEffect(() => {
-    setLocalSettings(settings);
-  }, [settings]);
+    const initAuth = async () => {
+      await signInAnonymously(auth);
+    };
+    initAuth();
+    return onAuthStateChanged(auth, setUser);
+  }, []);
 
+  // 監聽 Firebase 數據
+  useEffect(() => {
+    if (!user) return;
+
+    const publicPath = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
+
+    const unsubSettings = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'currentTrip'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setSettings(data);
+        if (!selectedDate && data.start) setSelectedDate(data.start);
+      }
+    }, (err) => console.error(err));
+
+    const unsubFlights = onSnapshot(publicPath('flights'), (snap) => {
+      setFlights(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => console.error(err));
+
+    const unsubLinks = onSnapshot(query(publicPath('links'), orderBy('createdAt', 'desc')), (snap) => {
+      setLinks(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => console.error(err));
+
+    const unsubExpenses = onSnapshot(publicPath('expenses'), (snap) => {
+      setExpenses(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => console.error(err));
+
+    return () => {
+      unsubSettings();
+      unsubFlights();
+      unsubLinks();
+      unsubExpenses();
+    };
+  }, [user]);
+
+  // 行程專用監聽（隨日期變化）
+  useEffect(() => {
+    if (!user || !selectedDate) return;
+    const qI = query(collection(db, 'artifacts', appId, 'public', 'data', 'itinerary'), where('date', '==', selectedDate));
+    return onSnapshot(qI, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.start.localeCompare(b.start));
+      setItinerary(data);
+      updateWeather(data.length > 0 ? data[0].location : null);
+    }, (err) => console.error(err));
+  }, [user, selectedDate]);
+
+  // 獲取匯率
   useEffect(() => {
     fetch('https://open.er-api.com/v6/latest/JPY')
       .then(res => res.json())
@@ -43,164 +121,558 @@ const HomeTab: React.FC<HomeTabProps> = ({ settings, flights, onReset }) => {
       .catch(() => {});
   }, []);
 
-  const saveSettings = async () => {
-    await setDoc(doc(db, "settings", "currentTrip"), localSettings);
-    alert("❄️ 北海道行程已同步");
+  // GPS 天氣邏輯
+  const updateWeather = async (fallbackLoc) => {
+    const fetchWeather = async (params) => {
+      try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?${params}&appid=c8f4d0fbf6c2b1cded4335d40c62d3f5&units=metric&lang=zh_tw`);
+        const data = await res.json();
+        if (data.cod === 200) setWeather(data);
+      } catch (e) {}
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fetchWeather(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`),
+        () => {
+          if (fallbackLoc) {
+            const city = fallbackLoc.split(/[ ,，、]/)[0].substring(0, 10);
+            fetchWeather(`q=${encodeURIComponent(city)}`);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
   };
 
-  const handleMemberChange = (index: number, field: keyof Member, value: string) => {
-    const newMembers = [...localSettings.members];
-    newMembers[index] = { ...newMembers[index], [field]: value };
-    setLocalSettings({...localSettings, members: newMembers});
-  };
-
-  const addMember = () => {
-    setLocalSettings({
-      ...localSettings, 
-      members: [...localSettings.members, { name: '', avatar: AVATAR_OPTIONS[0].url }]
-    });
+  const resetAllData = async () => {
+    if (!confirm("確定要重設所有旅程資料嗎？此操作無法還原。")) return;
+    const cols = ['itinerary', 'expenses', 'links', 'flights'];
+    for (const c of cols) {
+      const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', c));
+      for (const d of snap.docs) await deleteDoc(d.ref);
+    }
+    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'currentTrip'), { tripName: '', start: '', end: '', members: [] });
+    window.location.reload();
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 relative">
-      <SnowEffect />
-      
-      {/* 航班資訊 */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-center px-2">
-          <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">我的機票</h2>
-          <button onClick={() => setIsFlightModalOpen(true)} className="text-blue-600 text-xs font-bold transition-colors hover:text-blue-800">+ 新增</button>
+    <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-24 font-sans text-slate-900 overflow-x-hidden relative">
+      {/* 背景裝飾 */}
+      <div className="fixed inset-0 pointer-events-none opacity-20 z-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <div key={i} className="absolute text-blue-200 animate-pulse" style={{
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            fontSize: `${Math.random() * 20 + 10}px`
+          }}>❄</div>
+        ))}
+      </div>
+
+      <header className="pt-10 px-6 pb-4 text-center z-10 relative">
+        <h1 className="text-2xl font-black tracking-tight text-blue-900 drop-shadow-sm uppercase">
+          {settings.tripName || "我的旅遊誌"}
+        </h1>
+        {weather && (
+          <div className="mt-2 inline-flex items-center gap-2 bg-white/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white shadow-sm">
+            <LucideNavigation size={12} className="text-blue-500 fill-blue-500" />
+            <img src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}.png`} className="w-6 h-6" alt="weather" />
+            <span className="text-xs font-bold">{weather.name} · {Math.round(weather.main.temp)}°C</span>
+          </div>
+        )}
+      </header>
+
+      <main className="px-5 z-10 relative">
+        {activeTab === 'home' && <HomeTab settings={settings} flights={flights} exchangeRate={exchangeRate} onReset={resetAllData} />}
+        {activeTab === 'plan' && <PlanTab itinerary={itinerary} selectedDate={selectedDate} setSelectedDate={setSelectedDate} settings={settings} />}
+        {activeTab === 'files' && <FilesTab links={links} />}
+        {activeTab === 'split' && <SplitTab expenses={expenses} members={settings.members} />}
+      </main>
+
+      <nav className="fixed bottom-6 left-5 right-5 h-16 bg-white/95 backdrop-blur-lg rounded-[32px] shadow-2xl flex items-center justify-around z-50 border border-white/50">
+        <NavItem icon={<LucidePlane size={22} />} label="首頁" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+        <NavItem icon={<LucideMapPin size={22} />} label="行程" active={activeTab === 'plan'} onClick={() => setActiveTab('plan')} />
+        <NavItem icon={<LucideRefreshCw size={22} />} label="附件" active={activeTab === 'files'} onClick={() => setActiveTab('files')} />
+        <NavItem icon={<LucideCoins size={22} />} label="分帳" active={activeTab === 'split'} onClick={() => setActiveTab('split')} />
+      </nav>
+    </div>
+  );
+}
+
+// --- 分頁組件 ---
+
+function HomeTab({ settings, flights, exchangeRate, onReset }) {
+  const [jpy, setJpy] = useState('');
+  const [twd, setTwd] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [localSettings, setLocalSettings] = useState(settings);
+
+  useEffect(() => { setLocalSettings(settings); }, [settings]);
+
+  const saveSettings = async () => {
+    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'currentTrip'), localSettings);
+    alert("❄️ 行程設定已同步");
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <section className="space-y-3">
+        <div className="flex justify-between items-center px-1">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">我的登機證</h3>
+          <button onClick={() => setIsModalOpen(true)} className="text-blue-600 text-[10px] font-black">+ 新增</button>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar px-1">
-          {flights.map(f => <div key={f.id} className="min-w-[280px] shrink-0"><BoardingPass flight={f} /></div>)}
-          {flights.length === 0 && (
-            <div className="w-full bg-white/50 border-2 border-dashed border-blue-100 rounded-[30px] p-6 text-center text-slate-300">
-              尚無航班資訊
-            </div>
-          )}
+        <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+          {flights.map(f => <BoardingPassCard key={f.id} flight={f} />)}
+          {flights.length === 0 && <div className="w-full h-32 bg-white/40 border-2 border-dashed border-slate-200 rounded-3xl flex items-center justify-center text-slate-300 font-bold">尚無航班</div>}
         </div>
       </section>
 
-      {/* 旅程設定 */}
-      <section className="bg-white/80 backdrop-blur-md rounded-[40px] p-7 shadow-sm border border-white space-y-5">
-        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-          <i className="fas fa-snowflake text-blue-400"></i> 旅程設定
-        </h2>
-        <Input 
-          label="旅行主題" 
-          value={localSettings.tripName} 
-          onChange={v => setLocalSettings({...localSettings, tripName: v})} 
-        />
+      <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-6 shadow-sm space-y-4 border border-white">
+        <h3 className="font-black text-lg text-slate-800">旅程設定</h3>
+        <input className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none font-bold text-sm" placeholder="旅行名稱" value={localSettings.tripName} onChange={e => setLocalSettings({...localSettings, tripName: e.target.value})} />
         
         <div className="space-y-3">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">旅伴與頭像</label>
-          <div className="flex flex-col gap-3">
-            {localSettings.members.map((m, i) => (
-              <div key={i} className="flex items-center gap-3 bg-slate-50 p-2 rounded-3xl group transition-all hover:bg-slate-100">
-                <div className="relative shrink-0">
-                  <img src={m.avatar} className="w-12 h-12 rounded-full border-2 border-white shadow-sm bg-white p-0.5 object-cover" alt="Avatar" />
-                  <select 
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    value={m.avatar}
-                    onChange={e => handleMemberChange(i, 'avatar', e.target.value)}
-                  >
-                    {AVATAR_OPTIONS.map(opt => (
-                      <option key={opt.url} value={opt.url}>{opt.name}</option>
-                    ))}
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">成員與頭像</span>
+          <div className="space-y-2">
+            {localSettings.members?.map((m, i) => (
+              <div key={i} className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl">
+                <div className="relative w-10 h-10 shrink-0">
+                  <img src={m.avatar} className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm" alt="avatar" />
+                  <select className="absolute inset-0 opacity-0 cursor-pointer" value={m.avatar} onChange={e => {
+                    const nm = [...localSettings.members];
+                    nm[i].avatar = e.target.value;
+                    setLocalSettings({...localSettings, members: nm});
+                  }}>
+                    {AVATAR_OPTIONS.map(opt => <option key={opt.url} value={opt.url}>{opt.name}</option>)}
                   </select>
                 </div>
-                <input 
-                  className="bg-transparent border-none outline-none font-bold text-slate-700 w-full text-sm"
-                  value={m.name}
-                  placeholder="旅伴名稱"
-                  onChange={e => handleMemberChange(i, 'name', e.target.value)}
-                />
+                <input className="bg-transparent font-bold text-sm outline-none flex-1" value={m.name} placeholder="姓名" onChange={e => {
+                  const nm = [...localSettings.members];
+                  nm[i].name = e.target.value;
+                  setLocalSettings({...localSettings, members: nm});
+                }} />
                 <button onClick={() => {
-                   const nm = [...localSettings.members];
-                   nm.splice(i, 1);
-                   setLocalSettings({...localSettings, members: nm});
-                }} className="text-slate-200 px-2 hover:text-rose-500 transition-colors"><i className="fas fa-times"></i></button>
+                  const nm = localSettings.members.filter((_, idx) => idx !== i);
+                  setLocalSettings({...localSettings, members: nm});
+                }} className="text-slate-300 hover:text-red-400 p-1"><LucideX size={16} /></button>
               </div>
             ))}
-            <button onClick={addMember} className="py-3 border-2 border-dashed border-slate-100 rounded-2xl text-slate-400 text-[10px] font-black uppercase hover:bg-slate-50 transition-colors">
+            <button onClick={() => setLocalSettings({...localSettings, members: [...(localSettings.members || []), { name: '', avatar: AVATAR_OPTIONS[0].url }]})} className="w-full py-3 border-2 border-dashed border-slate-100 rounded-2xl text-[10px] font-black text-slate-400 uppercase hover:bg-slate-50 transition-colors">
               + 新增旅伴
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Input type="date" label="出發日" value={localSettings.start} onChange={v => setLocalSettings({...localSettings, start: v})} />
-          <Input type="date" label="回程日" value={localSettings.end} onChange={v => setLocalSettings({...localSettings, end: v})} />
+        <div className="grid grid-cols-2 gap-3">
+          <input type="date" className="p-4 bg-slate-50 rounded-2xl border-none outline-none font-bold text-xs" value={localSettings.start} onChange={e => setLocalSettings({...localSettings, start: e.target.value})} />
+          <input type="date" className="p-4 bg-slate-50 rounded-2xl border-none outline-none font-bold text-xs" value={localSettings.end} onChange={e => setLocalSettings({...localSettings, end: e.target.value})} />
         </div>
-        <Button onClick={saveSettings} className="w-full">儲存設定</Button>
-      </section>
+        <button onClick={saveSettings} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-200 active:scale-95 transition-all">儲存變更</button>
+      </div>
 
-      {/* 匯率換算 */}
-      <section className="bg-white/80 backdrop-blur-md rounded-[40px] p-7 shadow-sm border border-white">
-        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2 mb-5">
-          <i className="fas fa-coins text-amber-400"></i> 北海道匯率換算
-        </h2>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1 bg-slate-50 p-4 rounded-[25px]">
-            <span className="text-[10px] font-black text-slate-400 block mb-1">JPY</span>
-            <input type="number" className="w-full bg-transparent border-none text-xl font-black text-slate-700 outline-none" value={jpy} onChange={e => {
+      <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-6 shadow-sm space-y-4 border border-white">
+        <h3 className="font-black text-lg text-slate-800">匯率換算</h3>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 bg-slate-50 p-3 rounded-2xl">
+            <span className="text-[10px] font-black text-slate-400 block mb-1 uppercase">JPY</span>
+            <input type="number" className="bg-transparent font-black text-lg outline-none w-full" value={jpy} onChange={e => {
               setJpy(e.target.value);
-              const val = parseFloat(e.target.value);
-              setTwd(isNaN(val) ? '' : (val * exchangeRate).toFixed(0));
+              setTwd(e.target.value ? (parseFloat(e.target.value) * exchangeRate).toFixed(0) : '');
             }} />
           </div>
-          <i className="fas fa-exchange-alt text-slate-200"></i>
-          <div className="flex-1 bg-slate-50 p-4 rounded-[25px]">
-            <span className="text-[10px] font-black text-slate-400 block mb-1">TWD</span>
-            <input type="number" className="w-full bg-transparent border-none text-xl font-black text-slate-700 outline-none" value={twd} onChange={e => {
+          <LucideRefreshCw size={16} className="text-slate-300" />
+          <div className="flex-1 bg-slate-50 p-3 rounded-2xl">
+            <span className="text-[10px] font-black text-slate-400 block mb-1 uppercase">TWD</span>
+            <input type="number" className="bg-transparent font-black text-lg outline-none w-full" value={twd} onChange={e => {
               setTwd(e.target.value);
-              const val = parseFloat(e.target.value);
-              setJpy(isNaN(val) ? '' : (val / exchangeRate).toFixed(0));
+              setJpy(e.target.value ? (parseFloat(e.target.value) / exchangeRate).toFixed(0) : '');
             }} />
           </div>
         </div>
-      </section>
+        <p className="text-[10px] text-slate-400 text-right font-bold italic">1 JPY ≈ {exchangeRate.toFixed(4)} TWD</p>
+      </div>
 
-      <Button variant="danger" className="w-full bg-white text-rose-500 border-none shadow-none font-bold py-3 transition-colors hover:bg-rose-50" onClick={onReset}>
-        清除目前旅程
-      </Button>
+      <button onClick={onReset} className="w-full py-4 text-slate-300 font-bold text-xs hover:text-red-400 transition-colors uppercase tracking-widest">重設所有資料</button>
 
-      {isFlightModalOpen && <FlightModal onClose={() => setIsFlightModalOpen(false)} />}
+      {isModalOpen && <FlightModal onClose={() => setIsModalOpen(false)} />}
     </div>
   );
-};
+}
 
-const FlightModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const [flight, setFlight] = useState({ air: '', no: '', from: '', fromT: '', to: '', toT: '', type: 'go' as 'go' | 'back' });
-  const save = async () => {
-    if (!flight.air || !flight.from || !flight.to) return alert("請填寫完整資訊");
-    await setDoc(doc(db, "flights", flight.type), flight);
-    onClose();
-  };
+function PlanTab({ itinerary, selectedDate, setSelectedDate, settings }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const listRef = useRef(null);
+
+  const dates = [];
+  if (settings.start && settings.end) {
+    let curr = new Date(settings.start);
+    const last = new Date(settings.end);
+    while (curr <= last) {
+      dates.push(new Date(curr).toISOString().split('T')[0]);
+      curr.setDate(curr.getDate() + 1);
+    }
+  }
+
+  useEffect(() => {
+    if (listRef.current) {
+      Sortable.create(listRef.current, {
+        animation: 150,
+        delay: 300,
+        delayOnTouchOnly: true,
+        handle: '.itinerary-card',
+        onEnd: async (evt) => {
+          // 在本系統中排序由時間控制，拖曳僅提供視覺反饋
+        }
+      });
+    }
+  }, [itinerary]);
+
   return (
-    <div className="fixed inset-0 z-[100] bg-blue-900/40 flex items-center justify-center p-6 backdrop-blur-sm">
-      <div className="bg-white rounded-[40px] w-full max-w-sm p-8 space-y-4 shadow-2xl animate-in zoom-in-95 duration-300">
-        <h3 className="text-xl font-black">新增登機證</h3>
-        <select className="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none" value={flight.type} onChange={e => setFlight({...flight, type: e.target.value as any})}>
-          <option value="go">去程航班</option><option value="back">回程航班</option>
+    <div className="space-y-4 animate-in fade-in duration-500">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
+        {dates.map(d => {
+          const dt = new Date(d);
+          const active = selectedDate === d;
+          return (
+            <button key={d} onClick={() => setSelectedDate(d)} className={`min-w-[60px] h-20 rounded-2xl flex flex-col items-center justify-center transition-all ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white text-slate-400'}`}>
+              <span className="text-[10px] font-black uppercase">{dt.toLocaleDateString('zh-TW', { weekday: 'short' })}</span>
+              <span className="text-lg font-black">{dt.getDate()}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div ref={listRef} className="space-y-3">
+        {itinerary.map((item, idx) => (
+          <React.Fragment key={item.id}>
+            <div className="itinerary-card bg-white rounded-[28px] p-5 shadow-sm border border-slate-100 flex items-center relative group">
+              <button onClick={async () => { if(confirm("刪除？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'itinerary', item.id)) }} className="absolute -top-1 -left-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <LucideX size={14} />
+              </button>
+              
+              <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0 mr-4">
+                {TYPE_ICONS[item.type] || <LucideMapPin size={20} />}
+              </div>
+
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black text-blue-900">{item.start} - {item.end}</span>
+                  <span className="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">{getTimeDiff(item.start, item.end)}</span>
+                </div>
+                <h4 className="font-bold text-slate-800 text-base">{item.location}</h4>
+                {item.desc && <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>}
+              </div>
+
+              <div className="flex flex-col gap-2 ml-2">
+                <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`, '_blank')} className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-500 transition-colors">
+                  <LucideNavigation size={18} />
+                </button>
+                <button onClick={() => { setEditId(item.id); setIsModalOpen(true); }} className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 transition-colors">
+                  <LucideChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+            {idx < itinerary.length - 1 && (
+              <div className="ml-10 py-1 flex items-center gap-2 text-slate-300 font-bold text-[10px]">
+                <div className="w-0.5 h-4 bg-slate-200 rounded-full"></div>
+                <LucidePlane size={10} className="rotate-90" />
+                <span>交通預計 ...</span>
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+        {itinerary.length === 0 && <div className="py-12 text-center text-slate-300 font-bold">本日尚無行程</div>}
+      </div>
+
+      <button onClick={() => { setEditId(null); setIsModalOpen(true); }} className="fixed bottom-24 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-xl flex items-center justify-center active:scale-90 transition-transform z-40">
+        <LucideX size={24} className="rotate-45" />
+      </button>
+
+      {isModalOpen && <PlanModal onClose={() => setIsModalOpen(false)} editId={editId} date={selectedDate} />}
+    </div>
+  );
+}
+
+function FilesTab({ links }) {
+  const [name, setName] = useState('');
+  const [url, setUrl] = useState('');
+
+  const save = async () => {
+    if (!name || !url) return;
+    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'links'), { name, url, createdAt: new Date() });
+    setName(''); setUrl('');
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="bg-white rounded-[32px] p-6 shadow-sm space-y-4 border border-white">
+        <h3 className="font-black text-lg">新增雲端連結</h3>
+        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="檔案描述 (例如：訂房憑證)" value={name} onChange={e => setName(e.target.value)} />
+        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="Google Drive 連結" value={url} onChange={e => setUrl(e.target.value)} />
+        <button onClick={save} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm">儲存附件</button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {links.map(l => {
+          let fId = l.url.includes('/d/') ? l.url.split('/d/')[1].split('/')[0] : '';
+          return (
+            <div key={l.id} className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex items-center justify-between group">
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-800">{l.name}</h4>
+                <a href={l.url} target="_blank" rel="noreferrer" className="text-blue-500 text-[10px] font-black uppercase tracking-widest mt-1 inline-block">開啟外部連結</a>
+                {fId && <img src={`https://drive.google.com/thumbnail?id=${fId}&sz=w800`} className="mt-3 rounded-xl w-full h-32 object-cover" alt="preview" />}
+              </div>
+              <button onClick={async () => { if(confirm("刪除？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'links', l.id)) }} className="p-3 text-slate-200 hover:text-red-500"><LucideTrash2 size={20} /></button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SplitTab({ expenses, members }) {
+  const [amount, setAmount] = useState('');
+  const [payer, setPayer] = useState('');
+  const [splitTo, setSplitTo] = useState([]);
+
+  useEffect(() => {
+    if (members?.length > 0) {
+      setPayer(members[0].name);
+      setSplitTo(members.map(m => m.name));
+    }
+  }, [members]);
+
+  const save = async () => {
+    if (!amount || splitTo.length === 0) return;
+    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), { 
+      amount: parseFloat(amount), 
+      payer, 
+      splitTo, 
+      createdAt: new Date() 
+    });
+    setAmount('');
+  };
+
+  const balances = {};
+  members?.forEach(m => balances[m.name] = 0);
+  expenses.forEach(e => {
+    balances[e.payer] += e.amount;
+    const per = e.amount / e.splitTo.length;
+    e.splitTo.forEach(m => balances[m] -= per);
+  });
+
+  const debtors = [], creditors = [];
+  Object.entries(balances).forEach(([name, bal]) => {
+    if (bal < -1) debtors.push({ name, amt: -bal });
+    else if (bal > 1) creditors.push({ name, amt: bal });
+  });
+
+  const suggestions = [];
+  let i = 0, j = 0;
+  const dClone = JSON.parse(JSON.stringify(debtors));
+  const cClone = JSON.parse(JSON.stringify(creditors));
+  while(i < dClone.length && j < cClone.length) {
+    const pay = Math.min(dClone[i].amt, cClone[j].amt);
+    suggestions.push(`${dClone[i].name} ➡️ 給 ${cClone[j].name} $${Math.round(pay)}`);
+    dClone[i].amt -= pay; cClone[j].amt -= pay;
+    if (dClone[i].amt < 1) i++;
+    if (cClone[j].amt < 1) j++;
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="bg-white rounded-[32px] p-6 shadow-sm space-y-4 border border-white text-center">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">旅程總支出</span>
+        <h2 className="text-4xl font-black text-slate-800">${Math.round(expenses.reduce((acc, e) => acc + e.amount, 0))}</h2>
+        
+        <div className="pt-4 grid grid-cols-2 gap-4">
+          {Object.entries(balances).map(([name, bal]) => (
+            <div key={name} className="bg-slate-50 p-3 rounded-2xl">
+              <span className="text-[10px] font-bold text-slate-400 block">{name}</span>
+              <span className={`text-sm font-black ${bal >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {bal >= 0 ? '+' : ''}{Math.round(bal)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {suggestions.length > 0 && (
+        <div className="bg-green-50 border-2 border-green-100 rounded-3xl p-5 space-y-2">
+          <h4 className="text-xs font-black text-green-600 uppercase">💡 結算建議</h4>
+          {suggestions.map((s, idx) => <p key={idx} className="text-sm font-bold text-green-700">{s}</p>)}
+        </div>
+      )}
+
+      <div className="bg-white rounded-[32px] p-6 shadow-sm space-y-4 border border-white">
+        <h3 className="font-black text-lg">新增支出</h3>
+        <input type="number" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="支出金額" value={amount} onChange={e => setAmount(e.target.value)} />
+        <select className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" value={payer} onChange={e => setPayer(e.target.value)}>
+          {members?.map(m => <option key={m.name} value={m.name}>{m.name} 付款</option>)}
         </select>
-        <Input label="航空公司" value={flight.air} onChange={v => setFlight({...flight, air: v})} />
-        <Input label="航班號碼" value={flight.no} onChange={v => setFlight({...flight, no: v})} />
-        <div className="grid grid-cols-2 gap-2">
-          <Input label="起點" value={flight.from} onChange={v => setFlight({...flight, from: v.toUpperCase()})} />
-          <Input label="時間" type="time" value={flight.fromT} onChange={v => setFlight({...flight, fromT: v})} />
+        <div className="space-y-2">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">分攤成員</span>
+          <div className="flex flex-wrap gap-2">
+            {members?.map(m => (
+              <button key={m.name} onClick={() => setSplitTo(prev => prev.includes(m.name) ? prev.filter(x => x !== m.name) : [...prev, m.name])} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${splitTo.includes(m.name) ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                {m.name}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Input label="終點" value={flight.to} onChange={v => setFlight({...flight, to: v.toUpperCase()})} />
-          <Input label="時間" type="time" value={flight.toT} onChange={v => setFlight({...flight, toT: v})} />
+        <button onClick={save} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-200">紀錄帳目</button>
+      </div>
+
+      <div className="space-y-3">
+        {expenses.sort((a,b)=>b.createdAt-a.createdAt).map(e => (
+          <div key={e.id} className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between group">
+            <div>
+              <span className="text-[10px] font-black text-slate-400 uppercase">{e.payer} 付款</span>
+              <h4 className="font-black text-slate-800 text-lg">${e.amount}</h4>
+              <p className="text-[9px] text-slate-300 font-bold">分攤：{e.splitTo.join(', ')}</p>
+            </div>
+            <button onClick={async () => { if(confirm("刪除？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', e.id)) }} className="p-2 text-slate-100 group-hover:text-red-400"><LucideTrash2 size={18} /></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// --- 小型輔助組件 ---
+
+function NavItem({ icon, label, active, onClick }) {
+  return (
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-blue-600' : 'text-slate-300 hover:text-slate-400'}`}>
+      {icon}
+      <span className="text-[9px] font-black uppercase tracking-tighter">{label}</span>
+    </button>
+  );
+}
+
+function BoardingPassCard({ flight }) {
+  const [sh, sm] = flight.fromT.split(':').map(Number), [eh, em] = flight.toT.split(':').map(Number);
+  let diff = (eh * 60 + em) - (sh * 60 + sm);
+  if (diff < 0) diff += 1440;
+  
+  return (
+    <div className="min-w-[280px] bg-white rounded-3xl overflow-hidden shadow-sm border border-blue-50 relative group">
+      <button onClick={async () => { if(confirm("刪除？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'flights', flight.id)) }} className="absolute top-2 right-2 text-slate-100 hover:text-red-400 z-10"><LucideX size={16} /></button>
+      <div className="bg-blue-600 px-4 py-2 flex justify-between text-white text-[9px] font-black uppercase tracking-widest">
+        <span>{flight.air} {flight.no}</span>
+        <span>{flight.type === 'go' ? 'Departure' : 'Arrival'}</span>
+      </div>
+      <div className="p-5 flex items-center justify-between">
+        <div className="text-center">
+          <h4 className="text-2xl font-black text-blue-900">{flight.from}</h4>
+          <span className="text-xs font-bold text-slate-400">{flight.fromT}</span>
         </div>
-        <div className="pt-4 flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={onClose}>取消</Button>
-          <Button className="flex-1 bg-blue-600" onClick={save}>儲存</Button>
+        <div className="flex-1 px-4 flex flex-col items-center">
+          <span className="text-[8px] font-black text-slate-300 uppercase mb-1">{Math.floor(diff/60)}h {diff%60}m</span>
+          <div className="w-full h-[1px] bg-slate-100 relative">
+            <LucidePlane size={10} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-200" />
+          </div>
+        </div>
+        <div className="text-center">
+          <h4 className="text-2xl font-black text-blue-900">{flight.to}</h4>
+          <span className="text-xs font-bold text-slate-400">{flight.toT}</span>
         </div>
       </div>
     </div>
   );
-};
+}
 
-export default HomeTab;
+function FlightModal({ onClose }) {
+  const [flight, setFlight] = useState({ air: '', no: '', from: '', fromT: '', to: '', toT: '', type: 'go' });
+  const save = async () => {
+    if (!flight.air || !flight.from || !flight.to) return alert("資訊不完整");
+    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'flights'), { ...flight, createdAt: new Date() });
+    onClose();
+  };
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+      <div className="bg-white rounded-[40px] w-full max-w-xs p-8 space-y-4 animate-in zoom-in-95">
+        <h3 className="text-xl font-black text-slate-800">新增航班</h3>
+        <select className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={flight.type} onChange={e => setFlight({...flight, type: e.target.value})}>
+          <option value="go">去程航班</option><option value="back">回程航班</option>
+        </select>
+        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="航空公司" value={flight.air} onChange={e => setFlight({...flight, air: e.target.value})} />
+        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="航班號碼" value={flight.no} onChange={e => setFlight({...flight, no: e.target.value})} />
+        <div className="grid grid-cols-2 gap-2">
+          <input className="p-3 bg-slate-50 rounded-2xl font-bold text-sm" placeholder="從" value={flight.from} onChange={e => setFlight({...flight, from: e.target.value.toUpperCase()})} />
+          <input type="time" className="p-3 bg-slate-50 rounded-2xl font-bold text-sm" value={flight.fromT} onChange={e => setFlight({...flight, fromT: e.target.value})} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <input className="p-3 bg-slate-50 rounded-2xl font-bold text-sm" placeholder="到" value={flight.to} onChange={e => setFlight({...flight, to: e.target.value.toUpperCase()})} />
+          <input type="time" className="p-3 bg-slate-50 rounded-2xl font-bold text-sm" value={flight.toT} onChange={e => setFlight({...flight, toT: e.target.value})} />
+        </div>
+        <div className="flex gap-2 pt-2">
+          <button onClick={onClose} className="flex-1 py-4 font-black text-slate-400">取消</button>
+          <button onClick={save} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg">儲存</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlanModal({ onClose, editId, date }) {
+  const [form, setForm] = useState({ type: 'attraction', location: '', desc: '', start: '09:00', end: '10:00' });
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editId) {
+      getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'itinerary', editId)).then(s => setForm(s.data()));
+    }
+    
+    // 初始化 Google Autocomplete
+    if (window.google) {
+      const autocomplete = new google.maps.places.Autocomplete(inputRef.current);
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.name) setForm(prev => ({ ...prev, location: place.name }));
+      });
+    }
+  }, [editId]);
+
+  const save = async () => {
+    if (!form.location) return alert("請輸入地點");
+    const data = { ...form, date };
+    if (editId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'itinerary', editId), data);
+    else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'itinerary'), data);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+      <div className="bg-white rounded-[40px] w-full max-w-xs p-8 space-y-4 animate-in zoom-in-95">
+        <h3 className="text-xl font-black">{editId ? "修改行程" : "新增行程"}</h3>
+        <select className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+          <option value="attraction">📍 景點</option>
+          <option value="hotel">🏨 住宿</option>
+          <option value="flight">✈️ 飛行</option>
+          <option value="breakfast">☕ 早餐</option>
+          <option value="lunch">🍜 午餐</option>
+          <option value="dinner">🍺 晚餐</option>
+        </select>
+        <input ref={inputRef} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="地點名稱" value={form.location} onChange={e => setForm({...form, location: e.target.value})} />
+        <textarea className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="備註說明" rows={2} value={form.desc} onChange={e => setForm({...form, desc: e.target.value})} />
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <span className="text-[9px] font-black text-slate-300 ml-1 uppercase">Start</span>
+            <input type="time" className="w-full p-3 bg-slate-50 rounded-2xl font-bold text-sm" value={form.start} onChange={e => setForm({...form, start: e.target.value})} />
+          </div>
+          <div className="space-y-1">
+            <span className="text-[9px] font-black text-slate-300 ml-1 uppercase">End</span>
+            <input type="time" className="w-full p-3 bg-slate-50 rounded-2xl font-bold text-sm" value={form.end} onChange={e => setForm({...form, end: e.target.value})} />
+          </div>
+        </div>
+        <div className="flex gap-2 pt-2">
+          <button onClick={onClose} className="flex-1 py-4 font-black text-slate-400">取消</button>
+          <button onClick={save} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg">儲存</button>
+        </div>
+      </div>
+    </div>
+  );
+}
