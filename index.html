@@ -5,35 +5,42 @@ import {
   query, orderBy, addDoc, getDocs, where, deleteDoc, updateDoc, getDoc 
 } from 'firebase/firestore';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { LucidePlane, LucideMapPin, LucideUtensils, LucideCoffee, LucideMoon, LucideHotel, LucideNavigation, LucideTrash2, LucideX, LucideRefreshCw, LucideCoins, LucideChevronRight, LucideUser } from 'lucide-react';
+import { LucidePlane, LucideMapPin, LucideUtensils, LucideCoffee, LucideMoon, LucideHotel, LucideNavigation, LucideTrash2, LucideX, LucideRefreshCw, LucideCoins, LucideChevronRight, LucideUser, LucideAlertTriangle } from 'lucide-react';
 import Sortable from 'sortablejs';
 
-// --- Firebase 配置 ---
-const firebaseConfig = JSON.parse(__firebase_config);
+// --- 環境變數安全檢查 ---
+let firebaseConfig;
+try {
+  firebaseConfig = JSON.parse(__firebase_config);
+} catch (e) {
+  // 供外部部署參考，若無環境變數則使用空配置防止崩潰
+  firebaseConfig = { apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: "" };
+}
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'qiao-travel-app';
 
-// --- 頭像選項 (根據您提供的圖片名稱) ---
+// --- 您提供的 8 張頭像圖片 ---
 const AVATAR_OPTIONS = [
-  { name: '經典頭像 1', url: 'image_5252f4.png' },
-  { name: '風格頭像 2', url: 'image_525023.png' },
-  { name: '旅行者頭像 3', url: 'image_525047.png' },
-  { name: '冒險家頭像 4', url: 'image_525041.png' },
-  { name: '探險頭像 5', url: 'image_525332.png' },
-  { name: '漫步頭像 6', url: 'image_525310.png' },
-  { name: '探路者頭像 7', url: 'image_52532b.png' },
-  { name: '嚮導頭像 8', url: 'image_5252ee.png' }
+  { name: '成員 A', url: 'image_5252f4.png' },
+  { name: '成員 B', url: 'image_525023.png' },
+  { name: '成員 C', url: 'image_525047.png' },
+  { name: '成員 D', url: 'image_525041.png' },
+  { name: '成員 E', url: 'image_525332.png' },
+  { name: '成員 F', url: 'image_525310.png' },
+  { name: '成員 G', url: 'image_52532b.png' },
+  { name: '成員 H', url: 'image_5252ee.png' }
 ];
 
 const TYPE_ICONS = {
-  attraction: <LucideMapPin size={20} />,
-  hotel: <LucideHotel size={20} />,
-  flight: <LucidePlane size={20} />,
-  breakfast: <LucideCoffee size={20} />,
-  lunch: <LucideUtensils size={20} />,
-  dinner: <LucideMoon size={20} />,
+  attraction: <LucideMapPin size={18} />,
+  hotel: <LucideHotel size={18} />,
+  flight: <LucidePlane size={18} />,
+  breakfast: <LucideCoffee size={18} />,
+  lunch: <LucideUtensils size={18} />,
+  dinner: <LucideMoon size={18} />,
 };
 
 // --- 工具函數 ---
@@ -60,14 +67,20 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState('');
   const [weather, setWeather] = useState(null);
   const [exchangeRate, setExchangeRate] = useState(0.22);
+  const [configError, setConfigError] = useState(false);
 
   // 初始化 Auth
   useEffect(() => {
+    if (!firebaseConfig.apiKey) {
+      setConfigError(true);
+      return;
+    }
     const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        // 使用系統提供的 token (若有)
+      try {
+        await signInAnonymously(auth);
+      } catch (e) {
+        console.error("Auth error:", e);
       }
-      await signInAnonymously(auth);
     };
     initAuth();
     const unsub = onAuthStateChanged(auth, setUser);
@@ -101,10 +114,7 @@ export default function App() {
     }, (err) => console.error("Expenses error:", err));
 
     return () => {
-      unsubSettings();
-      unsubFlights();
-      unsubLinks();
-      unsubExpenses();
+      unsubSettings(); unsubFlights(); unsubLinks(); unsubExpenses();
     };
   }, [user]);
 
@@ -115,13 +125,13 @@ export default function App() {
     const unsub = onSnapshot(qI, (snap) => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.start.localeCompare(b.start));
       setItinerary(data);
-      if (data.length > 0) updateWeather(data[0].location);
-      else updateWeather(null);
+      // 觸發使用者 GPS 天氣
+      updateWeather(data.length > 0 ? data[0].location : null);
     }, (err) => console.error("Itinerary error:", err));
     return () => unsub();
   }, [user, selectedDate]);
 
-  // 匯率獲取
+  // 匯率
   useEffect(() => {
     fetch('https://open.er-api.com/v6/latest/JPY')
       .then(res => res.json())
@@ -129,7 +139,7 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // GPS 天氣邏輯
+  // GPS 天氣邏輯 (使用者定位優先)
   const updateWeather = async (fallbackLoc) => {
     const fetchWeather = async (params) => {
       try {
@@ -157,7 +167,7 @@ export default function App() {
   };
 
   const resetAllData = async () => {
-    if (!confirm("確定要重設所有旅程資料嗎？此操作無法還原。")) return;
+    if (!confirm("確定要重設所有旅程資料嗎？")) return;
     const cols = ['itinerary', 'expenses', 'links', 'flights'];
     for (const c of cols) {
       const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', c));
@@ -167,28 +177,32 @@ export default function App() {
     window.location.reload();
   };
 
-  return (
-    <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-24 font-sans text-slate-900 overflow-x-hidden relative">
-      {/* 背景裝飾 */}
-      <div className="fixed inset-0 pointer-events-none opacity-20 z-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <div key={i} className="absolute text-blue-200 animate-pulse" style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            fontSize: `${Math.random() * 20 + 10}px`
-          }}>❄</div>
-        ))}
+  if (configError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-10 text-center">
+        <LucideAlertTriangle size={60} className="text-red-500 mb-4" />
+        <h2 className="text-xl font-black text-slate-800">網頁配置錯誤</h2>
+        <p className="mt-2 text-sm text-slate-500">Firebase 設定遺失。若您是在 GitHub Pages 開啟，請確保已填入自己的 Firebase Config。</p>
       </div>
+    );
+  }
 
-      <header className="pt-10 px-6 pb-4 text-center z-10 relative">
-        <h1 className="text-2xl font-black tracking-tight text-blue-900 drop-shadow-sm uppercase">
+  return (
+    <div className="max-w-md mx-auto min-h-screen bg-[#FDFDFF] pb-24 font-sans text-slate-900 overflow-x-hidden relative">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .pac-container { z-index: 10000 !important; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
+      `}</style>
+      
+      <header className="pt-12 px-6 pb-4 text-center z-10 relative">
+        <h1 className="text-2xl font-black tracking-tight text-blue-950 uppercase drop-shadow-sm">
           {settings.tripName || "我的旅遊誌"}
         </h1>
         {weather && (
-          <div className="mt-2 inline-flex items-center gap-2 bg-white/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white shadow-sm">
+          <div className="mt-3 inline-flex items-center gap-2 bg-white/70 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/50 shadow-sm">
             <LucideNavigation size={12} className="text-blue-500 fill-blue-500" />
             <img src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}.png`} className="w-6 h-6" alt="weather" />
-            <span className="text-xs font-bold">{weather.name} · {Math.round(weather.main.temp)}°C</span>
+            <span className="text-[11px] font-black">{weather.name} · {Math.round(weather.main.temp)}°C</span>
           </div>
         )}
       </header>
@@ -200,11 +214,11 @@ export default function App() {
         {activeTab === 'split' && <SplitTab expenses={expenses} members={settings.members} />}
       </main>
 
-      <nav className="fixed bottom-6 left-5 right-5 h-16 bg-white/95 backdrop-blur-lg rounded-[32px] shadow-2xl flex items-center justify-around z-50 border border-white/50">
-        <NavItem icon={<LucidePlane size={22} />} label="首頁" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-        <NavItem icon={<LucideMapPin size={22} />} label="行程" active={activeTab === 'plan'} onClick={() => setActiveTab('plan')} />
-        <NavItem icon={<LucideRefreshCw size={22} />} label="附件" active={activeTab === 'files'} onClick={() => setActiveTab('files')} />
-        <NavItem icon={<LucideCoins size={22} />} label="分帳" active={activeTab === 'split'} onClick={() => setActiveTab('split')} />
+      <nav className="fixed bottom-4 left-5 right-5 h-14 bg-white/90 backdrop-blur-2xl rounded-full shadow-2xl flex items-center justify-around z-50 border border-white/40">
+        <NavItem icon={<LucidePlane size={20} />} label="首頁" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+        <NavItem icon={<LucideMapPin size={20} />} label="行程" active={activeTab === 'plan'} onClick={() => setActiveTab('plan')} />
+        <NavItem icon={<LucideRefreshCw size={20} />} label="附件" active={activeTab === 'files'} onClick={() => setActiveTab('files')} />
+        <NavItem icon={<LucideCoins size={20} />} label="分帳" active={activeTab === 'split'} onClick={() => setActiveTab('split')} />
       </nav>
     </div>
   );
@@ -223,45 +237,47 @@ function HomeTab({ settings, flights, exchangeRate, onReset }) {
   const saveSettings = async () => {
     if (!localSettings.tripName) return alert("請填寫旅行名稱");
     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'currentTrip'), localSettings);
-    alert("❄️ 行程設定已同步");
+    alert("❄️ 行程設定已保存");
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* 登機證區域 */}
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* 航班 */}
       <section className="space-y-3">
         <div className="flex justify-between items-center px-1">
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">我的登機證</h3>
-          <button onClick={() => setIsModalOpen(true)} className="text-blue-600 text-[10px] font-black">+ 新增</button>
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">航班概覽</h3>
+          <button onClick={() => setIsModalOpen(true)} className="text-blue-600 text-[10px] font-black">+ 新增航班</button>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
           {flights.map(f => <BoardingPassCard key={f.id} flight={f} />)}
-          {flights.length === 0 && <div className="w-full h-32 bg-white/40 border-2 border-dashed border-slate-200 rounded-3xl flex items-center justify-center text-slate-300 font-bold">尚無航班</div>}
+          {flights.length === 0 && <div className="w-full h-24 bg-white/40 border-2 border-dashed border-slate-200 rounded-[28px] flex items-center justify-center text-slate-300 font-bold">暫無航班資訊</div>}
         </div>
       </section>
 
-      {/* 旅程設定 */}
-      <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-6 shadow-sm space-y-4 border border-white">
-        <h3 className="font-black text-lg text-slate-800">旅程設定</h3>
-        <input className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none font-bold text-sm" placeholder="旅行名稱" value={localSettings.tripName || ''} onChange={e => setLocalSettings({...localSettings, tripName: e.target.value})} />
+      {/* 成員與設定 */}
+      <div className="bg-white rounded-[32px] p-6 shadow-sm space-y-5 border border-slate-100">
+        <div className="space-y-2">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">旅行名稱</span>
+          <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="例如：115 北海道之旅" value={localSettings.tripName || ''} onChange={e => setLocalSettings({...localSettings, tripName: e.target.value})} />
+        </div>
         
         <div className="space-y-4">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">成員名單與頭像</span>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">成員與頭像選擇</span>
           <div className="space-y-3">
             {localSettings.members?.map((m, i) => (
-              <div key={i} className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-white shadow-sm">
-                <div className="shrink-0">
-                  <img src={m.avatar} className="w-12 h-12 rounded-full border-2 border-white object-cover shadow-sm bg-blue-100" alt="avatar" />
+              <div key={i} className="flex items-center gap-3 bg-slate-50 p-3 rounded-3xl border border-white shadow-sm">
+                <div className="shrink-0 relative group">
+                  <img src={m.avatar} className="w-14 h-14 rounded-full border-2 border-white object-cover shadow-sm bg-blue-50" alt="avatar" />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <input className="w-full bg-white px-3 py-1.5 rounded-lg font-bold text-sm outline-none border border-slate-100" value={m.name || ''} placeholder="旅伴姓名" onChange={e => {
+                  <input className="w-full bg-white px-3 py-1.5 rounded-xl font-black text-sm outline-none border border-slate-100" value={m.name || ''} placeholder="姓名" onChange={e => {
                     const nm = [...localSettings.members];
                     nm[i].name = e.target.value;
                     setLocalSettings({...localSettings, members: nm});
                   }} />
-                  {/* 頭像選擇下拉列表 */}
+                  {/* 頭像下拉選擇器 */}
                   <select 
-                    className="w-full bg-white px-2 py-1 rounded-lg text-xs font-bold border border-slate-100 outline-none text-slate-500" 
+                    className="w-full bg-white px-2 py-1 rounded-lg text-[10px] font-bold border border-slate-100 outline-none text-blue-600 appearance-none text-center" 
                     value={m.avatar} 
                     onChange={e => {
                       const nm = [...localSettings.members];
@@ -280,7 +296,7 @@ function HomeTab({ settings, flights, exchangeRate, onReset }) {
                 }} className="text-slate-300 hover:text-red-400 p-2"><LucideX size={20} /></button>
               </div>
             ))}
-            <button onClick={() => setLocalSettings({...localSettings, members: [...(localSettings.members || []), { name: '', avatar: AVATAR_OPTIONS[0].url }]})} className="w-full py-3 border-2 border-dashed border-slate-100 rounded-2xl text-[10px] font-black text-slate-400 uppercase hover:bg-slate-100 transition-colors">
+            <button onClick={() => setLocalSettings({...localSettings, members: [...(localSettings.members || []), { name: '', avatar: AVATAR_OPTIONS[0].url }]})} className="w-full py-3 border-2 border-dashed border-slate-100 rounded-3xl text-[10px] font-black text-slate-400 uppercase hover:bg-slate-100 transition-colors">
               + 新增旅伴
             </button>
           </div>
@@ -289,40 +305,40 @@ function HomeTab({ settings, flights, exchangeRate, onReset }) {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <span className="text-[9px] font-black text-slate-300 uppercase ml-1">出發日</span>
-            <input type="date" className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none font-bold text-xs" value={localSettings.start || ''} onChange={e => setLocalSettings({...localSettings, start: e.target.value})} />
+            <input type="date" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-xs" value={localSettings.start || ''} onChange={e => setLocalSettings({...localSettings, start: e.target.value})} />
           </div>
           <div className="space-y-1">
             <span className="text-[9px] font-black text-slate-300 uppercase ml-1">回程日</span>
-            <input type="date" className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none font-bold text-xs" value={localSettings.end || ''} onChange={e => setLocalSettings({...localSettings, end: e.target.value})} />
+            <input type="date" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-xs" value={localSettings.end || ''} onChange={e => setLocalSettings({...localSettings, end: e.target.value})} />
           </div>
         </div>
-        <button onClick={saveSettings} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-200 active:scale-95 transition-all">儲存所有設定</button>
+        <button onClick={saveSettings} className="w-full py-4 bg-blue-700 text-white rounded-[24px] font-black text-sm shadow-xl shadow-blue-100 active:scale-95 transition-all">保存旅程設定</button>
       </div>
 
       {/* 匯率 */}
-      <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-6 shadow-sm space-y-4 border border-white">
-        <h3 className="font-black text-lg text-slate-800">即時匯率換算</h3>
+      <div className="bg-slate-900 rounded-[32px] p-6 shadow-xl space-y-4 text-white">
+        <h3 className="font-black text-base">即時匯率換算 (JPY ⬌ TWD)</h3>
         <div className="flex items-center gap-3">
-          <div className="flex-1 bg-slate-50 p-3 rounded-2xl">
-            <span className="text-[10px] font-black text-slate-400 block mb-1 uppercase">日幣 JPY</span>
-            <input type="number" className="bg-transparent font-black text-lg outline-none w-full" value={jpy} onChange={e => {
+          <div className="flex-1 bg-white/10 p-3 rounded-2xl border border-white/10">
+            <span className="text-[9px] font-black text-white/40 block mb-1">日幣 JPY</span>
+            <input type="number" className="bg-transparent text-white font-black text-lg outline-none w-full" value={jpy} onChange={e => {
               setJpy(e.target.value);
               setTwd(e.target.value ? (parseFloat(e.target.value) * exchangeRate).toFixed(0) : '');
             }} />
           </div>
-          <LucideRefreshCw size={16} className="text-slate-300" />
-          <div className="flex-1 bg-slate-50 p-3 rounded-2xl">
-            <span className="text-[10px] font-black text-slate-400 block mb-1 uppercase">台幣 TWD</span>
-            <input type="number" className="bg-transparent font-black text-lg outline-none w-full" value={twd} onChange={e => {
+          <LucideRefreshCw size={16} className="text-white/20" />
+          <div className="flex-1 bg-white/10 p-3 rounded-2xl border border-white/10">
+            <span className="text-[9px] font-black text-white/40 block mb-1">台幣 TWD</span>
+            <input type="number" className="bg-transparent text-white font-black text-lg outline-none w-full" value={twd} onChange={e => {
               setTwd(e.target.value);
               setJpy(e.target.value ? (parseFloat(e.target.value) / exchangeRate).toFixed(0) : '');
             }} />
           </div>
         </div>
-        <p className="text-[10px] text-slate-400 text-right font-bold italic">1 JPY ≈ {exchangeRate.toFixed(4)} TWD</p>
+        <p className="text-[9px] text-white/30 text-right font-bold italic tracking-wider">數據來源: Open Exchange Rates · 1 JPY ≈ {exchangeRate.toFixed(4)} TWD</p>
       </div>
 
-      <button onClick={onReset} className="w-full py-4 text-slate-300 font-bold text-xs hover:text-red-400 transition-colors uppercase tracking-widest">重設資料 (謹慎操作)</button>
+      <button onClick={onReset} className="w-full py-2 text-slate-300 font-bold text-[10px] hover:text-red-400 transition-colors uppercase tracking-[0.2em]">重設所有資料</button>
 
       {isModalOpen && <FlightModal onClose={() => setIsModalOpen(false)} />}
     </div>
@@ -347,67 +363,66 @@ function PlanTab({ itinerary, selectedDate, setSelectedDate, settings }) {
   useEffect(() => {
     if (listRef.current) {
       Sortable.create(listRef.current, {
-        animation: 150,
+        animation: 200,
         delay: 300,
         delayOnTouchOnly: true,
-        handle: '.itinerary-card',
-        onEnd: () => {} // 排序邏輯由 Firebase query orderBy 控制
+        handle: '.drag-handle',
+        ghostClass: 'opacity-50'
       });
     }
   }, [itinerary]);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
-      <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 sticky top-0 z-20">
         {dates.map(d => {
           const dt = new Date(d);
           const active = selectedDate === d;
           return (
-            <button key={d} onClick={() => setSelectedDate(d)} className={`min-w-[60px] h-20 rounded-2xl flex flex-col items-center justify-center transition-all ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white text-slate-400'}`}>
-              <span className="text-[10px] font-black uppercase">{dt.toLocaleDateString('zh-TW', { weekday: 'short' })}</span>
-              <span className="text-lg font-black">{dt.getDate()}</span>
+            <button key={d} onClick={() => setSelectedDate(d)} className={`min-w-[55px] h-16 rounded-2xl flex flex-col items-center justify-center transition-all ${active ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}`}>
+              <span className="text-[9px] font-black uppercase">{dt.toLocaleDateString('zh-TW', { weekday: 'short' })}</span>
+              <span className="text-base font-black">{dt.getDate()}</span>
             </button>
           );
         })}
       </div>
 
       <div ref={listRef} className="space-y-3">
-        {itinerary.map((item, idx) => (
-          <React.Fragment key={item.id}>
-            <div className="itinerary-card bg-white rounded-[28px] p-5 shadow-sm border border-slate-100 flex items-center relative group">
-              <button onClick={async () => { if(confirm("確定刪除行程？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'itinerary', item.id)) }} className="absolute -top-1 -left-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <LucideX size={14} />
-              </button>
-              
-              <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0 mr-4">
-                {TYPE_ICONS[item.type] || <LucideMapPin size={20} />}
-              </div>
-
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-blue-900">{item.start} - {item.end}</span>
-                  <span className="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">{getTimeDiff(item.start, item.end)}</span>
-                </div>
-                <h4 className="font-bold text-slate-800 text-base">{item.location}</h4>
-                {item.desc && <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>}
-              </div>
-
-              <div className="flex flex-col gap-2 ml-2">
-                <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`, '_blank')} className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-500 transition-colors">
-                  <LucideNavigation size={18} />
-                </button>
-                <button onClick={() => { setEditId(item.id); setIsModalOpen(true); }} className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 transition-colors">
-                  <LucideChevronRight size={18} />
-                </button>
-              </div>
+        {itinerary.map((item) => (
+          <div key={item.id} className="drag-handle itinerary-card bg-white rounded-[24px] p-4 shadow-sm border border-slate-100 flex items-center relative group active:scale-95 transition-transform">
+            <button onClick={async (e) => { e.stopPropagation(); if(confirm("確定刪除此行程？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'itinerary', item.id)) }} className="absolute -top-1 -left-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-30">
+              <LucideX size={12} />
+            </button>
+            
+            <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0 mr-4 shadow-inner">
+              {TYPE_ICONS[item.type] || <LucideMapPin size={18} />}
             </div>
-          </React.Fragment>
+
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center gap-2">
+                {/* 調整字體大小為適中 15px 並加粗 */}
+                <span className="text-[15px] font-black text-blue-950">{item.start} - {item.end}</span>
+                <span className="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">{getTimeDiff(item.start, item.end)}</span>
+              </div>
+              <h4 className="font-black text-slate-800 text-[15px] leading-tight">{item.location}</h4>
+              {item.desc && <p className="text-[11px] text-slate-400 leading-relaxed italic">{item.desc}</p>}
+            </div>
+
+            <div className="flex flex-col gap-2 ml-2 border-l border-slate-50 pl-3">
+              <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`, '_blank')} className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors">
+                <LucideNavigation size={18} />
+              </button>
+              <button onClick={() => { setEditId(item.id); setIsModalOpen(true); }} className="p-2 text-slate-300 hover:text-slate-600 rounded-xl transition-colors">
+                <LucideChevronRight size={18} />
+              </button>
+            </div>
+          </div>
         ))}
-        {itinerary.length === 0 && <div className="py-12 text-center text-slate-300 font-bold">本日尚未新增行程</div>}
+        {itinerary.length === 0 && <div className="py-20 text-center text-slate-300 font-bold italic">準備好開啟一段新冒險了嗎？</div>}
       </div>
 
-      <button onClick={() => { setEditId(null); setIsModalOpen(true); }} className="fixed bottom-24 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-xl flex items-center justify-center active:scale-90 transition-transform z-40">
-        <LucideX size={24} className="rotate-45" />
+      <button onClick={() => { setEditId(null); setIsModalOpen(true); }} className="fixed bottom-24 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform z-40">
+        <LucideX size={26} className="rotate-45" />
       </button>
 
       {isModalOpen && <PlanModal onClose={() => setIsModalOpen(false)} editId={editId} date={selectedDate} />}
@@ -427,24 +442,26 @@ function FilesTab({ links }) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="bg-white rounded-[32px] p-6 shadow-sm space-y-4 border border-white">
-        <h3 className="font-black text-lg">雲端附件</h3>
-        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="描述 (例如：旅館地址、門票)" value={name} onChange={e => setName(e.target.value)} />
-        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="分享連結" value={url} onChange={e => setUrl(e.target.value)} />
-        <button onClick={save} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm">儲存附件</button>
+      <div className="bg-white rounded-[32px] p-6 shadow-sm border border-slate-100 space-y-4">
+        <h3 className="font-black text-base">雲端附件與憑證</h3>
+        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="描述 (如：租車憑證、門票)" value={name} onChange={e => setName(e.target.value)} />
+        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="貼上 Google Drive 連結" value={url} onChange={e => setUrl(e.target.value)} />
+        <button onClick={save} className="w-full py-4 bg-slate-900 text-white rounded-[24px] font-black text-sm shadow-xl active:scale-95 transition-transform">上傳雲端附件</button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-4">
         {links.map(l => {
           let fId = l.url.includes('/d/') ? l.url.split('/d/')[1].split('/')[0] : '';
           return (
-            <div key={l.id} className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex items-center justify-between group">
-              <div className="flex-1 pr-2">
-                <h4 className="font-bold text-slate-800">{l.name}</h4>
-                <a href={l.url} target="_blank" rel="noreferrer" className="text-blue-500 text-[10px] font-black uppercase mt-1 inline-block">開啟連結</a>
-                {fId && <img src={`https://drive.google.com/thumbnail?id=${fId}&sz=w800`} className="mt-3 rounded-xl w-full h-32 object-cover border border-slate-50" alt="preview" />}
+            <div key={l.id} className="bg-white rounded-[28px] p-4 shadow-sm border border-slate-100 flex flex-col group overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h4 className="font-black text-slate-800 text-sm">{l.name}</h4>
+                  <a href={l.url} target="_blank" rel="noreferrer" className="text-blue-500 text-[10px] font-black uppercase mt-1 inline-flex items-center gap-1">預覽原件 <LucideNavigation size={10} /></a>
+                </div>
+                <button onClick={async () => { if(confirm("刪除此附件？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'links', l.id)) }} className="p-3 text-slate-200 hover:text-red-500 transition-colors"><LucideTrash2 size={18} /></button>
               </div>
-              <button onClick={async () => { if(confirm("確定刪除？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'links', l.id)) }} className="p-3 text-slate-200 hover:text-red-500"><LucideTrash2 size={20} /></button>
+              {fId && <img src={`https://drive.google.com/thumbnail?id=${fId}&sz=w800`} className="mt-3 rounded-2xl w-full h-40 object-cover border border-slate-50 shadow-inner" alt="drive-preview" />}
             </div>
           );
         })}
@@ -466,7 +483,7 @@ function SplitTab({ expenses, members }) {
   }, [members]);
 
   const save = async () => {
-    if (!amount || splitTo.length === 0) return alert("資訊未填寫完整");
+    if (!amount || splitTo.length === 0) return alert("支出資訊不完整");
     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), { 
       amount: parseFloat(amount), 
       payer, 
@@ -503,17 +520,18 @@ function SplitTab({ expenses, members }) {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="bg-white rounded-[32px] p-6 shadow-sm space-y-4 border border-white text-center">
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">旅程總支出</span>
-        <h2 className="text-4xl font-black text-slate-800">${Math.round(expenses.reduce((acc, e) => acc + e.amount, 0))}</h2>
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      <div className="bg-slate-900 rounded-[32px] p-8 shadow-2xl text-center text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-10"><LucideCoins size={80} /></div>
+        <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">旅程總支出總計</span>
+        <h2 className="text-4xl font-black mt-1">${Math.round(expenses.reduce((acc, e) => acc + e.amount, 0)).toLocaleString()}</h2>
         
-        <div className="pt-4 grid grid-cols-2 gap-4">
+        <div className="pt-6 grid grid-cols-2 gap-4">
           {Object.entries(balances).map(([name, bal]) => (
-            <div key={name} className="bg-slate-50 p-3 rounded-2xl">
-              <span className="text-[10px] font-bold text-slate-400 block">{name}</span>
-              <span className={`text-sm font-black ${bal >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {bal >= 0 ? '+' : ''}{Math.round(bal)}
+            <div key={name} className="bg-white/5 backdrop-blur-md p-3 rounded-2xl border border-white/5">
+              <span className="text-[10px] font-bold text-white/40 block mb-1">{name}</span>
+              <span className={`text-sm font-black ${bal >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {bal >= 0 ? '+' : ''}{Math.round(bal).toLocaleString()}
               </span>
             </div>
           ))}
@@ -521,40 +539,50 @@ function SplitTab({ expenses, members }) {
       </div>
 
       {suggestions.length > 0 && (
-        <div className="bg-green-50 border-2 border-green-100 rounded-3xl p-5 space-y-2">
-          <h4 className="text-xs font-black text-green-600 uppercase">💡 結算建議</h4>
-          {suggestions.map((s, idx) => <p key={idx} className="text-sm font-bold text-green-700">{s}</p>)}
+        <div className="bg-green-50/50 border border-green-100 rounded-[28px] p-6 shadow-sm">
+          <h4 className="text-[11px] font-black text-green-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <LucideRefreshCw size={12} /> 結算最佳建議
+          </h4>
+          <div className="space-y-2">
+            {suggestions.map((s, idx) => <p key={idx} className="text-sm font-bold text-green-800 flex items-center gap-2">{s}</p>)}
+          </div>
         </div>
       )}
 
-      <div className="bg-white rounded-[32px] p-6 shadow-sm space-y-4 border border-white">
-        <h3 className="font-black text-lg text-slate-800">新增分帳</h3>
-        <input type="number" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="支出金額" value={amount} onChange={e => setAmount(e.target.value)} />
-        <select className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" value={payer} onChange={e => setPayer(e.target.value)}>
-          {members?.map(m => m.name && <option key={m.name} value={m.name}>{m.name} 付款</option>)}
-        </select>
-        <div className="space-y-2">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">分攤成員</span>
+      <div className="bg-white rounded-[32px] p-6 shadow-sm border border-slate-100 space-y-4">
+        <h3 className="font-black text-base">新增一筆支出</h3>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <input type="number" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="金額" value={amount} onChange={e => setAmount(e.target.value)} />
+          </div>
+          <div className="flex-[1.5]">
+            <select className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" value={payer} onChange={e => setPayer(e.target.value)}>
+              {members?.map(m => m.name && <option key={m.name} value={m.name}>{m.name} 付款</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">參與分攤的人</span>
           <div className="flex flex-wrap gap-2">
             {members?.map(m => m.name && (
-              <button key={m.name} onClick={() => setSplitTo(prev => prev.includes(m.name) ? prev.filter(x => x !== m.name) : [...prev, m.name])} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${splitTo.includes(m.name) ? 'bg-blue-600 text-white shadow-md shadow-blue-100' : 'bg-slate-100 text-slate-400'}`}>
+              <button key={m.name} onClick={() => setSplitTo(prev => prev.includes(m.name) ? prev.filter(x => x !== m.name) : [...prev, m.name])} className={`px-4 py-2 rounded-full text-xs font-black transition-all ${splitTo.includes(m.name) ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
                 {m.name}
               </button>
             ))}
           </div>
         </div>
-        <button onClick={save} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-200">紀錄帳目</button>
+        <button onClick={save} className="w-full py-4 bg-blue-700 text-white rounded-[24px] font-black text-sm shadow-xl active:scale-95 transition-all">紀錄此筆開銷</button>
       </div>
 
       <div className="space-y-3">
         {expenses.sort((a,b)=> (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).map(e => (
-          <div key={e.id} className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between group">
+          <div key={e.id} className="bg-white p-4 rounded-[24px] shadow-sm border border-slate-100 flex items-center justify-between group">
             <div>
-              <span className="text-[10px] font-black text-slate-400 uppercase">{e.payer} 付款</span>
-              <h4 className="font-black text-slate-800 text-lg">${e.amount}</h4>
-              <p className="text-[9px] text-slate-300 font-bold">分攤：{e.splitTo.join(', ')}</p>
+              <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">{e.payer} 先代墊了</span>
+              <h4 className="font-black text-slate-800 text-lg">${e.amount.toLocaleString()}</h4>
+              <p className="text-[9px] text-slate-400 font-bold">對象：{e.splitTo.join(', ')}</p>
             </div>
-            <button onClick={async () => { if(confirm("刪除此紀錄？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', e.id)) }} className="p-2 text-slate-100 group-hover:text-red-400"><LucideTrash2 size={18} /></button>
+            <button onClick={async () => { if(confirm("刪除此分帳紀錄？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', e.id)) }} className="p-3 text-slate-100 group-hover:text-red-400 transition-colors"><LucideTrash2 size={18} /></button>
           </div>
         ))}
       </div>
@@ -566,9 +594,9 @@ function SplitTab({ expenses, members }) {
 
 function NavItem({ icon, label, active, onClick }) {
   return (
-    <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-blue-600' : 'text-slate-300 hover:text-slate-400'}`}>
+    <button onClick={onClick} className={`flex flex-col items-center gap-0.5 transition-all ${active ? 'text-blue-700 scale-110' : 'text-slate-300'}`}>
       {icon}
-      <span className="text-[9px] font-black uppercase tracking-tighter">{label}</span>
+      <span className="text-[8px] font-black uppercase tracking-widest">{label}</span>
     </button>
   );
 }
@@ -580,26 +608,26 @@ function BoardingPassCard({ flight }) {
   if (diff < 0) diff += 1440;
   
   return (
-    <div className="min-w-[280px] bg-white rounded-3xl overflow-hidden shadow-sm border border-blue-50 relative group">
-      <button onClick={async () => { if(confirm("確定刪除航班？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'flights', flight.id)) }} className="absolute top-2 right-2 text-white/50 hover:text-white z-10 p-1"><LucideX size={16} /></button>
-      <div className="bg-blue-600 px-4 py-2 flex justify-between text-white text-[9px] font-black uppercase tracking-widest">
-        <span>{flight.air} {flight.no}</span>
-        <span>{flight.type === 'go' ? 'OUTBOUND' : 'INBOUND'}</span>
+    <div className="min-w-[260px] bg-white rounded-[28px] overflow-hidden shadow-sm border border-slate-100 relative group shrink-0">
+      <button onClick={async (e) => { e.stopPropagation(); if(confirm("確定刪除航班？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'flights', flight.id)) }} className="absolute top-2 right-2 text-slate-200 hover:text-red-400 z-10 p-1 transition-colors"><LucideX size={16} /></button>
+      <div className="bg-blue-700 px-4 py-1.5 flex justify-between text-white text-[9px] font-black uppercase tracking-widest">
+        <span>{flight.air} · {flight.no}</span>
+        <span>{flight.type === 'go' ? '出發' : '返程'}</span>
       </div>
-      <div className="p-5 flex items-center justify-between">
+      <div className="p-4 flex items-center justify-between">
         <div className="text-center">
-          <h4 className="text-2xl font-black text-blue-900 leading-tight">{flight.from}</h4>
-          <span className="text-xs font-bold text-slate-400">{flight.fromT}</span>
+          <h4 className="text-xl font-black text-blue-950">{flight.from}</h4>
+          <span className="text-[10px] font-bold text-slate-400">{flight.fromT}</span>
         </div>
-        <div className="flex-1 px-4 flex flex-col items-center">
-          <span className="text-[8px] font-black text-slate-300 uppercase mb-1">{Math.floor(diff/60)}h {diff%60}m</span>
-          <div className="w-full h-[1px] bg-slate-100 relative">
-            <LucidePlane size={10} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-200" />
+        <div className="flex-1 px-3 flex flex-col items-center">
+          <span className="text-[8px] font-black text-slate-200 mb-1">{Math.floor(diff/60)}h {diff%60}m</span>
+          <div className="w-full h-[1.5px] bg-slate-50 relative">
+            <LucidePlane size={10} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-100 fill-blue-50" />
           </div>
         </div>
         <div className="text-center">
-          <h4 className="text-2xl font-black text-blue-900 leading-tight">{flight.to}</h4>
-          <span className="text-xs font-bold text-slate-400">{flight.toT}</span>
+          <h4 className="text-xl font-black text-blue-950">{flight.to}</h4>
+          <span className="text-[10px] font-bold text-slate-400">{flight.toT}</span>
         </div>
       </div>
     </div>
@@ -609,30 +637,32 @@ function BoardingPassCard({ flight }) {
 function FlightModal({ onClose }) {
   const [flight, setFlight] = useState({ air: '', no: '', from: '', fromT: '', to: '', toT: '', type: 'go' });
   const save = async () => {
-    if (!flight.air || !flight.from || !flight.to) return alert("請填寫完整航班資訊");
+    if (!flight.air || !flight.from || !flight.to) return alert("資訊未填全");
     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'flights'), { ...flight, createdAt: new Date() });
     onClose();
   };
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6">
       <div className="bg-white rounded-[40px] w-full max-w-xs p-8 space-y-4 animate-in zoom-in-95 duration-300">
-        <h3 className="text-xl font-black text-slate-800">航班資訊</h3>
+        <h3 className="text-lg font-black text-slate-800">登機資訊設定</h3>
         <select className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" value={flight.type} onChange={e => setFlight({...flight, type: e.target.value})}>
           <option value="go">去程航班</option><option value="back">回程航班</option>
         </select>
-        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="航空公司" value={flight.air} onChange={e => setFlight({...flight, air: e.target.value})} />
-        <input className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="航班號碼" value={flight.no} onChange={e => setFlight({...flight, no: e.target.value})} />
-        <div className="grid grid-cols-2 gap-2">
-          <input className="p-3 bg-slate-50 rounded-2xl font-bold text-sm outline-none" placeholder="起飛地 (如 TPE)" value={flight.from} onChange={e => setFlight({...flight, from: e.target.value.toUpperCase()})} />
-          <input type="time" className="p-3 bg-slate-50 rounded-2xl font-bold text-sm outline-none" value={flight.fromT} onChange={e => setFlight({...flight, fromT: e.target.value})} />
+        <div className="flex gap-2">
+          <input className="flex-1 p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="航司" value={flight.air} onChange={e => setFlight({...flight, air: e.target.value})} />
+          <input className="flex-1 p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="編號" value={flight.no} onChange={e => setFlight({...flight, no: e.target.value})} />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <input className="p-3 bg-slate-50 rounded-2xl font-bold text-sm outline-none" placeholder="目的地 (如 CTS)" value={flight.to} onChange={e => setFlight({...flight, to: e.target.value.toUpperCase()})} />
-          <input type="time" className="p-3 bg-slate-50 rounded-2xl font-bold text-sm outline-none" value={flight.toT} onChange={e => setFlight({...flight, toT: e.target.value})} />
+          <input className="p-3 bg-slate-50 rounded-2xl font-bold text-xs outline-none" placeholder="起飛 (TPE)" value={flight.from} onChange={e => setFlight({...flight, from: e.target.value.toUpperCase()})} />
+          <input type="time" className="p-3 bg-slate-50 rounded-2xl font-bold text-xs outline-none" value={flight.fromT} onChange={e => setFlight({...flight, fromT: e.target.value})} />
         </div>
-        <div className="flex gap-2 pt-2">
+        <div className="grid grid-cols-2 gap-2">
+          <input className="p-3 bg-slate-50 rounded-2xl font-bold text-xs outline-none" placeholder="抵達 (CTS)" value={flight.to} onChange={e => setFlight({...flight, to: e.target.value.toUpperCase()})} />
+          <input type="time" className="p-3 bg-slate-50 rounded-2xl font-bold text-xs outline-none" value={flight.toT} onChange={e => setFlight({...flight, toT: e.target.value})} />
+        </div>
+        <div className="flex gap-3 pt-2">
           <button onClick={onClose} className="flex-1 py-4 font-black text-slate-400">取消</button>
-          <button onClick={save} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100">儲存航班</button>
+          <button onClick={save} className="flex-1 py-4 bg-blue-700 text-white rounded-2xl font-black shadow-lg">儲存</button>
         </div>
       </div>
     </div>
@@ -650,14 +680,22 @@ function PlanModal({ onClose, editId, date }) {
       });
     }
     
-    // 初始化 Google Autocomplete
-    if (window.google) {
-      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current);
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (place.name) setForm(prev => ({ ...prev, location: place.name }));
-      });
-    }
+    // 初始化 Google Autocomplete (解決下拉清單錯誤)
+    const initMap = () => {
+      if (window.google && inputRef.current) {
+        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current);
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (place.name) setForm(prev => ({ ...prev, location: place.name }));
+          else if (place.formatted_address) setForm(prev => ({ ...prev, location: place.formatted_address }));
+        });
+      }
+    };
+    
+    // 若地圖腳本未載入，則延遲嘗試
+    if (window.google) initMap();
+    else setTimeout(initMap, 2000);
+
   }, [editId]);
 
   const save = async () => {
@@ -669,32 +707,32 @@ function PlanModal({ onClose, editId, date }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-      <div className="bg-white rounded-[40px] w-full max-w-xs p-8 space-y-4 animate-in zoom-in-95 duration-300">
-        <h3 className="text-xl font-black text-slate-800">{editId ? "修改行程" : "新增行程"}</h3>
-        <select className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-          <option value="attraction">📍 景點</option>
-          <option value="hotel">🏨 住宿</option>
-          <option value="flight">✈️ 飛行</option>
-          <option value="breakfast">☕ 早餐</option>
-          <option value="lunch">🍜 午餐</option>
-          <option value="dinner">🍺 晚餐</option>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+      <div className="bg-white rounded-[40px] w-full max-w-xs p-8 space-y-4 animate-in zoom-in-95 duration-300 relative">
+        <h3 className="text-xl font-black text-slate-800">{editId ? "修改計畫" : "新增計畫"}</h3>
+        <select className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-black text-sm text-blue-600" value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+          <option value="attraction">📍 探索景點</option>
+          <option value="hotel">🏨 住宿 Check-in</option>
+          <option value="flight">✈️ 航班/交通</option>
+          <option value="breakfast">☕ 美味早餐</option>
+          <option value="lunch">🍜 精緻午餐</option>
+          <option value="dinner">🍺 豐盛晚餐</option>
         </select>
-        <input ref={inputRef} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm border-none" placeholder="地點名稱" value={form.location || ''} onChange={e => setForm({...form, location: e.target.value})} />
-        <textarea className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm border-none" placeholder="備註說明" rows={2} value={form.desc || ''} onChange={e => setForm({...form, desc: e.target.value})} />
+        <input ref={inputRef} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm border-none" placeholder="地點名稱 (Google 建議)" value={form.location || ''} onChange={e => setForm({...form, location: e.target.value})} />
+        <textarea className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm border-none" placeholder="活動摘要或說明..." rows={2} value={form.desc || ''} onChange={e => setForm({...form, desc: e.target.value})} />
         <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <span className="text-[9px] font-black text-slate-300 ml-1 uppercase tracking-wider">Start</span>
-            <input type="time" className="w-full p-3 bg-slate-50 rounded-2xl font-bold text-sm outline-none" value={form.start} onChange={e => setForm({...form, start: e.target.value})} />
+          <div className="space-y-1 text-center">
+            <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">開始</span>
+            <input type="time" className="w-full p-3 bg-slate-50 rounded-2xl font-black text-xs outline-none text-center" value={form.start} onChange={e => setForm({...form, start: e.target.value})} />
           </div>
-          <div className="space-y-1">
-            <span className="text-[9px] font-black text-slate-300 ml-1 uppercase tracking-wider">End</span>
-            <input type="time" className="w-full p-3 bg-slate-50 rounded-2xl font-bold text-sm outline-none" value={form.end} onChange={e => setForm({...form, end: e.target.value})} />
+          <div className="space-y-1 text-center">
+            <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">結束</span>
+            <input type="time" className="w-full p-3 bg-slate-50 rounded-2xl font-black text-xs outline-none text-center" value={form.end} onChange={e => setForm({...form, end: e.target.value})} />
           </div>
         </div>
-        <div className="flex gap-2 pt-2">
-          <button onClick={onClose} className="flex-1 py-4 font-black text-slate-400">取消</button>
-          <button onClick={save} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100">儲存行程</button>
+        <div className="flex gap-3 pt-2">
+          <button onClick={onClose} className="flex-1 py-4 font-black text-slate-400">返回</button>
+          <button onClick={save} className="flex-1 py-4 bg-blue-700 text-white rounded-2xl font-black shadow-xl shadow-blue-100">確認儲存</button>
         </div>
       </div>
     </div>
