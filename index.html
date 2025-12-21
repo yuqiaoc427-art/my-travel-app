@@ -49,7 +49,6 @@
         .btn-col { display: flex; flex-direction: column; gap: 4px; margin-left: 8px; }
         .btn-action { padding: 7px 10px; border-radius: 9px; border: none; font-size: 11px; font-weight: bold; color: white; cursor: pointer; width: 65px; text-align: center; }
         
-        /* 通勤時間靠左對齊 */
         .commute-info { text-align: left; color: white; font-size: 11px; margin: 4px 0 4px 50px; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 5px; }
 
         /* 導覽列 */
@@ -75,6 +74,13 @@
         .currency-card { background: var(--glass); border-radius: 24px; padding: 20px; margin: 15px 5px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .currency-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .currency-label { font-size: 12px; color: #666; width: 40px; }
+
+        /* 成員管理樣式 */
+        .member-row { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 15px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); }
+        .member-avatar-preview { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: white; }
+        .member-info { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .member-info input { margin: 0; padding: 8px; font-size: 13px; }
+        .member-info select { margin: 0; padding: 5px; font-size: 12px; height: 32px; }
     </style>
 </head>
 <body>
@@ -84,12 +90,34 @@
     <!-- 1. 首頁 -->
     <div id="tab-home" class="tab-content active">
         <div id="flight-display-area"></div>
+        
         <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
-            <strong style="font-size:17px;">旅程基本設定</strong>
-            <input type="text" id="input-trip-name" placeholder="旅行名稱">
-            <input type="text" id="input-members" placeholder="成員 (用逗號隔開)">
-            <div style="display:flex; gap:10px;"><input type="date" id="input-start-date"><input type="date" id="input-end-date"></div>
-            <button onclick="saveBaseSettings()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:12px; font-weight:bold;">儲存旅程</button>
+            <strong style="font-size:17px; display:block; margin-bottom:15px;">旅程基本設定</strong>
+            
+            <span style="font-size:12px; color:#666; margin-left:5px;">旅行名稱</span>
+            <input type="text" id="input-trip-name" placeholder="例如：115 北海道之旅">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 10px 5px;">
+                <span style="font-size:12px; color:#666;">旅伴成員與頭像</span>
+                <button onclick="addMemberRow()" style="background:var(--accent); color:white; border:none; padding:5px 12px; border-radius:8px; font-size:11px; font-weight:bold;">+ 新增旅伴</button>
+            </div>
+            
+            <div id="members-list-container">
+                <!-- 成員列動態插入處 -->
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <div style="flex:1;">
+                    <span style="font-size:12px; color:#666; margin-left:5px;">開始日期</span>
+                    <input type="date" id="input-start-date">
+                </div>
+                <div style="flex:1;">
+                    <span style="font-size:12px; color:#666; margin-left:5px;">結束日期</span>
+                    <input type="date" id="input-end-date">
+                </div>
+            </div>
+            
+            <button onclick="saveBaseSettings()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:12px; font-weight:bold; margin-top:10px;">儲存旅程</button>
             <button onclick="openModal('modal-reset')" class="btn-danger-outline">重設所有資料 (開始新旅程)</button>
         </div>
 
@@ -221,7 +249,18 @@
 
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
         let currentMembers = [], selectedDate = "";
-        let exchangeRate = 0.22; // 預設匯率備案
+        let exchangeRate = 0.22;
+
+        const AVATAR_OPTIONS = [
+            { name: '經典 A', url: 'image_5252f4.png' },
+            { name: '風格 B', url: 'image_525023.png' },
+            { name: '旅行者 C', url: 'image_525047.png' },
+            { name: '冒險家 D', url: 'image_525041.png' },
+            { name: '探險 E', url: 'image_525332.png' },
+            { name: '漫步 F', url: 'image_525310.png' },
+            { name: '探路者 G', url: 'image_52532b.png' },
+            { name: '嚮導 H', url: 'image_5252ee.png' }
+        ];
 
         const typeIcons = {
             attraction: 'fa-map-marker-alt',
@@ -232,7 +271,29 @@
             dinner: 'fa-moon'
         };
 
-        // --- 匯率換算邏輯 ---
+        // --- 成員管理邏輯 ---
+        window.addMemberRow = (name = '', avatar = AVATAR_OPTIONS[0].url) => {
+            const container = document.getElementById('members-list-container');
+            const row = document.createElement('div');
+            row.className = 'member-row';
+            
+            // 下拉選項 HTML
+            let optionsHtml = AVATAR_OPTIONS.map(opt => `<option value="${opt.url}" ${opt.url === avatar ? 'selected' : ''}>${opt.name}</option>`).join('');
+
+            row.innerHTML = `
+                <img src="${avatar}" class="member-avatar-preview" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                <div class="member-info">
+                    <input type="text" class="member-name-input" value="${name}" placeholder="旅伴姓名">
+                    <select class="member-avatar-select" onchange="this.parentElement.previousElementSibling.src = this.value">
+                        ${optionsHtml}
+                    </select>
+                </div>
+                <button onclick="this.parentElement.remove()" style="background:none; border:none; color:#ccc;"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(row);
+        };
+
+        // --- 匯率換算 ---
         async function fetchExchangeRate() {
             try {
                 const res = await fetch('https://open.er-api.com/v6/latest/JPY');
@@ -248,31 +309,24 @@
         window.convertCurrency = (type) => {
             const jpyInput = document.getElementById('input-jpy');
             const twdInput = document.getElementById('input-twd');
-            if (type === 'JPY') {
-                twdInput.value = (jpyInput.value * exchangeRate).toFixed(2);
-            } else {
-                jpyInput.value = (twdInput.value / exchangeRate).toFixed(2);
-            }
+            if (type === 'JPY') twdInput.value = (jpyInput.value * exchangeRate).toFixed(2);
+            else jpyInput.value = (twdInput.value / exchangeRate).toFixed(2);
         };
 
-        // --- 重置所有資料 ---
+        // --- 重置資料 ---
         window.resetAllData = async () => {
             const collectionsToClear = ["itinerary", "expenses", "links", "flights"];
             try {
                 for (const colName of collectionsToClear) {
                     const snap = await getDocs(collection(db, colName));
-                    for (const d of snap.docs) {
-                        await deleteDoc(doc(db, colName, d.id));
-                    }
+                    for (const d of snap.docs) await deleteDoc(doc(db, colName, d.id));
                 }
                 await deleteDoc(doc(db, "settings", "currentTrip"));
                 window.location.reload();
-            } catch (e) {
-                alert("重設失敗: " + e.message);
-            }
+            } catch (e) { alert("重設失敗: " + e.message); }
         };
 
-        // --- GPS 使用者定位天氣 ---
+        // --- GPS 天氣 ---
         async function updateWeather(fallbackLoc) {
             const weatherBox = document.getElementById('weather-box');
             const getW = async (params) => {
@@ -296,9 +350,7 @@
                     async()=>{ if (fallbackLoc) await tryFallbackWeather(fallbackLoc, getW); }, 
                     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
-            } else if(fallbackLoc) {
-                await tryFallbackWeather(fallbackLoc, getW);
-            }
+            } else if(fallbackLoc) await tryFallbackWeather(fallbackLoc, getW);
         }
 
         async function tryFallbackWeather(loc, fetchFn) {
@@ -310,7 +362,7 @@
             if(!success) await fetchFn(`q=${encodeURIComponent(city.substring(0,2))}`);
         }
 
-        // --- 行程核心功能 ---
+        // --- 行程功能 ---
         window.saveItinerary = async () => {
             if(!selectedDate) return alert("請選日期");
             const data = { 
@@ -355,7 +407,7 @@
                     </div>`;
                 if(i < docs.length - 1) {
                     const time = await getCommute(d.location, docs[i+1].data().location);
-                    html += `<div class="commute-info"><i class="fas fa-car"></i> 車程約 ${time}</div>`;
+                    html += `<div class="commute-info"><i class="fas fa-car"></i> 約 ${time}</div>`;
                 }
             }
             listEl.innerHTML = html || '<p style="text-align:center; color:white;">無行程</p>';
@@ -401,7 +453,19 @@
         }
 
         window.saveBaseSettings = async () => {
-            const data = { tripName: document.getElementById('input-trip-name').value, members: document.getElementById('input-members').value.split(',').map(m=>m.trim()), start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value };
+            // 獲取所有成員列資料
+            const memberElements = document.querySelectorAll('.member-row');
+            const membersData = Array.from(memberElements).map(row => ({
+                name: row.querySelector('.member-name-input').value.trim(),
+                avatar: row.querySelector('.member-avatar-select').value
+            })).filter(m => m.name !== "");
+
+            const data = { 
+                tripName: document.getElementById('input-trip-name').value, 
+                members: membersData, 
+                start: document.getElementById('input-start-date').value, 
+                end: document.getElementById('input-end-date').value 
+            };
             await setDoc(doc(db, "settings", "currentTrip"), data);
             alert("儲存成功");
         };
@@ -411,9 +475,16 @@
                 const d = snap.data();
                 document.getElementById('dynamic-trip-name').innerText = d.tripName || "旅遊誌";
                 document.getElementById('input-trip-name').value = d.tripName || "";
-                document.getElementById('input-members').value = (d.members || []).join(", ");
                 document.getElementById('input-start-date').value = d.start || "";
                 document.getElementById('input-end-date').value = d.end || "";
+                
+                // 渲染成員列表
+                const container = document.getElementById('members-list-container');
+                container.innerHTML = '';
+                if(d.members && d.members.length > 0) {
+                    d.members.forEach(m => addMemberRow(m.name, m.avatar));
+                }
+                
                 currentMembers = d.members || [];
                 renderDates(d.start, d.end);
             }
@@ -486,12 +557,12 @@
         async function refreshSettlement() {
             const snap = await getDocs(collection(db, "expenses"));
             let total = 0, balances = {};
-            currentMembers.forEach(m => balances[m] = 0);
+            currentMembers.forEach(m => balances[m.name] = 0);
             snap.forEach(d => {
                 const data = d.data(); total += data.amount;
                 balances[data.payer] += data.amount;
                 const per = data.amount / data.splitTo.length;
-                data.splitTo.forEach(m => balances[m] -= per);
+                data.splitTo.forEach(m => { if(balances.hasOwnProperty(m)) balances[m] -= per; });
             });
             document.getElementById('total-val').innerText = "$" + Math.round(total).toLocaleString();
             let html = '';
@@ -524,7 +595,7 @@
         window.openPayment = (id) => {
             document.getElementById('pay-trip-id').value = id;
             let opt = '', chk = '';
-            currentMembers.forEach(m => { opt += `<option value="${m}">${m}</option>`; chk += `<label style="display:block; margin:5px 0;"><input type="checkbox" class="split-cb" value="${m}" checked> ${m}</label>`; });
+            currentMembers.forEach(m => { opt += `<option value="${m.name}">${m.name}</option>`; chk += `<label style="display:block; margin:5px 0;"><input type="checkbox" class="split-cb" value="${m.name}" checked> ${m.name}</label>`; });
             document.getElementById('pay-payer').innerHTML = opt;
             document.getElementById('pay-split-list').innerHTML = `<p style="font-size:12px;">分攤成員：</p>${chk}`;
             openModal('modal-payment');
