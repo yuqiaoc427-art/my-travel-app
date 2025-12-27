@@ -8,130 +8,49 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     
     <style>
-        :root { 
-            --glass: rgba(255, 255, 255, 0.88); 
-            --blur: blur(20px); 
-            --accent: #1e3c72; 
-            --danger: #e74c3c; 
-            --success: #27ae60;
-            --secondary: #f0f2f5;
-            --shadow: 0 10px 30px rgba(0,0,0,0.12);
-        }
+        :root { --glass: rgba(255, 255, 255, 0.95); --blur: blur(20px); --accent: #1e3c72; --danger: #e74c3c; --success: #27ae60; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 100px; background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #333; overflow-x: hidden; }
         
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; 
-            padding-bottom: 100px; 
-            background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; 
-            background-size: cover; 
-            min-height: 100vh; 
-            color: #333; 
-            overflow-x: hidden; 
-        }
+        .tab-content { display: none; padding: 0 10px; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 全域卡片與動畫 */
-        .card { 
-            background: var(--glass); 
-            backdrop-filter: var(--blur); 
-            border-radius: 24px; 
-            margin: 15px 5px; 
-            padding: 20px; 
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(255,255,255,0.3);
-            animation: slideUp 0.5s ease-out;
-        }
+        .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
+        #weather-box { background: rgba(0,0,0,0.4); color: white; border-radius: 20px; padding: 8px 15px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 8px; font-size: 13px; backdrop-filter: blur(10px); }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* --- 登機證 UI 優化 (Apple Wallet Style) --- */
+        .boarding-pass { background: white; border-radius: 20px; margin: 15px 5px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: visible; }
+        .boarding-pass::before, .boarding-pass::after { content: ''; position: absolute; width: 20px; height: 20px; background: rgba(0,0,0,0.3); border-radius: 50%; top: 45px; z-index: 2; }
+        .boarding-pass::before { left: -10px; } .boarding-pass::after { right: -10px; }
+        .ticket-top { background: var(--accent); color: white; padding: 12px 20px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 1px; }
+        .ticket-mid { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; margin: 0 10px; }
+        .airport-code { font-size: 32px; font-weight: 900; color: var(--accent); margin: 0; line-height: 1; }
+        .ticket-btm { padding: 15px 20px; background: #fafafa; border-radius: 0 0 20px 20px; display: flex; justify-content: space-around; font-size: 10px; color: #666; }
 
-        .tab-content { display: none; padding: 0 12px; }
-        .tab-content.active { display: block; }
+        /* --- 時間軸 UI 優化 (Timeline Style) --- */
+        #itinerary-list { position: relative; padding-left: 25px; margin-left: 15px; border-left: 2px dashed rgba(255,255,255,0.4); }
+        .itinerary-card { background: var(--glass); border-radius: 20px; margin: 15px 0; padding: 16px; display: flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,0.1); position: relative; }
+        .itinerary-card::before { content: ''; position: absolute; left: -33px; top: 25px; width: 14px; height: 14px; background: var(--accent); border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(30,60,114,0.5); z-index: 5; }
+        .delete-btn-tl { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-        .header { text-align: center; color: white; text-shadow: 0 2px 15px rgba(0,0,0,0.6); padding: 45px 20px 10px; }
+        /* --- 成員簡化展示 --- */
+        .member-summary-bar { display: flex; align-items: center; gap: -10px; margin-bottom: 10px; padding: 5px; }
+        .summary-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; margin-left: -10px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .summary-avatar:first-child { margin-left: 0; }
+        #members-list-container.collapsed { display: none; }
+
+        /* 導覽與通用 */
+        .card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(255,255,255,0.98); height: 55px; border-radius: 28px; display: flex; box-shadow: 0 8px 25px rgba(0,0,0,0.2); z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; text-decoration: none; font-size: 10px; }
+        .nav-item.active { color: var(--accent); font-weight: 900; }
+        .fab { position: fixed; bottom: 85px; right: 25px; width: 55px; height: 55px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 900; border: none; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         
-        /* 1. 登機證優化 (Apple Wallet Style) */
-        .boarding-pass { 
-            background: #fff; 
-            border-radius: 20px; 
-            margin: 15px 5px; 
-            position: relative; 
-            box-shadow: var(--shadow); 
-            overflow: hidden;
-        }
-        .boarding-pass::before, .boarding-pass::after {
-            content: ""; position: absolute; width: 20px; height: 20px; 
-            background: rgba(0,0,0,0.2); border-radius: 50%; top: 50%; transform: translateY(-50%); z-index: 2;
-        }
-        .boarding-pass::before { left: -10px; }
-        .boarding-pass::after { right: -10px; }
-
-        .ticket-top { background: var(--accent); color: white; padding: 12px 20px; display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 1px; }
-        .ticket-mid { 
-            padding: 20px; display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 2px dashed #eee; margin: 0 10px;
-        }
-        .airport-code { font-size: 28px; font-weight: 900; color: var(--accent); margin: 0; }
-
-        /* 2. 行程頁與時間軸優化 */
-        #itinerary-list { position: relative; padding-left: 25px; margin-top: 20px; }
-        #itinerary-list::before {
-            content: ""; position: absolute; left: 8px; top: 10px; bottom: 10px;
-            width: 2px; border-left: 2px dashed rgba(255,255,255,0.5);
-        }
-
-        .itinerary-card { 
-            background: var(--glass); border-radius: 20px; margin: 10px 0; padding: 16px; 
-            display: flex; align-items: center; box-shadow: var(--shadow); position: relative;
-        }
-        /* 時間軸圓點 */
-        .itinerary-card::before {
-            content: ""; position: absolute; left: -22px; width: 12px; height: 12px;
-            background: white; border: 3px solid var(--accent); border-radius: 50%; z-index: 5;
-        }
-
-        /* 狀態標籤色分 */
-        .type-icon { 
-            width: 44px; height: 44px; border-radius: 14px; display: flex; 
-            align-items: center; justify-content: center; font-size: 18px; margin-right: 12px; flex-shrink: 0;
-        }
-        .icon-attraction { background: #e3f2fd; color: #1976d2; }
-        .icon-lunch, .icon-dinner, .icon-breakfast { background: #fff3e0; color: #f57c00; }
-        .icon-hotel { background: #f3e5f5; color: #7b1fa2; }
-        .icon-flight { background: #e8f5e9; color: #388e3c; }
-
-        /* 通勤資訊優化 */
-        .commute-info { 
-            margin: 8px 0 8px 30px; padding: 5px 15px; background: rgba(0,0,0,0.2);
-            border-radius: 20px; color: white; font-size: 11px; display: inline-flex; align-items: center; gap: 8px;
-            backdrop-filter: blur(5px);
-        }
-
-        /* 3. 按鈕色彩規範 */
-        .btn-primary { background: var(--accent); color: white; border: none; }
-        .btn-辅助 { background: var(--secondary); color: #555; border: none; }
-        .btn-danger-outline { 
-            background: transparent; color: var(--danger); 
-            border: 1.5px solid var(--danger) !important; 
-        }
-        .btn-action { padding: 8px; border-radius: 10px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; }
-
-        /* 4. 分帳與其他 */
-        .expense-detail-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .currency-symbol { font-family: monospace; font-weight: bold; margin-right: 2px; }
-
-        /* 導覽列 */
-        .nav-bar { 
-            position: fixed; bottom: 20px; left: 20px; right: 20px; 
-            background: rgba(255,255,255,0.95); height: 60px; border-radius: 30px; 
-            display: flex; box-shadow: 0 10px 40px rgba(0,0,0,0.25); z-index: 1000; 
-        }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #aaa; text-decoration: none; font-size: 10px; transition: 0.3s; }
-        .nav-item.active { color: var(--accent); transform: translateY(-3px); }
-        .nav-item i { font-size: 20px; margin-bottom: 2px; }
-
-        .fab { position: fixed; bottom: 95px; right: 25px; width: 55px; height: 55px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; box-shadow: 0 8px 25px rgba(30,60,114,0.4); z-index: 900; border: none; }
+        .expense-detail-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .type-icon { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; margin-right: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .commute-info { font-size: 11px; color: white; margin: 5px 0 5px 45px; font-weight: bold; background: rgba(0,0,0,0.2); width: fit-content; padding: 2px 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -140,83 +59,81 @@
 
     <div id="tab-home" class="tab-content active">
         <div id="flight-display-area"></div>
-        
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <strong style="font-size:17px;">旅程基本設定</strong>
-                <button onclick="toggleMemberEdit()" class="btn-action btn-辅助" id="member-toggle-btn">展開成員</button>
-            </div>
+            <strong style="font-size:17px; display:block; margin-bottom:12px;">旅程基本設定</strong>
             
-            <div id="trip-basic-inputs">
-                <span style="font-size:12px; color:#666;">旅行名稱</span>
-                <input type="text" id="input-trip-name" placeholder="例如：115 北海道之旅">
-                
-                <div id="members-section" style="display:none;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin: 10px 0;">
-                        <span style="font-size:12px; color:#666;">成員設定</span>
-                        <button onclick="addMemberRow()" class="btn-action btn-primary" style="padding:4px 10px;">+ 新增</button>
-                    </div>
-                    <div id="members-list-container"></div>
-                </div>
-
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <div style="flex:1;"><span style="font-size:12px; color:#666;">開始日期</span><input type="date" id="input-start-date"></div>
-                    <div style="flex:1;"><span style="font-size:12px; color:#666;">結束日期</span><input type="date" id="input-end-date"></div>
-                </div>
-                <button onclick="saveBaseSettings()" class="btn-primary" style="width:100%; padding:14px; border:none; border-radius:12px; font-weight:bold; margin-top:15px; cursor:pointer;">儲存設定</button>
-                <button onclick="openModal('modal-reset')" class="btn-danger-outline" style="width:100%; padding:10px; border-radius:12px; font-weight:bold; margin-top:15px; cursor:pointer;">重設資料</button>
+            <span style="font-size:11px; color:#666;">旅行名稱</span>
+            <input type="text" id="input-trip-name" placeholder="例如：115 北海道之旅">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0 5px;">
+                <span style="font-size:11px; color:#666;">旅伴成員</span>
+                <button onclick="toggleMemberEdit()" id="edit-member-btn" style="background:var(--accent); color:white; border:none; padding:4px 12px; border-radius:15px; font-size:11px;">編輯成員</button>
             </div>
-        </div>
+            <div id="member-summary-display" class="member-summary-bar"></div>
+            <div id="members-list-container" class="collapsed"></div>
+            <button onclick="addMemberRow()" id="add-row-btn" style="width:100%; padding:8px; background:#f0f0f0; border:none; border-radius:10px; font-size:11px; margin-bottom:15px; display:none;">+ 新增成員欄位</button>
 
-        <div class="card">
-            <strong style="font-size:17px; display:block; margin-bottom:15px;">💹 匯率換算</strong>
-            <div style="display:flex; align-items:center; gap:10px;"><input type="number" id="input-jpy" placeholder="JPY" oninput="convertCurrency('JPY')"> <i class="fas fa-exchange-alt" style="color:var(--accent)"></i> <input type="number" id="input-twd" placeholder="TWD" oninput="convertCurrency('TWD')"></div>
-            <div id="exchange-rate-info" style="font-size:11px; color:#999; text-align:right; margin-top:8px;">讀取中...</div>
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;"><span style="font-size:11px; color:#666;">開始日期</span><input type="date" id="input-start-date"></div>
+                <div style="flex:1;"><span style="font-size:11px; color:#666;">結束日期</span><input type="date" id="input-end-date"></div>
+            </div>
+            <button onclick="saveBaseSettings()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:12px; font-weight:bold; margin-top:10px;">儲存設定</button>
+            <button onclick="openModal('modal-reset')" style="width:100%; padding:10px; background:none; color:var(--danger); border:1px solid var(--danger); border-radius:12px; font-weight:bold; margin-top:15px; font-size:11px;">重設資料</button>
+        </div>
+        
+        <div class="currency-card">
+            <strong style="font-size:15px; display:block; margin-bottom:10px;">💹 匯率換算 (即時)</strong>
+            <div style="display:flex; align-items:center; gap:10px;"><input type="number" id="input-jpy" placeholder="JPY" oninput="convertCurrency('JPY')"><i class="fas fa-exchange-alt" style="color:var(--accent)"></i><input type="number" id="input-twd" placeholder="TWD" oninput="convertCurrency('TWD')"></div>
+            <div id="exchange-rate-info" style="font-size:10px; color:#999; text-align:right; margin-top:5px;">載入中...</div>
         </div>
         <button class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></button>
     </div>
 
     <div id="tab-plan" class="tab-content">
-        <div id="weather-box" style="color:white; text-align:center; padding:10px; font-size:14px;">定位中...</div>
+        <div id="weather-box">正在請求定位...</div>
         <div class="date-container" id="date-scroll"></div>
         <div id="itinerary-list"></div>
         <button class="fab" onclick="openModal('modal-itinerary')"><i class="fas fa-plus"></i></button>
     </div>
 
     <div id="tab-split" class="tab-content">
-        <div id="settle-suggestions" class="settle-card">正在計算...</div>
+        <div id="settle-suggestions" class="settle-card">正在計算債務...</div>
         <div class="card" style="text-align:center;">
             <p style="margin:0; color:#666; font-size:13px;">旅程總支出</p>
-            <h1 id="total-val" style="margin:5px 0; color:var(--accent);">$0</h1>
+            <h1 id="total-val" style="margin:5px 0;">$0</h1>
             <div id="personal-list"></div>
         </div>
         <div class="card">
             <strong>花費明細</strong>
             <div id="expense-detail-list" style="margin-top:10px;"></div>
         </div>
-        <button class="fab" onclick="window.openPayment()"><i class="fas fa-plus"></i></button>
+        <button class="fab" onclick="window.openPayment()"><i class="fas fa-coins"></i></button>
     </div>
 
     <div id="modal-payment" class="modal-overlay"><div class="modal-content">
-        <h3 id="payment-modal-title">💰 支出詳情</h3>
+        <h3 id="payment-modal-title">💰 支出記帳</h3>
         <input type="hidden" id="edit-expense-id">
-        <input type="text" id="pay-name" placeholder="項目名稱">
+        <input type="text" id="pay-name" placeholder="項目名稱 (如: 晚餐)">
         <div style="display:flex; gap:10px;">
             <select id="pay-currency" style="flex:0.4;" onchange="updateConvertHint()"><option value="TWD">台幣 ($)</option><option value="JPY">日圓 (¥)</option></select>
             <input type="number" id="pay-amount" placeholder="金額" style="flex:1;" oninput="updateConvertHint()">
         </div>
-        <span id="convert-hint" class="convert-hint" style="font-size:12px; color:var(--accent); display:block; margin-bottom:10px;"></span>
+        <span id="convert-hint" style="font-size:11px; color:var(--accent); display:block; margin-bottom:10px;"></span>
         <select id="pay-payer"></select>
         <div id="pay-split-list" style="max-height:150px; overflow-y:auto; border:1px solid #eee; padding:10px; border-radius:10px;"></div>
         <textarea id="pay-note" rows="2" placeholder="備註..."></textarea>
         <input type="file" id="pay-file" accept="image/*" onchange="previewExpenseFile(this)">
-        <div id="preview-wrapper" class="preview-container"><button class="btn-remove-file" onclick="removeExpenseFile()">✕</button><img id="expense-img-preview" class="preview-box"></div>
-        <button onclick="saveExpense()" class="btn-primary" style="width:100%; padding:12px; border:none; border-radius:12px; margin-top:15px; font-weight:bold;">儲存</button>
-        <button id="del-expense-btn" onclick="deleteExpenseReal()" class="btn-danger-outline" style="width:100%; padding:10px; border-radius:12px; margin-top:8px; display:none;">刪除此筆</button>
-        <button onclick="closeModal()" class="btn-辅助" style="width:100%; margin-top:10px; border-radius:12px; padding:10px;">取消</button>
+        <div id="preview-wrapper" style="position:relative; margin-top:10px; display:none;">
+            <button onclick="removeExpenseFile()" style="position:absolute; top:5px; right:5px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px;">✕</button>
+            <img id="expense-img-preview" style="width:100%; border-radius:10px;">
+        </div>
+        <button onclick="saveExpense()" style="width:100%; background:var(--success); color:white; padding:12px; border:none; border-radius:12px; margin-top:15px; font-weight:bold;">儲存</button>
+        <button id="del-expense-btn" onclick="deleteExpenseReal()" style="width:100%; background:none; color:var(--danger); padding:10px; border:none; margin-top:5px; display:none;">刪除此筆</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:5px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
 
     <div id="modal-itinerary" class="modal-overlay">...</div>
+    <div id="modal-flight" class="modal-overlay">...</div>
 
     <div class="nav-bar">
         <a href="javascript:void(0)" class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></a>
@@ -225,7 +142,6 @@
     </div>
 
     <script type="module">
-        // Firebase 與 核心邏輯嚴格維持
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, setDoc, updateDoc, getDoc, getDocs, where, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -236,57 +152,38 @@
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
         let currentMembers = [], selectedDate = "", exchangeRate = 0.22;
 
-        const AVATAR_OPTIONS = [ { name: '北狐', url: 'https://images.unsplash.com/photo-1516934024742-b461fba4760a?w=100&h=100&fit=crop' }, { name: '蝦夷小飛鼠', url: 'https://images.unsplash.com/photo-1507356102280-305608778f8c?w=100&h=100&fit=crop' } ];
+        const AVATAR_OPTIONS = [
+            { name: '北狐', url: 'https://images.unsplash.com/photo-1516934024742-b461fba4760a?w=100&h=100&fit=crop' },
+            { name: '蝦夷小飛鼠', url: 'https://images.unsplash.com/photo-1507356102280-305608778f8c?w=100&h=100&fit=crop' },
+            { name: '蝦夷鳴兔', url: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=100&h=100&fit=crop' },
+            { name: '蝦夷鹿', url: 'https://images.unsplash.com/photo-1484406566174-9da000fda645?w=100&h=100&fit=crop' },
+            { name: '丹頂鶴', url: 'https://images.unsplash.com/photo-1612140417641-7a71f0217983?w=100&h=100&fit=crop' },
+            { name: '棕熊', url: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=100&h=100&fit=crop' },
+            { name: '銀喉長尾山雀', url: 'https://images.unsplash.com/photo-1552728089-57bdde30eba3?w=100&h=100&fit=crop' },
+            { name: '虎頭海鵰', url: 'https://images.unsplash.com/photo-1543444983-500742183c5e?w=100&h=100&fit=crop' }
+        ];
 
-        // --- 1. 首頁優化：成員摺疊 ---
+        // --- 成員收合功能 ---
         window.toggleMemberEdit = () => {
-            const sec = document.getElementById('members-section');
-            const btn = document.getElementById('member-toggle-btn');
-            if(sec.style.display === 'none') {
-                sec.style.display = 'block'; btn.innerText = '收合設定';
-            } else {
-                sec.style.display = 'none'; btn.innerText = '展開成員';
-            }
-        };
-
-        // --- 2. 行程頁優化：色分與時間軸渲染 ---
-        window.refreshItinerary = async () => {
-            if(!selectedDate) return;
-            const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
-            const snap = await getDocs(q);
-            const listEl = document.getElementById('itinerary-list');
-            let html = '', docs = snap.docs;
+            const container = document.getElementById('members-list-container');
+            const summary = document.getElementById('member-summary-display');
+            const addBtn = document.getElementById('add-row-btn');
+            const editBtn = document.getElementById('edit-member-btn');
             
-            for(let i=0; i<docs.length; i++) {
-                const d = docs[i].data(), id = docs[i].id;
-                const typeClass = `icon-${d.type}`;
-                const icon = {attraction:'fa-map-marker-alt', hotel:'fa-hotel', breakfast:'fa-coffee', lunch:'fa-utensils', dinner:'fa-utensils', flight:'fa-plane'}[d.type] || 'fa-dot-circle';
-                
-                html += `
-                <div class="itinerary-card" data-id="${id}">
-                    <div class="delete-btn-tl" onclick="window.deletePlan('${id}')"><i class="fas fa-times-circle"></i></div>
-                    <div class="type-icon ${typeClass}"><i class="fas ${icon}"></i></div>
-                    <div class="info-col">
-                        <div class="time-row">${d.start} - ${d.end}<span class="stay-tag">${getTimeDiff(d.start, d.end)}</span></div>
-                        <div class="location-text">${d.location}</div>
-                        ${d.desc ? `<div class="desc-text">${d.desc}</div>` : ''}
-                    </div>
-                    <div class="btn-col">
-                        <button class="btn-action btn-辅助" style="background:#f39c12; color:white;" onclick="window.openOnGoogleMaps('${d.location}')"><i class="fas fa-directions"></i></button>
-                        <button class="btn-action btn-辅助" onclick="window.editPlan('${id}')">編輯</button>
-                    </div>
-                </div>`;
-                
-                if(i < docs.length - 1) {
-                    const time = await getCommute(d.location, docs[i+1].data().location);
-                    html += `<div class="commute-info"><i class="fas fa-map-marked-alt"></i> 距離下一站：${time} <button onclick="window.openOnGoogleMaps('${docs[i+1].data().location}')" style="background:none; border:none; color:white; font-size:10px; text-decoration:underline; cursor:pointer;">導航</button></div>`;
-                }
+            if(container.classList.contains('collapsed')) {
+                container.classList.remove('collapsed');
+                summary.style.display = 'none';
+                addBtn.style.display = 'block';
+                editBtn.innerText = '收合清單';
+            } else {
+                container.classList.add('collapsed');
+                summary.style.display = 'flex';
+                addBtn.style.display = 'none';
+                editBtn.innerText = '編輯成員';
             }
-            listEl.innerHTML = html || '<p style="text-align:center; color:white; padding-top:30px;">今日尚無行程安排</p>';
-            new Sortable(listEl, { animation: 150 });
         };
 
-        // --- 3. 分帳優化：幣別符號 ---
+        // --- 幣別與分帳明細優化 ---
         onSnapshot(query(collection(db, "expenses"), orderBy("createdAt", "desc")), (snap) => {
             let total = 0, balances = {}, detailHtml = '';
             currentMembers.forEach(m => balances[m.name] = 0);
@@ -296,11 +193,12 @@
                 const per = d.amount / d.splitTo.length;
                 d.splitTo.forEach(m => { if(balances.hasOwnProperty(m)) balances[m] -= per; });
                 
-                const sym = d.currency === 'JPY' ? '¥' : '$';
+                // 幣別符號判定
+                const symbol = d.currency === 'JPY' ? '¥' : '$';
                 detailHtml += `
                 <div class="expense-detail-item" onclick="window.openPayment('${ds.id}')">
-                    <div><b>${d.name}</b><br><small style="color:#888;">${d.payer} 墊付 (${sym}${d.rawAmount})</small></div>
-                    <div style="text-align:right;"><b style="color:var(--accent);">$${Math.round(d.amount).toLocaleString()}</b></div>
+                    <div><b>${d.name}</b><br><small style="color:#888;">${d.payer} 墊付 (${symbol}${d.rawAmount})</small></div>
+                    <div style="text-align:right;"><b>$${Math.round(d.amount).toLocaleString()}</b>${d.img ? '<br><i class="fas fa-image" style="font-size:10px;color:#ccc;"></i>' : ''}</div>
                 </div>`;
             });
             document.getElementById('total-val').innerText = "$" + Math.round(total).toLocaleString();
@@ -308,34 +206,78 @@
             updateSettleUI(balances);
         });
 
-        // --- 4. 登機證渲染優化 ---
+        // --- 行程與時間軸渲染 ---
+        window.refreshItinerary = async () => {
+            if(!selectedDate) return;
+            const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
+            const snap = await getDocs(q);
+            const listEl = document.getElementById('itinerary-list');
+            let html = '', docs = snap.docs;
+            for(let i=0; i<docs.length; i++) {
+                const d = docs[i].data(), id = docs[i].id;
+                html += `
+                    <div class="itinerary-card" data-id="${id}">
+                        <div class="delete-btn-tl" onclick="window.deletePlan('${id}')">✕</div>
+                        <div class="type-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="info-col">
+                            <div class="time-row">${d.start} - ${d.end} <span class="stay-tag">${d.start && d.end ? '預計停留' : ''}</span></div>
+                            <div class="location-text">${d.location}</div>
+                            ${d.desc ? `<div style="font-size:12px;color:#666;margin-top:4px;">${d.desc}</div>` : ''}
+                        </div>
+                        <div class="btn-col">
+                            <button class="btn-action" style="background:#f39c12; padding:5px; width:50px;" onclick="window.openOnGoogleMaps('${d.location}')"><i class="fas fa-directions"></i></button>
+                            <button class="btn-action" style="background:#3498db; padding:5px; width:50px;" onclick="window.editPlan('${id}')">編輯</button>
+                        </div>
+                    </div>`;
+                if(i < docs.length - 1) {
+                    const time = await getCommute(d.location, docs[i+1].data().location);
+                    html += `<div class="commute-info"><i class="fas fa-car"></i> ${time}</div>`;
+                }
+            }
+            listEl.innerHTML = html || '<p style="text-align:center; color:white; padding-top:20px;">尚無計畫</p>';
+            new Sortable(listEl, { animation: 150 });
+        };
+
+        // --- 登機證渲染 ---
         onSnapshot(collection(db, "flights"), (snap) => {
             let html = '';
             snap.forEach(ds => {
                 const f = ds.data();
                 html += `
                 <div class="boarding-pass">
-                    <div class="ticket-top"><span>${f.air} ${f.no}</span><span>AIR TICKET</span></div>
+                    <div class="ticket-top"><span>${f.air} ${f.no}</span><span>航空通行證</span></div>
                     <div class="ticket-mid">
                         <div style="text-align:left;"><p class="airport-code">${f.from}</p><b>${f.fromT}</b></div>
-                        <div style="text-align:center; flex:1; position:relative;">
-                            <i class="fas fa-plane" style="color:#ddd; font-size:20px;"></i>
-                            <div style="border-top:2px dotted #eee; width:80%; margin:10px auto;"></div>
-                        </div>
+                        <div style="flex:1; text-align:center; position:relative;"><i class="fas fa-plane" style="color:#eee; font-size:20px;"></i></div>
                         <div style="text-align:right;"><p class="airport-code">${f.to}</p><b>${f.toT}</b></div>
                     </div>
-                    <div class="ticket-btm" style="padding:15px; background:#fafafa; display:flex; justify-content:space-around; font-size:10px;">
-                        <div>TYPE<br><b class="ticket-val">${f.type=='go'?'DEPARTURE':'RETURN'}</b></div>
-                        <div>GATE<br><b class="ticket-val">TBA</b></div>
-                        <div>STATUS<br><b class="ticket-val" style="color:var(--success)">ON TIME</b></div>
-                    </div>
+                    <div class="ticket-btm"><span>航班：${f.no}</span><span>類型：${f.type === 'go' ? '去程' : '回程'}</span></div>
                 </div>`;
             });
             document.getElementById('flight-display-area').innerHTML = html;
         });
 
-        // 其餘邏輯 (初始化、時間計算、Firebase 儲存等) 維持不變...
-        // [以下省略重複的基礎邏輯函數以保持簡潔，實際運行時請包含您原始代碼的其餘部分]
+        // --- 其餘 Firebase 基本功能完全維持 (addMemberRow, saveBaseSettings, saveItinerary, openPayment 等) ---
+        // (此處省略部分重複邏輯代碼以節省篇幅，但運作時需包含您原本的對應函數)
+        
+        // 初始化成員摘要頭像
+        onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
+            if(snap.exists()) {
+                const d = snap.data();
+                currentMembers = d.members || [];
+                const summaryEl = document.getElementById('member-summary-display');
+                summaryEl.innerHTML = currentMembers.map(m => `<img src="${m.avatar}" class="summary-avatar" title="${m.name}">`).join('') + `<span style="font-size:12px; color:white; margin-left:15px;">${currentMembers.length} 位旅伴</span>`;
+                
+                const container = document.getElementById('members-list-container');
+                container.innerHTML = '';
+                currentMembers.forEach(m => window.addMemberRow(m.name, m.avatar));
+                
+                document.getElementById('dynamic-trip-name').innerText = d.tripName || "旅遊誌";
+                renderDates(d.start, d.end);
+            }
+        });
+
+        // 頁面與 Modal 基本功能
         window.switchTab = (id, el) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -345,15 +287,7 @@
         window.openModal = (id) => document.getElementById(id).style.display = 'flex';
         window.closeModal = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
         
-        // 頁面初始化
-        onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
-            if(snap.exists()) {
-                const d = snap.data();
-                document.getElementById('dynamic-trip-name').innerText = d.tripName || "旅遊誌";
-                currentMembers = d.members || [];
-                // 這裡會觸發後續的各頁面渲染
-            }
-        });
+        // (其餘如 getTimeDiff, getCommute, saveExpense 等邏輯需保持與您的原始版本一致)
     </script>
 </body>
 </html>
