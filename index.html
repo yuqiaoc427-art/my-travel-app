@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     
     <style>
-        :root { --glass: rgba(255, 255, 255, 0.92); --blur: blur(20px); --accent: #1e3c72; --danger: #e74c3c; }
+        :root { --glass: rgba(255, 255, 255, 0.92); --blur: blur(20px); --accent: #1e3c72; --danger: #e74c3c; --success: #27ae60; }
         body { font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 100px; background: url('https://static.gltjp.com/glt/data/article/21000/20246/20230828_043453_d11a1481_w1920.webp') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #333; overflow-x: hidden; }
         
         .tab-content { display: none; padding: 0 10px; }
@@ -18,29 +18,31 @@
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
         #weather-box { background: rgba(0,0,0,0.35); color: white; border-radius: 15px; padding: 8px 12px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 6px; font-size: 13px; backdrop-filter: blur(5px); min-height: 38px; }
 
+        /* 登機證浮窗 */
         .boarding-pass { background: #fff; border-radius: 15px; margin: 10px 5px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-left: 5px solid var(--accent); max-width: 95%; margin-left: auto; margin-right: auto; }
         .ticket-top { background: var(--accent); color: white; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; }
         .ticket-mid { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .airport-code { font-size: 24px; font-weight: 900; color: var(--accent); margin: 0; }
         .ticket-btm { padding: 10px 15px; background: #fafafa; display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 5px; border-top: 1px dashed #ddd; font-size: 10px; }
 
+        /* 日期選擇器 */
         .date-container { display: flex; overflow-x: auto; padding: 15px 5px; gap: 10px; scrollbar-width: none; }
         .date-item { min-width: 60px; height: 85px; background: var(--glass); border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
         .date-item.active { background: var(--accent); color: white; border: none; box-shadow: 0 5px 15px rgba(30,60,114,0.3); }
         .date-item b { font-size: 15px; margin-bottom: 3px; }
         .date-item span { font-size: 11px; opacity: 0.8; }
 
+        /* 行程卡片 */
         .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 16px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; cursor: grab; }
         .itinerary-card:active { cursor: grabbing; }
         .delete-btn-tl { position: absolute; top: 8px; left: 8px; color: var(--danger); font-size: 16px; cursor: pointer; z-index: 10; opacity: 0.7; }
-        .type-icon { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; margin-right: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); flex-shrink: 0; }
+        .type-icon { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; margin-right: 12px; flex-shrink: 0; }
         .info-col { flex: 1; display: flex; flex-direction: column; gap: 3px; }
         .time-row { font-weight: 700; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 5px; }
         .location-text { font-size: 16px; font-weight: bold; color: #333; line-height: 1.3; }
-        .btn-col { display: flex; flex-direction: column; gap: 4px; margin-left: 8px; }
-        .btn-action { padding: 7px 10px; border-radius: 9px; border: none; font-size: 11px; font-weight: bold; color: white; cursor: pointer; width: 65px; text-align: center; }
         .commute-info { text-align: left; color: white; font-size: 11px; margin: 4px 0 4px 50px; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 5px; }
 
+        /* 導覽列 */
         .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(255,255,255,0.98); height: 55px; border-radius: 28px; display: flex; box-shadow: 0 8px 25px rgba(0,0,0,0.2); z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; text-decoration: none; font-size: 10px; }
         .nav-item i { font-size: 18px; margin-bottom: 2px; }
@@ -53,15 +55,19 @@
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #eee; border-radius: 12px; font-size: 15px; box-sizing: border-box; }
         
         .currency-card { background: var(--glass); border-radius: 24px; padding: 20px; margin: 15px 5px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .member-row { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 15px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); }
-        .member-info { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .member-row { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 15px; margin-bottom: 10px; }
+        .member-info { flex: 1; }
 
         .settle-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 14px; text-align: left; }
         .expense-detail-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; }
         .convert-hint { font-size: 11px; color: #1e3c72; font-weight: bold; margin-top: -5px; margin-bottom: 8px; display: block; }
-        .preview-container { position: relative; margin-top: 10px; display: none; }
-        .preview-box { width: 100%; border-radius: 12px; display: block; }
-        .btn-remove-file { position: absolute; top: 5px; right: 5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 12px; }
+        
+        /* 多圖預覽網格 */
+        #preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+        .preview-item { position: relative; width: 100%; aspect-ratio: 1; }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+        .btn-remove-img { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
         .btn-danger-outline { width: 100%; padding: 12px; background: white; color: var(--danger); border: 2px solid var(--danger); border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
@@ -89,9 +95,9 @@
         </div>
         <div class="currency-card">
             <strong style="font-size:17px; display:block; margin-bottom:15px;">💹 匯率換算 (即時)</strong>
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><span style="font-size:12px; color:#666; width:40px;">日幣</span><input type="number" id="input-jpy" placeholder="JPY" oninput="convertCurrency('JPY')"></div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><span style="font-size:12px; color:#666; width:40px;">日幣</span><input type="number" id="input-jpy" placeholder="JPY" step="any" oninput="convertCurrency('JPY')"></div>
             <div style="text-align:center; color:var(--accent); margin: -5px 0 5px;"><i class="fas fa-exchange-alt"></i></div>
-            <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:12px; color:#666; width:40px;">台幣</span><input type="number" id="input-twd" placeholder="TWD" oninput="convertCurrency('TWD')"></div>
+            <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:12px; color:#666; width:40px;">台幣</span><input type="number" id="input-twd" placeholder="TWD" step="any" oninput="convertCurrency('TWD')"></div>
             <div id="exchange-rate-info" style="font-size:11px; color:#999; text-align:right; margin-top:5px;">讀取中...</div>
         </div>
         <button class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></button>
@@ -118,6 +124,36 @@
         <button class="fab" onclick="window.openPayment()"><i class="fas fa-plus"></i></button>
     </div>
 
+    <div id="modal-payment" class="modal-overlay"><div class="modal-content">
+        <h3 id="payment-modal-title">💰 支出記帳</h3>
+        <input type="hidden" id="edit-expense-id">
+        <input type="text" id="pay-name" placeholder="項目名稱 (如: 晚餐)">
+        
+        <div style="display:flex; gap:10px;">
+            <select id="pay-currency" style="flex:0.4;" onchange="updateConvertHint()">
+                <option value="TWD">台幣 (TWD)</option><option value="JPY">日圓 (JPY)</option>
+            </select>
+            <input type="number" id="pay-amount" placeholder="金額" style="flex:1;" oninput="updateConvertHint()">
+        </div>
+        <span id="convert-hint" class="convert-hint"></span>
+
+        <p style="font-size:12px; margin:0;">誰先墊付：</p>
+        <select id="pay-payer"></select>
+        <p style="font-size:12px; margin:10px 0 0;">分攤成員：</p>
+        <div id="pay-split-list" style="max-height:120px; overflow-y:auto; border:1px solid #eee; padding:8px; border-radius:10px;"></div>
+
+        <textarea id="pay-note" rows="2" placeholder="備註說明..."></textarea>
+        
+        <p style="font-size:12px; margin:10px 0 0;">附件檔案 (支援多圖)：</p>
+        <input type="file" id="pay-file" accept="image/*" multiple onchange="handleMultipleFiles(this)">
+        
+        <div id="preview-grid"></div>
+
+        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:12px; margin-top:15px; font-weight:bold;">儲存帳目</button>
+        <button id="del-expense-btn" onclick="deleteExpenseReal()" style="width:100%; background:none; color:var(--danger); padding:10px; border:none; margin-top:5px; display:none;">刪除此筆支出</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:5px; border:none; padding:10px; border-radius:12px;">取消</button>
+    </div></div>
+
     <div id="modal-itinerary" class="modal-overlay"><div class="modal-content">
         <h3>📝 編輯行程</h3>
         <input type="hidden" id="edit-id">
@@ -129,33 +165,6 @@
         <textarea id="plan-desc" rows="3" placeholder="活動說明"></textarea>
         <div style="display:flex; gap:10px;"><input type="time" id="plan-start"><input type="time" id="plan-end"></div>
         <button onclick="saveItinerary()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
-        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
-    </div></div>
-
-    <div id="modal-payment" class="modal-overlay"><div class="modal-content">
-        <h3 id="payment-modal-title">💰 新增支出</h3>
-        <input type="hidden" id="edit-expense-id">
-        <input type="text" id="pay-name" placeholder="項目名稱 (如: 晚餐)">
-        <div style="display:flex; gap:10px;">
-            <select id="pay-currency" style="flex:0.4;" onchange="updateConvertHint()">
-                <option value="TWD">台幣 (TWD)</option><option value="JPY">日圓 (JPY)</option>
-            </select>
-            <input type="number" id="pay-amount" placeholder="金額" style="flex:1;" oninput="updateConvertHint()">
-        </div>
-        <span id="convert-hint" class="convert-hint"></span>
-        <p style="font-size:12px; margin:0;">誰先墊付：</p>
-        <select id="pay-payer"></select>
-        <p style="font-size:12px; margin:10px 0 0;">分攤成員：</p>
-        <div id="pay-split-list"></div>
-        <textarea id="pay-note" rows="2" placeholder="備註說明..."></textarea>
-        <p style="font-size:12px; margin:10px 0 0;">附件檔案：</p>
-        <input type="file" id="pay-file" accept="image/*" onchange="previewExpenseFile(this)">
-        <div id="preview-container" class="preview-container">
-            <button class="btn-remove-file" onclick="removeExpenseFile()">✕</button>
-            <img id="expense-img-preview" class="preview-box">
-        </div>
-        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:12px; margin-top:15px; font-weight:bold;">儲存帳目</button>
-        <button id="del-expense-btn" onclick="deleteExpenseReal()" style="width:100%; background:var(--danger); color:white; padding:12px; border:none; border-radius:12px; margin-top:5px; display:none;">刪除此筆</button>
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
 
@@ -206,10 +215,39 @@
 
         const WEATHER_KEY = "c8f4d0fbf6c2b1cded4335d40c62d3f5";
         let currentMembers = [], selectedDate = "", exchangeRate = 0.22;
+        let tempImages = []; // 用於存放 Base64 字串陣列
 
-        const typeIcons = { attraction: 'fa-map-marker-alt', hotel: 'fa-hotel', flight: 'fa-plane', breakfast: 'fa-coffee', lunch: 'fa-utensils', dinner: 'fa-moon' };
+        // --- 多圖上傳處理 ---
+        window.handleMultipleFiles = (input) => {
+            if (input.files) {
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        tempImages.push(e.target.result);
+                        renderPreviewGrid();
+                    };
+                    reader.readAsDataURL(file);
+                });
+                input.value = ""; // 重設 input 讓使用者可以重複選取同一張圖
+            }
+        };
 
-        // --- 分帳專用邏輯 ---
+        window.renderPreviewGrid = () => {
+            const grid = document.getElementById('preview-grid');
+            grid.innerHTML = tempImages.map((src, index) => `
+                <div class="preview-item">
+                    <button class="btn-remove-img" onclick="removeImage(${index})">✕</button>
+                    <img src="${src}" class="preview-img">
+                </div>
+            `).join('');
+        };
+
+        window.removeImage = (index) => {
+            tempImages.splice(index, 1);
+            renderPreviewGrid();
+        };
+
+        // --- 分帳功能 ---
         window.updateConvertHint = () => {
             const amount = Number(document.getElementById('pay-amount').value);
             const curr = document.getElementById('pay-currency').value;
@@ -219,28 +257,13 @@
             else hint.innerText = `≈ TWD ${(amount * exchangeRate).toFixed(0)}`;
         };
 
-        window.previewExpenseFile = (input) => {
-            const preview = document.getElementById('expense-img-preview');
-            const container = document.getElementById('preview-container');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => { preview.src = e.target.result; container.style.display = 'block'; };
-                reader.readAsDataURL(input.files[0]);
-            }
-        };
-
-        window.removeExpenseFile = () => {
-            document.getElementById('pay-file').value = "";
-            document.getElementById('expense-img-preview').src = "";
-            document.getElementById('preview-container').style.display = 'none';
-        };
-
         window.openPayment = async (id = null) => {
             document.getElementById('edit-expense-id').value = id || "";
             document.getElementById('pay-name').value = "";
             document.getElementById('pay-amount').value = "";
             document.getElementById('pay-note').value = "";
-            window.removeExpenseFile();
+            tempImages = []; // 重設圖片
+            renderPreviewGrid();
             document.getElementById('del-expense-btn').style.display = id ? "block" : "none";
             document.getElementById('payment-modal-title').innerText = id ? "📝 編輯支出" : "💰 新增支出";
 
@@ -260,11 +283,9 @@
                 document.getElementById('pay-currency').value = d.currency || "TWD";
                 document.getElementById('pay-payer').value = d.payer;
                 document.getElementById('pay-note').value = d.note || "";
-                if(d.img) {
-                    const p = document.getElementById('expense-img-preview');
-                    p.src = d.img;
-                    document.getElementById('preview-container').style.display = 'block';
-                }
+                // 支援舊有單張圖片(String)或新版多張圖片(Array)
+                if(d.img) tempImages = Array.isArray(d.img) ? [...d.img] : [d.img];
+                renderPreviewGrid();
                 updateConvertHint();
             }
             openModal('modal-payment');
@@ -278,10 +299,9 @@
             const payer = document.getElementById('pay-payer').value;
             const splitTo = [...document.querySelectorAll('.split-cb:checked')].map(c => c.value);
             const note = document.getElementById('pay-note').value;
-            const img = document.getElementById('expense-img-preview').src || "";
-            if(!name || !rawAmount) return alert("請輸入花費名稱與金額");
+            if(!name || !rawAmount || splitTo.length === 0) return alert("請輸入花費名稱、金額與分攤成員");
             const amount = (currency === "JPY") ? rawAmount * exchangeRate : rawAmount;
-            const data = { name, rawAmount, amount, currency, payer, splitTo, note, img, createdAt: serverTimestamp() };
+            const data = { name, rawAmount, amount, currency, payer, splitTo, note, img: tempImages, updatedAt: serverTimestamp() };
             if(id) await updateDoc(doc(db, "expenses", id), data); else await addDoc(collection(db, "expenses"), data);
             closeModal();
         };
@@ -299,10 +319,11 @@
                 if(balances.hasOwnProperty(d.payer)) balances[d.payer] += d.amount;
                 const per = d.amount / d.splitTo.length;
                 d.splitTo.forEach(m => { if(balances.hasOwnProperty(m)) balances[m] -= per; });
-                detailHtml += `<div class="expense-detail-item" onclick="window.openPayment('${ds.id}')"><div><b>${d.name}</b><br><small style="color:#888;">${d.payer} 墊付 (${d.currency} ${d.rawAmount})</small></div><div style="text-align:right;"><b>$${Math.round(d.amount).toLocaleString()}</b>${d.img ? '<br><i class="fas fa-file-image" style="color:#999;font-size:10px;"></i>' : ''}</div></div>`;
+                const imgCount = Array.isArray(d.img) ? d.img.length : (d.img ? 1 : 0);
+                detailHtml += `<div class="expense-detail-item" onclick="window.openPayment('${ds.id}')"><div><b>${d.name}</b><br><small style="color:#888;">${d.payer} 墊付 (${d.currency} ${d.rawAmount})</small></div><div style="text-align:right;"><b>$${Math.round(d.amount).toLocaleString()}</b>${imgCount > 0 ? `<br><small style="color:#999;"><i class="fas fa-images"></i> ${imgCount}</small>` : ''}</div></div>`;
             });
-            const totalEl = document.getElementById('total-val');
-            if(totalEl) totalEl.innerText = "$" + Math.round(total).toLocaleString();
+            const totalValEl = document.getElementById('total-val');
+            if(totalValEl) totalValEl.innerText = "$" + Math.round(total).toLocaleString();
             document.getElementById('expense-detail-list').innerHTML = detailHtml;
             updateSettleUI(balances);
         });
@@ -325,19 +346,19 @@
             document.getElementById('settle-suggestions').innerHTML = (debtors.length===0) ? "✅ 帳目已結清" : sug;
         }
 
-        // --- 行程功能 ---
-        window.saveBaseSettings = async () => {
-            const members = Array.from(document.querySelectorAll('.member-row')).map(r => ({ name: r.querySelector('.member-name-input').value })).filter(m => m.name);
-            await setDoc(doc(db, "settings", "currentTrip"), { tripName: document.getElementById('input-trip-name').value, members, start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value });
-            alert("旅程設定儲存成功");
-        };
-
+        // --- 首頁功能 (拿掉頭貼) ---
         window.addMemberRow = (name = '') => {
             const container = document.getElementById('members-list-container');
             const row = document.createElement('div');
             row.className = 'member-row';
-            row.innerHTML = `<div class="member-info"><input type="text" class="member-name-input" value="${name}" placeholder="旅伴姓名"></div><button onclick="this.parentElement.remove()" style="background:none; border:none; color:#ccc; padding: 10px;"><i class="fas fa-times"></i></button>`;
+            row.innerHTML = `<div class="member-info"><input type="text" class="member-name-input" value="${name}" placeholder="姓名"></div><button onclick="this.parentElement.remove()" style="background:none; border:none; color:#ccc; padding: 10px;"><i class="fas fa-times"></i></button>`;
             container.appendChild(row);
+        };
+
+        window.saveBaseSettings = async () => {
+            const members = Array.from(document.querySelectorAll('.member-row')).map(r => ({ name: r.querySelector('.member-name-input').value.trim() })).filter(m => m.name);
+            await setDoc(doc(db, "settings", "currentTrip"), { tripName: document.getElementById('input-trip-name').value, members, start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value });
+            alert("旅程設定儲存成功");
         };
 
         onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
@@ -354,13 +375,7 @@
             }
         });
 
-        window.saveItinerary = async () => {
-            const data = { date: selectedDate, type: document.getElementById('plan-type').value, location: document.getElementById('plan-location').value, desc: document.getElementById('plan-desc').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, updatedAt: serverTimestamp() };
-            const id = document.getElementById('edit-id').value;
-            if(id) await updateDoc(doc(db, "itinerary", id), data); else await addDoc(collection(db, "itinerary"), data);
-            closeModal(); refreshItinerary();
-        };
-
+        // --- 行程功能 (長按拖曳) ---
         window.refreshItinerary = async () => {
             if(!selectedDate) return;
             const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
@@ -371,23 +386,38 @@
             for(let i=0; i<docs.length; i++) {
                 const d = docs[i].data(), id = docs[i].id;
                 const icon = typeIcons[d.type] || 'fa-map-marker-alt';
-                html += `<div class="itinerary-card" data-id="${id}"><div class="delete-btn-tl" onclick="window.deletePlan('${id}')"><i class="fas fa-times-circle"></i></div><div class="type-icon"><i class="fas ${icon}"></i></div><div class="info-col"><div class="time-row">${d.start} - ${d.end}<span class="stay-tag">${getTimeDiff(d.start, d.end)}</span></div><div class="location-text">${d.location}</div>${d.desc ? `<div class="desc-text">${d.desc}</div>` : ''}</div><div class="btn-col"><button class="btn-action" style="background:#f39c12" onclick="window.openOnGoogleMaps('${d.location}')"><i class="fas fa-directions"></i></button><button class="btn-action" style="background:#3498db" onclick="window.editPlan('${id}')">編輯</button></div></div>`;
+                html += `<div class="itinerary-card" data-id="${id}"><div class="delete-btn-tl" onclick="window.deletePlan('${id}')"><i class="fas fa-times-circle"></i></div><div class="type-icon"><i class="fas ${icon}"></i></div><div class="info-col"><div class="time-row">${d.start} - ${d.end}</div><div class="location-text">${d.location}</div>${d.desc ? `<div style="font-size:13px;color:#666;line-height:1.4;">${d.desc}</div>` : ''}</div><div class="btn-col"><button class="btn-action" style="background:#f39c12" onclick="window.openOnGoogleMaps('${d.location}')"><i class="fas fa-directions"></i></button><button class="btn-action" style="background:#3498db" onclick="window.editPlan('${id}')">編輯</button></div></div>`;
                 if(i < docs.length - 1) { const time = await getCommute(d.location, docs[i+1].data().location); html += `<div class="commute-info"><i class="fas fa-car"></i> 約 ${time}</div>`; }
             }
-            listEl.innerHTML = html || '<p style="text-align:center; color:white;">無行程計畫。</p>';
+            listEl.innerHTML = html || '<p style="text-align:center; color:white; padding:20px;">無行程計畫。</p>';
+            
             new Sortable(listEl, { 
                 animation: 150,
-                delay: 1000, // 長按 1 秒
-                delayOnTouchOnly: true 
+                delay: 1000, 
+                delayOnTouchOnly: true
             });
         };
 
-        // --- 共用功能 ---
+        // 其餘輔助功能
+        window.saveItinerary = async () => {
+            const data = { date: selectedDate, type: document.getElementById('plan-type').value, location: document.getElementById('plan-location').value, desc: document.getElementById('plan-desc').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, updatedAt: serverTimestamp() };
+            const id = document.getElementById('edit-id').value;
+            if(id) await updateDoc(doc(db, "itinerary", id), data); else await addDoc(collection(db, "itinerary"), data);
+            closeModal(); refreshItinerary();
+        };
+
+        window.convertCurrency = (type) => {
+            const jpy = document.getElementById('input-jpy'), twd = document.getElementById('input-twd');
+            if (type === 'JPY') twd.value = (jpy.value * exchangeRate).toFixed(2);
+            else jpy.value = (twd.value / exchangeRate).toFixed(2);
+        };
+
         async function fetchExchangeRate() {
             try {
                 const res = await fetch('https://open.er-api.com/v6/latest/JPY');
                 const data = await res.json(); exchangeRate = data.rates.TWD;
-                document.getElementById('exchange-rate-info').innerText = `1 JPY ≈ ${exchangeRate.toFixed(4)} TWD (即時)`;
+                const info = document.getElementById('exchange-rate-info');
+                if(info) info.innerText = `1 JPY ≈ ${exchangeRate.toFixed(4)} TWD (即時)`;
             } catch (e) { }
         }
         fetchExchangeRate();
@@ -433,10 +463,14 @@
         window.openOnGoogleMaps = (l) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l)}`, '_blank');
         window.deletePlan = async (id) => { if(confirm("確定刪除？")) { await deleteDoc(doc(db, "itinerary", id)); refreshItinerary(); } };
         window.editPlan = async (id) => {
-            const d = (await getDoc(doc(db, "itinerary", id))).data();
-            document.getElementById('edit-id').value = id; document.getElementById('plan-type').value = d.type;
-            document.getElementById('plan-location').value = d.location; document.getElementById('plan-desc').value = d.desc || "";
-            document.getElementById('plan-start').value = d.start; document.getElementById('plan-end').value = d.end;
+            const ds = await getDoc(doc(db, "itinerary", id));
+            const d = ds.data();
+            document.getElementById('edit-id').value = id;
+            document.getElementById('plan-type').value = d.type;
+            document.getElementById('plan-location').value = d.location;
+            document.getElementById('plan-desc').value = d.desc || "";
+            document.getElementById('plan-start').value = d.start;
+            document.getElementById('plan-end').value = d.end;
             openModal('modal-itinerary');
         };
 
@@ -445,9 +479,10 @@
             snap.forEach(ds => {
                 const f = ds.data(); const [sh, sm] = f.fromT.split(':').map(Number), [eh, em] = f.toT.split(':').map(Number);
                 let diff = (eh*60+em)-(sh*60+sm); if(diff<0) diff+=1440;
-                html += `<div class="boarding-pass"><div class="ticket-top"><span>${f.air} ${f.no}</span><span>去程</span></div><div class="ticket-mid"><div style="text-align:left;"><p class="airport-code">${f.from}</p><b>${f.fromT}</b></div><div style="text-align:center;flex:1;position:relative;"><span style="font-size:9px;color:#999;">${Math.floor(diff/60)}h ${diff%60}m</span><br><i class="fas fa-plane" style="color:#eee;"></i></div><div style="text-align:right;"><p class="airport-code">${f.to}</p><b>${f.toT}</b></div></div></div>`;
+                html += `<div class="boarding-pass"><div class="ticket-top"><span>${f.air} ${f.no}</span><span>${f.type=='go'?'去程':'回程'}</span></div><div class="ticket-mid"><div style="text-align:left;"><p class="airport-code">${f.from}</p><b>${f.fromT}</b></div><div style="text-align:center;flex:1;position:relative;"><span style="font-size:9px;color:#999;">${Math.floor(diff/60)}h ${diff%60}m</span><br><i class="fas fa-plane" style="color:#eee;"></i></div><div style="text-align:right;"><p class="airport-code">${f.to}</p><b>${f.toT}</b></div></div></div>`;
             });
-            document.getElementById('flight-display-area').innerHTML = html;
+            const flightArea = document.getElementById('flight-display-area');
+            if(flightArea) flightArea.innerHTML = html;
         });
 
         function renderDates(s, e) {
@@ -466,7 +501,7 @@
         window.switchTab = (id, el) => { document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); document.getElementById(id).classList.add('active'); el.classList.add('active'); };
         window.openModal = (id) => document.getElementById(id).style.display = 'flex';
         window.closeModal = () => { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); document.getElementById('edit-id').value = ''; };
-        window.convertCurrency = (type) => { const jpy = document.getElementById('input-jpy'), twd = document.getElementById('input-twd'); if (type === 'JPY') twd.value = (jpy.value * exchangeRate).toFixed(2); else jpy.value = (twd.value / exchangeRate).toFixed(2); };
+        window.saveFlight = async () => { const t = document.getElementById('f-type').value; await setDoc(doc(db, "flights", t), { air: document.getElementById('f-air').value, no: document.getElementById('f-no').value, from: document.getElementById('f-from').value.toUpperCase(), fromT: document.getElementById('f-from-t').value, to: document.getElementById('f-to').value.toUpperCase(), toT: document.getElementById('f-to-t').value, type: t }); closeModal(); };
         window.resetAllData = async () => { if(confirm("這將清除所有資料，確定？")) { const cols = ["itinerary", "expenses", "flights"]; for(const c of cols) { const s = await getDocs(collection(db, c)); for(const d of s.docs) await deleteDoc(doc(db, c, d.id)); } await deleteDoc(doc(db, "settings", "currentTrip")); window.location.reload(); } };
 
     </script>
