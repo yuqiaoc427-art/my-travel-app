@@ -36,18 +36,14 @@
         /* 行程卡片 */
         .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 16px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; }
         .delete-btn-tl { position: absolute; top: 8px; left: 8px; color: var(--danger); font-size: 16px; cursor: pointer; z-index: 10; opacity: 0.7; }
-
         .type-icon { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; margin-right: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); flex-shrink: 0; }
-        
         .info-col { flex: 1; display: flex; flex-direction: column; gap: 3px; }
         .time-row { font-weight: 700; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 5px; }
         .stay-tag { font-size: 10px; background: rgba(30,60,114,0.1); color: var(--accent); padding: 1px 6px; border-radius: 8px; font-weight: bold; }
         .location-text { font-size: 16px; font-weight: bold; color: #333; line-height: 1.3; }
         .desc-text { font-size: 13px; color: #666; line-height: 1.4; }
-        
         .btn-col { display: flex; flex-direction: column; gap: 4px; margin-left: 8px; }
         .btn-action { padding: 7px 10px; border-radius: 9px; border: none; font-size: 11px; font-weight: bold; color: white; cursor: pointer; width: 65px; text-align: center; }
-        
         .commute-info { text-align: left; color: white; font-size: 11px; margin: 4px 0 4px 50px; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 5px; }
 
         /* 導覽列 */
@@ -61,23 +57,15 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 85%; border-radius: 25px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #eee; border-radius: 12px; font-size: 15px; box-sizing: border-box; font-family: inherit; }
-        
-        /* 匯率與成員管理樣式 */
-        .currency-card { background: var(--glass); border-radius: 24px; padding: 20px; margin: 15px 5px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .member-row { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 15px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); }
-        .member-avatar-preview { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: #eee; }
-        .member-info { flex: 1; display: flex; flex-direction: column; gap: 5px; }
-        .member-info input { margin: 0; padding: 8px; font-size: 13px; }
-        .member-info select { margin: 0; padding: 5px; font-size: 12px; height: 32px; }
 
-        .pac-container { z-index: 9999 !important; border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: inherit; margin-top: 5px; }
-        .settle-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 12px; border-radius: 10px; margin-top: 15px; font-size: 14px; text-align: left; }
-        .btn-danger-outline { width: 100%; padding: 12px; background: white; color: var(--danger); border: 2px solid var(--danger); border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; }
-
-        /* 分帳明細專用樣式 */
+        /* 分帳樣式 */
+        .settle-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 14px; text-align: left; }
         .expense-detail-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; }
-        .convert-hint { font-size: 11px; color: #1e3c72; font-weight: bold; margin-top: -5px; margin-bottom: 8px; display: block; }
-        .preview-box { width: 100%; border-radius: 12px; margin-top: 10px; display: none; }
+        .convert-hint { font-size: 11px; color: #1e3c72; font-weight: bold; margin-top: -5px; margin-bottom: 10px; display: block; }
+        
+        .preview-container { position: relative; width: 100%; margin-top: 10px; display: none; }
+        .preview-box { width: 100%; border-radius: 12px; display: block; }
+        .remove-file-badge { position: absolute; top: 5px; right: 5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -100,13 +88,13 @@
                 <div style="flex:1;"><span style="font-size:12px; color:#666; margin-left:5px;">結束日期</span><input type="date" id="input-end-date"></div>
             </div>
             <button onclick="saveBaseSettings()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:12px; font-weight:bold; margin-top:10px;">儲存設定</button>
-            <button onclick="openModal('modal-reset')" class="btn-danger-outline">重設資料 (開始新旅程)</button>
+            <button onclick="openModal('modal-reset')" style="width:100%; padding:12px; background:white; color:var(--danger); border:2px solid var(--danger); border-radius:12px; font-weight:bold; margin-top:15px; cursor:pointer;">重設資料 (開始新旅程)</button>
         </div>
         <div class="currency-card">
             <strong style="font-size:17px; display:block; margin-bottom:15px;">💹 匯率換算 (即時)</strong>
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><span style="font-size:12px; color:#666; width:40px;">日幣</span><input type="number" id="input-jpy" placeholder="JPY" step="any" oninput="convertCurrency('JPY')"></div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><span style="font-size:12px; color:#666; width:40px;">日幣</span><input type="number" id="input-jpy" placeholder="JPY" oninput="convertCurrency('JPY')"></div>
             <div style="text-align:center; color:var(--accent); margin: -5px 0 5px;"><i class="fas fa-exchange-alt"></i></div>
-            <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:12px; color:#666; width:40px;">台幣</span><input type="number" id="input-twd" placeholder="TWD" step="any" oninput="convertCurrency('TWD')"></div>
+            <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:12px; color:#666; width:40px;">台幣</span><input type="number" id="input-twd" placeholder="TWD" oninput="convertCurrency('TWD')"></div>
             <div id="exchange-rate-info" style="font-size:11px; color:#999; text-align:right; margin-top:5px;">讀取中...</div>
         </div>
         <button class="fab" onclick="openModal('modal-flight')"><i class="fas fa-plane"></i></button>
@@ -119,24 +107,14 @@
         <button class="fab" onclick="openModal('modal-itinerary')"><i class="fas fa-plus"></i></button>
     </div>
 
-    <div id="tab-files" class="tab-content">
-        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
-            <strong>📎 雲端附件</strong>
-            <input type="text" id="link-name" placeholder="檔案描述">
-            <input type="text" id="link-url" placeholder="貼上分享連結">
-            <button onclick="saveLink()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:10px;">儲存附件</button>
-        </div>
-        <div id="link-list"></div>
-    </div>
-
     <div id="tab-split" class="tab-content">
         <div id="settle-suggestions" class="settle-card">正在計算建議...</div>
-        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px; text-align:center;">
+        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
             <p style="margin:0; color:#666;">旅程總支出</p>
             <h1 id="total-val">$0</h1>
             <div id="personal-list"></div>
         </div>
-        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px;">
+        <div class="card" style="background:var(--glass); border-radius:24px; padding:20px; margin:15px 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
             <strong>花費明細 (點擊編輯)</strong>
             <div id="expense-detail-list" style="margin-top:10px;"></div>
         </div>
@@ -161,40 +139,49 @@
         <h3 id="payment-modal-title">💰 新增支出</h3>
         <input type="hidden" id="edit-expense-id">
         <input type="text" id="pay-name" placeholder="項目名稱 (如: 晚餐)">
-        
         <div style="display:flex; gap:10px;">
             <select id="pay-currency" style="flex:0.4;" onchange="updateConvertHint()">
-                <option value="TWD">TWD 台幣</option>
-                <option value="JPY">JPY 日圓</option>
+                <option value="TWD">TWD 台幣</option><option value="JPY">JPY 日圓</option>
             </select>
             <input type="number" id="pay-amount" placeholder="金額" style="flex:1;" oninput="updateConvertHint()">
         </div>
         <span id="convert-hint" class="convert-hint"></span>
-
         <p style="font-size:12px; margin:0;">誰先墊付：</p>
         <select id="pay-payer"></select>
         <p style="font-size:12px; margin:10px 0 0;">分攤成員：</p>
         <div id="pay-split-list"></div>
-
-        <p style="font-size:12px; margin:10px 0 0;">備註：</p>
         <textarea id="pay-note" rows="2" placeholder="備註說明..."></textarea>
-        
-        <p style="font-size:12px; margin:10px 0 0;">上傳圖片/檔案：</p>
+        <p style="font-size:12px; margin:10px 0 0;">附件檔案：</p>
         <input type="file" id="pay-file" accept="image/*" onchange="previewExpenseFile(this)">
-        <img id="expense-img-preview" class="preview-box">
-
-        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:12px; margin-top:15px;">儲存帳目</button>
+        <div id="preview-wrapper" class="preview-container">
+            <button class="remove-file-badge" onclick="removeExpenseFile()">✕</button>
+            <img id="expense-img-preview" class="preview-box">
+        </div>
+        <button onclick="saveExpense()" style="width:100%; background:#27ae60; color:white; padding:12px; border:none; border-radius:12px; margin-top:15px; font-weight:bold;">儲存帳目</button>
         <button id="del-expense-btn" onclick="deleteExpenseReal()" style="width:100%; background:var(--danger); color:white; padding:12px; border:none; border-radius:12px; margin-top:5px; display:none;">刪除此筆</button>
         <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
     </div></div>
 
-    <div id="modal-flight" class="modal-overlay">...</div>
-    <div id="modal-reset" class="modal-overlay">...</div>
+    <div id="modal-flight" class="modal-overlay"><div class="modal-content">
+        <h3>✈️ 登機證設定</h3>
+        <select id="f-type"><option value="go">去程</option><option value="back">回程</option></select>
+        <input type="text" id="f-air" placeholder="航空公司">
+        <input type="text" id="f-no" placeholder="航班號碼">
+        <div style="display:flex; gap:10px;"><input type="text" id="f-from" placeholder="TPE"><input type="time" id="f-from-t"></div>
+        <div style="display:flex; gap:10px;"><input type="text" id="f-to" placeholder="CTS"><input type="time" id="f-to-t"></div>
+        <button onclick="saveFlight()" style="width:100%; background:var(--accent); color:white; padding:12px; border:none; border-radius:12px;">儲存</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">取消</button>
+    </div></div>
+
+    <div id="modal-reset" class="modal-overlay"><div class="modal-content">
+        <h3 style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> 確定重設資料？</h3>
+        <button onclick="resetAllData()" style="width:100%; background:var(--danger); color:white; padding:12px; border:none; border-radius:12px; font-weight:bold;">是的，清除</button>
+        <button onclick="closeModal()" style="width:100%; background:#eee; margin-top:10px; border:none; padding:10px; border-radius:12px;">保留返回</button>
+    </div></div>
 
     <div class="nav-bar">
         <a href="javascript:void(0)" class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>首頁</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-plan', this)"><i class="fas fa-calendar-alt"></i><span>行程</span></a>
-        <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-files', this)"><i class="fas fa-paperclip"></i><span>附件</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="switchTab('tab-split', this)"><i class="fas fa-coins"></i><span>分帳</span></a>
     </div>
 
@@ -236,8 +223,7 @@
 
         const typeIcons = { attraction: 'fa-map-marker-alt', hotel: 'fa-hotel', flight: 'fa-plane', breakfast: 'fa-coffee', lunch: 'fa-utensils', dinner: 'fa-moon' };
 
-        // --- 核心邏輯：分帳功能修改 (僅修改此部分) ---
-
+        // --- 分帳邏輯 (幣別、試算、附件刪除) ---
         window.updateConvertHint = () => {
             const amount = Number(document.getElementById('pay-amount').value);
             const curr = document.getElementById('pay-currency').value;
@@ -249,11 +235,18 @@
 
         window.previewExpenseFile = (input) => {
             const preview = document.getElementById('expense-img-preview');
+            const wrapper = document.getElementById('preview-wrapper');
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (e) => { preview.src = e.target.result; preview.style.display = 'block'; };
+                reader.onload = (e) => { preview.src = e.target.result; wrapper.style.display = 'block'; };
                 reader.readAsDataURL(input.files[0]);
             }
+        };
+
+        window.removeExpenseFile = () => {
+            document.getElementById('pay-file').value = "";
+            document.getElementById('expense-img-preview').src = "";
+            document.getElementById('preview-wrapper').style.display = 'none';
         };
 
         window.openPayment = async (id = null) => {
@@ -261,8 +254,7 @@
             document.getElementById('pay-name').value = "";
             document.getElementById('pay-amount').value = "";
             document.getElementById('pay-note').value = "";
-            document.getElementById('pay-file').value = "";
-            document.getElementById('expense-img-preview').style.display = "none";
+            window.removeExpenseFile();
             document.getElementById('del-expense-btn').style.display = id ? "block" : "none";
             document.getElementById('payment-modal-title').innerText = id ? "📝 編輯支出" : "💰 新增支出";
 
@@ -282,7 +274,11 @@
                 document.getElementById('pay-currency').value = d.currency || "TWD";
                 document.getElementById('pay-payer').value = d.payer;
                 document.getElementById('pay-note').value = d.note || "";
-                if(d.img) { const p = document.getElementById('expense-img-preview'); p.src = d.img; p.style.display = "block"; }
+                if(d.img) {
+                    const p = document.getElementById('expense-img-preview');
+                    p.src = d.img;
+                    document.getElementById('preview-wrapper').style.display = 'block';
+                }
                 updateConvertHint();
             }
             openModal('modal-payment');
@@ -297,7 +293,7 @@
             const splitTo = [...document.querySelectorAll('.split-cb:checked')].map(c => c.value);
             const note = document.getElementById('pay-note').value;
             const img = document.getElementById('expense-img-preview').src || "";
-            if(!name || !rawAmount || splitTo.length === 0) return alert("請填寫名稱、金額與成員");
+            if(!name || !rawAmount) return alert("請輸入花費名稱與金額");
             const amount = (currency === "JPY") ? rawAmount * exchangeRate : rawAmount;
             const data = { name, rawAmount, amount, currency, payer, splitTo, note, img, createdAt: serverTimestamp() };
             if(id) await updateDoc(doc(db, "expenses", id), data); else await addDoc(collection(db, "expenses"), data);
@@ -317,9 +313,10 @@
                 if(balances.hasOwnProperty(d.payer)) balances[d.payer] += d.amount;
                 const per = d.amount / d.splitTo.length;
                 d.splitTo.forEach(m => { if(balances.hasOwnProperty(m)) balances[m] -= per; });
-                detailHtml += `<div class="expense-detail-item" onclick="window.openPayment('${ds.id}')"><div><b>${d.name}</b><br><small style="color:#888;">${d.payer} 墊付 (${d.currency} ${d.rawAmount})</small></div><div style="text-align:right;"><b>$${Math.round(d.amount).toLocaleString()}</b>${d.img ? '<br><i class="fas fa-image" style="font-size:10px;color:#999;"></i>' : ''}</div></div>`;
+                detailHtml += `<div class="expense-detail-item" onclick="window.openPayment('${ds.id}')"><div><b>${d.name}</b><br><small style="color:#888;">${d.payer} 墊付 (${d.currency} ${d.rawAmount})</small></div><div style="text-align:right;"><b>$${Math.round(d.amount).toLocaleString()}</b>${d.img ? '<br><i class="fas fa-file-image" style="color:#999;font-size:10px;"></i>' : ''}</div></div>`;
             });
-            document.getElementById('total-val').innerText = "$" + Math.round(total).toLocaleString();
+            const totalEl = document.getElementById('total-val');
+            if(totalEl) totalEl.innerText = "$" + Math.round(total).toLocaleString();
             document.getElementById('expense-detail-list').innerHTML = detailHtml;
             updateSettleUI(balances);
         });
@@ -342,8 +339,7 @@
             document.getElementById('settle-suggestions').innerHTML = (debtors.length===0) ? "✅ 帳目已結清" : sug;
         }
 
-        // --- 以下所有原始功能均回復原狀 ---
-
+        // --- 行程與原本功能回復 ---
         window.addMemberRow = (name = '', avatar = AVATAR_OPTIONS[0].url) => {
             const container = document.getElementById('members-list-container');
             const row = document.createElement('div');
@@ -364,7 +360,7 @@
                 const res = await fetch('https://open.er-api.com/v6/latest/JPY');
                 const data = await res.json(); exchangeRate = data.rates.TWD;
                 document.getElementById('exchange-rate-info').innerText = `1 JPY ≈ ${exchangeRate.toFixed(4)} TWD (即時)`;
-            } catch (e) { document.getElementById('exchange-rate-info').innerText = "匯率讀取失敗"; }
+            } catch (e) { }
         }
         fetchExchangeRate();
 
@@ -391,7 +387,6 @@
         }
 
         window.saveItinerary = async () => {
-            if(!selectedDate) return alert("請選日期");
             const data = { date: selectedDate, type: document.getElementById('plan-type').value, location: document.getElementById('plan-location').value, desc: document.getElementById('plan-desc').value, start: document.getElementById('plan-start').value, end: document.getElementById('plan-end').value, updatedAt: serverTimestamp() };
             const id = document.getElementById('edit-id').value;
             if(id) await updateDoc(doc(db, "itinerary", id), data); else await addDoc(collection(db, "itinerary"), data);
@@ -444,7 +439,7 @@
         window.saveBaseSettings = async () => {
             const members = Array.from(document.querySelectorAll('.member-row')).map(r => ({ name: r.querySelector('.member-name-input').value, avatar: r.querySelector('.member-avatar-select').value })).filter(m => m.name);
             await setDoc(doc(db, "settings", "currentTrip"), { tripName: document.getElementById('input-trip-name').value, members, start: document.getElementById('input-start-date').value, end: document.getElementById('input-end-date').value });
-            alert("已儲存");
+            alert("旅程設定儲存成功");
         };
 
         onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
@@ -483,22 +478,11 @@
                 let diff = (eh*60+em)-(sh*60+sm); if(diff<0) diff+=1440;
                 html += `<div class="boarding-pass"><div class="ticket-top"><span>${f.air} ${f.no}</span><span>${f.type=='go'?'去程':'回程'}</span></div><div class="ticket-mid"><div style="text-align:left;"><p class="airport-code">${f.from}</p><b>${f.fromT}</b></div><div style="text-align:center;flex:1;position:relative;"><span style="font-size:9px;color:#999;">${Math.floor(diff/60)}h ${diff%60}m</span><br><i class="fas fa-plane" style="color:#eee;"></i></div><div style="text-align:right;"><p class="airport-code">${f.to}</p><b>${f.toT}</b></div></div></div>`;
             });
-            document.getElementById('flight-display-area').innerHTML = html;
+            const flightArea = document.getElementById('flight-display-area');
+            if(flightArea) flightArea.innerHTML = html;
         });
 
-        window.saveLink = async () => { await addDoc(collection(db, "links"), { name: document.getElementById('link-name').value, url: document.getElementById('link-url').value, createdAt: serverTimestamp() }); document.getElementById('link-name').value = ''; document.getElementById('link-url').value = ''; };
-        onSnapshot(query(collection(db, "links"), orderBy("createdAt", "desc")), (snap) => {
-            let html = '';
-            snap.forEach(dSnap => {
-                const d = dSnap.data(), id = dSnap.id;
-                let fId = d.url.includes('/d/') ? d.url.split('/d/')[1].split('/')[0] : '';
-                html += `<div class="itinerary-card" style="padding:15px;"><div class="delete-btn-tl" onclick="window.deleteLink('${id}')"><i class="fas fa-times-circle"></i></div><div style="flex:1; padding-left:15px;"><b>${d.name}</b><br><a href="${d.url}" target="_blank" style="color:var(--accent); font-size:11px;">開啟連結 <i class="fas fa-external-link-alt"></i></a>${fId?`<img src="https://drive.google.com/thumbnail?id=${fId}&sz=w800" class="preview-img" style="width:100%;border-radius:12px;margin-top:8px;">`:''}</div></div>`;
-            });
-            document.getElementById('link-list').innerHTML = html;
-        });
-        window.deleteLink = async (id) => { if(confirm("刪除附件？")) await deleteDoc(doc(db, "links", id)); };
-
-        window.resetAllData = async () => { if(confirm("這將清除所有資料，確定？")) { const cols = ["itinerary", "expenses", "links", "flights"]; for(const c of cols) { const s = await getDocs(collection(db, c)); for(const d of s.docs) await deleteDoc(doc(db, c, d.id)); } await deleteDoc(doc(db, "settings", "currentTrip")); window.location.reload(); } };
+        window.resetAllData = async () => { if(confirm("這將清除所有資料，確定？")) { const cols = ["itinerary", "expenses", "flights"]; for(const c of cols) { const s = await getDocs(collection(db, c)); for(const d of s.docs) await deleteDoc(doc(db, c, d.id)); } await deleteDoc(doc(db, "settings", "currentTrip")); window.location.reload(); } };
 
         window.switchTab = (id, el) => { document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); document.getElementById(id).classList.add('active'); el.classList.add('active'); };
         window.openModal = (id) => document.getElementById(id).style.display = 'flex';
