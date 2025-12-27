@@ -505,5 +505,6 @@
         window.resetAllData = async () => { if(confirm("這將清除所有資料，確定？")) { const cols = ["itinerary", "expenses", "flights"]; for(const c of cols) { const s = await getDocs(collection(db, c)); for(const d of s.docs) await deleteDoc(doc(db, c, d.id)); } await deleteDoc(doc(db, "settings", "currentTrip")); window.location.reload(); } };
 
     </script>
+    <script type="module" src="/index.tsx"></script> 
 </body>
 </html>
