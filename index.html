@@ -18,7 +18,7 @@
         .header { text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); padding: 40px 20px 10px; }
         #weather-box { background: rgba(0,0,0,0.35); color: white; border-radius: 15px; padding: 8px 12px; margin: 10px auto; width: fit-content; display: flex; align-items: center; gap: 6px; font-size: 13px; backdrop-filter: blur(5px); min-height: 38px; }
 
-        /* 登機證 (維持原樣) */
+        /* 登機證 (嚴格維持) */
         .boarding-pass { background: #fff; border-radius: 15px; margin: 10px 5px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-left: 5px solid var(--accent); max-width: 95%; margin-left: auto; margin-right: auto; }
         .ticket-top { background: var(--accent); color: white; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; }
         .ticket-mid { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -31,7 +31,7 @@
         .date-item b { font-size: 15px; margin-bottom: 3px; }
         .date-item span { font-size: 11px; opacity: 0.8; }
 
-        /* 行程卡片 (長按拖曳樣式維持) */
+        /* 行程卡片 (嚴格維持) */
         .itinerary-card { background: var(--glass); backdrop-filter: var(--blur); border-radius: 22px; margin: 10px 0; padding: 16px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; cursor: grab; }
         .itinerary-card:active { cursor: grabbing; }
         .delete-btn-tl { position: absolute; top: 8px; left: 8px; color: var(--danger); font-size: 16px; cursor: pointer; z-index: 10; opacity: 0.7; }
@@ -55,19 +55,19 @@
         .currency-card { background: var(--glass); border-radius: 24px; padding: 20px; margin: 15px 5px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .member-row { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 15px; margin-bottom: 10px; }
 
-        /* --- 優化分帳頁 UI 樣式 --- */
-        .settle-card { background: white; padding: 15px; border-radius: 20px; margin-bottom: 15px; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-top: 4px solid var(--success); }
-        .settle-item { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-weight: 500; }
+        /* --- 分帳頁 UI 強化 (僅修改此區視覺) --- */
+        .settle-card { background: white; padding: 15px; border-radius: 20px; margin-bottom: 15px; font-size: 14px; text-align: left; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-left: 5px solid var(--success); }
+        .settle-item { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-weight: 600; }
         .settle-arrow { color: #ccc; font-size: 12px; }
-        .total-expense-card { background: linear-gradient(135deg, var(--accent), #3a6186); color: white; padding: 25px 20px; border-radius: 25px; margin: 15px 5px; text-align: center; box-shadow: 0 10px 20px rgba(30,60,114,0.3); }
-        .expense-detail-item { background: white; margin: 10px 0; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
-        .expense-detail-item:active { transform: scale(0.98); border-color: var(--accent); }
-        .expense-name-box b { font-size: 15px; color: #222; }
-        .expense-name-box small { color: #888; display: block; font-size: 12px; margin-top: 2px; }
-        .expense-amount-box { text-align: right; }
-        .expense-amount-box b { font-size: 16px; color: var(--accent); }
-        .convert-hint { font-size: 11px; color: var(--accent); font-weight: bold; margin-bottom: 8px; display: block; }
         
+        .split-summary-card { background: linear-gradient(135deg, var(--accent) 0%, #2a5298 100%); color: white; border-radius: 24px; padding: 20px; margin: 15px 5px; text-align: center; box-shadow: 0 10px 25px rgba(30,60,114,0.3); }
+        .personal-balance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+        .balance-item { background: rgba(255,255,255,0.15); padding: 10px; border-radius: 15px; font-size: 13px; backdrop-filter: blur(5px); }
+        
+        .expense-detail-item { background: var(--glass); margin: 10px 0; padding: 15px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid transparent; }
+        .expense-detail-item:active { background: #f0f0f0; border-color: var(--accent); }
+        
+        .convert-hint { font-size: 11px; color: var(--accent); font-weight: bold; margin-bottom: 8px; display: block; }
         #preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
         .preview-item { position: relative; width: 100%; aspect-ratio: 1; }
         .preview-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
@@ -111,12 +111,12 @@
     </div>
 
     <div id="tab-split" class="tab-content">
-        <div id="settle-suggestions" class="settle-card">正在載入成員與帳目...</div>
+        <div id="settle-suggestions" class="settle-card">正在載入帳目...</div>
         
-        <div class="total-expense-card">
-            <p style="margin:0; opacity: 0.8; font-size:14px;">旅程總支出</p>
-            <h1 id="total-val" style="margin: 8px 0; font-size: 32px;">$0</h1>
-            <div id="personal-list" style="margin-top: 15px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
+        <div class="split-summary-card">
+            <p style="margin:0; opacity: 0.8; font-size:13px;">旅程總支出</p>
+            <h1 id="total-val" style="margin: 5px 0; font-size: 32px;">$0</h1>
+            <div id="personal-list" class="personal-balance-grid"></div>
         </div>
 
         <div style="padding: 0 5px;">
@@ -211,7 +211,7 @@
         let currentMembers = [], selectedDate = "", exchangeRate = 0.22;
         let tempImages = [], unsubscribeExpenses = null;
 
-        // --- 核心設定與分帳同步 ---
+        // --- 核心資料監聽 ---
         onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
             if(snap.exists()) {
                 const d = snap.data();
@@ -222,11 +222,12 @@
                 document.getElementById('members-list-container').innerHTML = '';
                 if(d.members) d.members.forEach(m => addMemberRow(m.name));
                 currentMembers = d.members || [];
-                startListeningExpenses();
+                startListeningExpenses(); // 先讀成員再讀分帳
                 renderDates(d.start, d.end);
             }
         });
 
+        // --- 分帳邏輯強化 ---
         function startListeningExpenses() {
             if (unsubscribeExpenses) unsubscribeExpenses();
             const q = query(collection(db, "expenses"), orderBy("createdAt", "desc"));
@@ -239,23 +240,23 @@
                     if(balances.hasOwnProperty(d.payer)) balances[d.payer] += d.amount;
                     const per = d.amount / (d.splitTo ? d.splitTo.length : 1);
                     if(d.splitTo) d.splitTo.forEach(m => { if(balances.hasOwnProperty(m)) balances[m] -= per; });
+                    
                     const symbol = d.currency === 'JPY' ? '¥' : '$';
                     const imgCount = Array.isArray(d.img) ? d.img.length : (d.img ? 1 : 0);
-                    
                     detailHtml += `
-                    <div class="expense-detail-item" onclick="window.openPayment('${ds.id}')">
-                        <div class="expense-name-box">
-                            <b>${d.name}</b>
-                            <small>${d.payer} 墊付 · ${d.splitTo.length}人分攤</small>
-                        </div>
-                        <div class="expense-amount-box">
-                            <b>${symbol}${d.rawAmount.toLocaleString()}</b>
-                            ${imgCount > 0 ? `<br><small style="color:#27ae60;"><i class="fas fa-image"></i> ${imgCount}張圖</small>` : ''}
-                        </div>
-                    </div>`;
+                        <div class="expense-detail-item" onclick="window.openPayment('${ds.id}')">
+                            <div class="expense-name-box">
+                                <b>${d.name}</b>
+                                <small>${d.payer} 墊付 (${symbol}${d.rawAmount.toLocaleString()})</small>
+                            </div>
+                            <div class="expense-amount-box">
+                                <b style="color:var(--accent)">$${Math.round(d.amount).toLocaleString()}</b>
+                                ${imgCount > 0 ? `<br><small style="color:var(--success); font-size:10px;"><i class="fas fa-image"></i> ${imgCount}張圖</small>` : ''}
+                            </div>
+                        </div>`;
                 });
                 document.getElementById('total-val').innerText = "$" + Math.round(total).toLocaleString();
-                document.getElementById('expense-detail-list').innerHTML = detailHtml || '<p style="text-align:center; color:rgba(255,255,255,0.6);">尚無花費明細</p>';
+                document.getElementById('expense-detail-list').innerHTML = detailHtml;
                 updateSettleUI(balances);
             });
         }
@@ -264,33 +265,44 @@
             let listHtml = '', debtors = [], creditors = [];
             Object.keys(balances).forEach(m => {
                 const b = Math.round(balances[m]);
-                listHtml += `
-                <div style="background:rgba(255,255,255,0.1); padding:8px; border-radius:12px; font-size:13px;">
-                    <span style="opacity:0.8;">${m}</span><br>
-                    <b style="color:${b>=0?'#afffaf':'#ffadad'}">${b>=0?'+':''}${b.toLocaleString()}</b>
-                </div>`;
+                listHtml += `<div class="balance-item"><span>${m}</span><br><b style="color:${b>=0?'#afffaf':'#ffadad'}">${b>=0?'+':''}${b.toLocaleString()}</b></div>`;
                 if(b < -1) debtors.push({n:m, a:-b}); else if(b > 1) creditors.push({n:m, a:b});
             });
             document.getElementById('personal-list').innerHTML = listHtml;
             
-            let sug = '<div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;"><i class="fas fa-hand-holding-usd" style="color:var(--success)"></i><strong>結算轉帳建議</strong></div>', i=0, j=0;
+            let sug = '<strong style="color:var(--accent); display:block; margin-bottom:10px;"><i class="fas fa-hand-holding-usd"></i> 結算建議</strong>', i=0, j=0;
             while(i<debtors.length && j<creditors.length) {
                 let p = Math.min(debtors[i].a, creditors[j].a);
-                sug += `
-                <div class="settle-item">
-                    <span>${debtors[i].n}</span>
-                    <i class="fas fa-long-arrow-alt-right settle-arrow"></i>
-                    <span style="color:var(--success)">$${Math.round(p).toLocaleString()}</span>
-                    <i class="fas fa-long-arrow-alt-right settle-arrow"></i>
-                    <span>${creditors[j].n}</span>
-                </div>`;
+                sug += `<div class="settle-item"><span>${debtors[i].n}</span><i class="fas fa-long-arrow-alt-right settle-arrow"></i><span style="color:var(--success)">$${Math.round(p).toLocaleString()}</span><i class="fas fa-long-arrow-alt-right settle-arrow"></i><span>${creditors[j].n}</span></div>`;
                 debtors[i].a -= p; creditors[j].a -= p;
                 if(debtors[i].a < 1) i++; if(creditors[j].a < 1) j++;
             }
             document.getElementById('settle-suggestions').innerHTML = (debtors.length===0) ? '<div style="text-align:center; color:var(--success);"><i class="fas fa-check-circle"></i> 帳目已結清</div>' : sug;
         }
 
-        // --- 原始行程功能 (維持原樣) ---
+        // --- 行程功能 (嚴格維持原樣：含天氣、交通、拖曳) ---
+        async function updateWeather(fallbackLoc) {
+            const weatherBox = document.getElementById('weather-box');
+            const fetchW = async (p) => {
+                try {
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?${p}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`);
+                    const d = await res.json();
+                    if(d.cod===200) { weatherBox.innerHTML = `<i class="fas fa-location-arrow" style="font-size:11px;opacity:0.7;"></i> <img src="https://openweathermap.org/img/wn/${d.weather[0].icon}.png" width="28"><b>${d.name}: ${Math.round(d.main.temp)}°C</b>`; return true; }
+                    return false;
+                } catch(e) { return false; }
+            };
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async(pos)=> { await fetchW(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`); }, async()=>{ if(fallbackLoc) await tryFallbackWeather(fallbackLoc, fetchW); });
+            } else if(fallbackLoc) await tryFallbackWeather(fallbackLoc, fetchW);
+        }
+
+        async function tryFallbackWeather(loc, fetchFn) {
+            let city = loc.split(/[ ,，、]/)[0];
+            const match = loc.match(/.*?(市|縣|區|町|村)/);
+            if (match) city = match[0].split(/市|縣|區|町|村/).pop() || match[0];
+            if(!await fetchFn(`q=${encodeURIComponent(city)}`)) await fetchFn(`q=${encodeURIComponent(city.substring(0,2))}`);
+        }
+
         window.refreshItinerary = async () => {
             if(!selectedDate) return;
             const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
@@ -308,7 +320,7 @@
             new Sortable(listEl, { animation: 150, delay: 1000, delayOnTouchOnly: true });
         };
 
-        // --- 以下輔助功能嚴格維持不變 ---
+        // --- 輔助功能 (維持) ---
         window.handleMultipleFiles = (input) => { if (input.files) { Array.from(input.files).forEach(file => { const reader = new FileReader(); reader.onload = (e) => { tempImages.push(e.target.result); renderPreviewGrid(); }; reader.readAsDataURL(file); }); input.value = ""; } };
         window.renderPreviewGrid = () => { document.getElementById('preview-grid').innerHTML = tempImages.map((src, i) => `<div class="preview-item"><button class="btn-remove-img" onclick="removeImage(${i})">✕</button><img src="${src}" class="preview-img"></div>`).join(''); };
         window.removeImage = (i) => { tempImages.splice(i, 1); renderPreviewGrid(); };
@@ -331,6 +343,7 @@
         window.resetAllData = async () => { if(confirm("確定清除？")) { const cols = ["itinerary", "expenses", "flights"]; for(const c of cols) { const s = await getDocs(collection(db, c)); for(const d of s.docs) await deleteDoc(doc(db, c, d.id)); } await deleteDoc(doc(db, "settings", "currentTrip")); window.location.reload(); } };
         async function getCommute(o, d) { return new Promise((r) => { const s = new google.maps.DistanceMatrixService(); s.getDistanceMatrix({ origins: [o], destinations: [d], travelMode: 'DRIVING' }, (res, stat) => { r((stat==='OK' && res.rows[0].elements[0].status==='OK') ? res.rows[0].elements[0].duration.text : "..."); }); }); }
         window.openOnGoogleMaps = (l) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l)}`, '_blank');
+        window.editPlan = async (id) => { const ds = await getDoc(doc(db, "itinerary", id)); const d = ds.data(); document.getElementById('edit-id').value = id; document.getElementById('plan-type').value = d.type; document.getElementById('plan-location').value = d.location; document.getElementById('plan-desc').value = d.desc || ""; document.getElementById('plan-start').value = d.start; document.getElementById('plan-end').value = d.end; openModal('modal-itinerary'); };
         onSnapshot(collection(db, "flights"), (snap) => { let html = ''; snap.forEach(ds => { const f = ds.data(); const [sh, sm] = f.fromT.split(':').map(Number), [eh, em] = f.toT.split(':').map(Number); let diff = (eh*60+em)-(sh*60+sm); if(diff<0) diff+=1440; html += `<div class="boarding-pass"><div class="ticket-top"><span>${f.air} ${f.no}</span><span>航空</span></div><div class="ticket-mid"><div style="text-align:left;"><p class="airport-code">${f.from}</p><b>${f.fromT}</b></div><div style="text-align:center;flex:1;position:relative;"><span style="font-size:9px;color:#999;">${Math.floor(diff/60)}h ${diff%60}m</span><br><i class="fas fa-plane" style="color:#eee;"></i></div><div style="text-align:right;"><p class="airport-code">${f.to}</p><b>${f.toT}</b></div></div></div>`; }); if(document.getElementById('flight-display-area')) document.getElementById('flight-display-area').innerHTML = html; });
 
         const typeIcons = { attraction: 'fa-map-marker-alt', hotel: 'fa-hotel', flight: 'fa-plane', breakfast: 'fa-coffee', lunch: 'fa-utensils', dinner: 'fa-moon' };
