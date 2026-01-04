@@ -198,18 +198,72 @@
         let currentMembers = [], selectedDate = "", exchangeRate = 0.22;
         let tempImages = [], unsubscribeExpenses = null;
 
-        // --- 修正重點：分帳監聽器封裝 ---
+        // --- 核心設定監聽：確保先有成員再算分帳 ---
+        onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
+            if(snap.exists()) {
+                const d = snap.data();
+                document.getElementById('dynamic-trip-name').innerText = d.tripName || "旅遊誌";
+                document.getElementById('input-trip-name').value = d.tripName || "";
+                document.getElementById('input-start-date').value = d.start || "";
+                document.getElementById('input-end-date').value = d.end || "";
+                document.getElementById('members-list-container').innerHTML = '';
+                if(d.members) d.members.forEach(m => addMemberRow(m.name));
+                currentMembers = d.members || [];
+                // 重要：確保成員載入後啟動支出監聽
+                startListeningExpenses();
+                renderDates(d.start, d.end);
+            }
+        });
+
+        // --- 天氣與GPS功能 ---
+        async function updateWeather(fallbackLoc) {
+            const weatherBox = document.getElementById('weather-box');
+            const fetchW = async (p) => {
+                try {
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?${p}&appid=${WEATHER_KEY}&units=metric&lang=zh_tw`);
+                    const d = await res.json();
+                    if(d.cod===200) { weatherBox.innerHTML = `<i class="fas fa-location-arrow" style="font-size:11px;opacity:0.7;"></i> <img src="https://openweathermap.org/img/wn/${d.weather[0].icon}.png" width="28"><b>${d.name}: ${Math.round(d.main.temp)}°C</b>`; return true; }
+                    return false;
+                } catch(e) { return false; }
+            };
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async(pos)=> { await fetchW(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`); }, async()=>{ if(fallbackLoc) await tryFallbackWeather(fallbackLoc, fetchW); });
+            } else if(fallbackLoc) await tryFallbackWeather(fallbackLoc, fetchW);
+        }
+
+        async function tryFallbackWeather(loc, fetchFn) {
+            let city = loc.split(/[ ,，、]/)[0];
+            const match = loc.match(/.*?(市|縣|區|町|村)/);
+            if (match) city = match[0].split(/市|縣|區|町|村/).pop() || match[0];
+            if(!await fetchFn(`q=${encodeURIComponent(city)}`)) await fetchFn(`q=${encodeURIComponent(city.substring(0,2))}`);
+        }
+
+        // --- 行程功能：包含長按1秒拖曳、交通時間計算 ---
+        window.refreshItinerary = async () => {
+            if(!selectedDate) return;
+            const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
+            const snap = await getDocs(q);
+            const listEl = document.getElementById('itinerary-list');
+            let html = '', docs = snap.docs;
+            updateWeather(docs.length > 0 ? docs[0].data().location : null);
+            for(let i=0; i<docs.length; i++) {
+                const d = docs[i].data(), id = docs[i].id;
+                const icon = typeIcons[d.type] || 'fa-map-marker-alt';
+                html += `<div class="itinerary-card" data-id="${id}"><div class="delete-btn-tl" onclick="window.deletePlan('${id}')"><i class="fas fa-times-circle"></i></div><div class="type-icon"><i class="fas ${icon}"></i></div><div class="info-col"><div class="time-row">${d.start} - ${d.end}<span class="stay-tag">${getTimeDiff(d.start, d.end)}</span></div><div class="location-text">${d.location}</div>${d.desc ? `<div style="font-size:13px;color:#666;line-height:1.4;">${d.desc}</div>` : ''}</div><div class="btn-col"><button class="btn-action" style="background:#f39c12" onclick="window.openOnGoogleMaps('${d.location}')"><i class="fas fa-directions"></i></button><button class="btn-action" style="background:#3498db" onclick="window.editPlan('${id}')">編輯</button></div></div>`;
+                if(i < docs.length - 1) { const time = await getCommute(d.location, docs[i+1].data().location); html += `<div class="commute-info"><i class="fas fa-car"></i> 約 ${time}</div>`; }
+            }
+            listEl.innerHTML = html || '<p style="text-align:center; color:white; padding:20px;">無行程計畫。</p>';
+            new Sortable(listEl, { animation: 150, delay: 1000, delayOnTouchOnly: true });
+        };
+
+        // --- 分帳功能監聽封裝 ---
         function startListeningExpenses() {
             if (unsubscribeExpenses) unsubscribeExpenses();
             const q = query(collection(db, "expenses"), orderBy("createdAt", "desc"));
             unsubscribeExpenses = onSnapshot(q, (snap) => {
                 let total = 0, balances = {}, detailHtml = '';
-                if (currentMembers.length === 0) {
-                    document.getElementById('settle-suggestions').innerText = "請先在首頁設定成員。";
-                    return;
-                }
+                if (currentMembers.length === 0) return;
                 currentMembers.forEach(m => balances[m.name] = 0);
-
                 snap.forEach(ds => {
                     const d = ds.data(); total += d.amount;
                     if(balances.hasOwnProperty(d.payer)) balances[d.payer] += d.amount;
@@ -223,80 +277,6 @@
                 updateSettleUI(balances);
             });
         }
-
-        // --- 多圖上傳 ---
-        window.handleMultipleFiles = (input) => {
-            if (input.files) {
-                Array.from(input.files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => { tempImages.push(e.target.result); renderPreviewGrid(); };
-                    reader.readAsDataURL(file);
-                });
-                input.value = "";
-            }
-        };
-        window.renderPreviewGrid = () => {
-            document.getElementById('preview-grid').innerHTML = tempImages.map((src, i) => `<div class="preview-item"><button class="btn-remove-img" onclick="removeImage(${i})">✕</button><img src="${src}" class="preview-img"></div>`).join('');
-        };
-        window.removeImage = (i) => { tempImages.splice(i, 1); renderPreviewGrid(); };
-
-        // --- 支出編輯/儲存 ---
-        window.updateConvertHint = () => {
-            const amount = Number(document.getElementById('pay-amount').value);
-            const curr = document.getElementById('pay-currency').value;
-            const hint = document.getElementById('convert-hint');
-            if(!amount) { hint.innerText = ""; return; }
-            hint.innerText = (curr === 'TWD') ? `≈ JPY ${(amount / exchangeRate).toFixed(0)}` : `≈ TWD ${(amount * exchangeRate).toFixed(0)}`;
-        };
-
-        window.openPayment = async (id = null) => {
-            document.getElementById('edit-expense-id').value = id || "";
-            document.getElementById('pay-name').value = "";
-            document.getElementById('pay-amount').value = "";
-            document.getElementById('pay-note').value = "";
-            tempImages = []; renderPreviewGrid();
-            document.getElementById('del-expense-btn').style.display = id ? "block" : "none";
-            document.getElementById('payment-modal-title').innerText = id ? "📝 編輯支出" : "💰 新增支出";
-
-            let opt = '', chk = '';
-            currentMembers.forEach(m => {
-                opt += `<option value="${m.name}">${m.name}</option>`;
-                chk += `<label style="display:block;margin:5px 0;"><input type="checkbox" class="split-cb" value="${m.name}" checked> ${m.name}</label>`;
-            });
-            document.getElementById('pay-payer').innerHTML = opt;
-            document.getElementById('pay-split-list').innerHTML = chk;
-
-            if(id) {
-                const ds = await getDoc(doc(db, "expenses", id));
-                const d = ds.data();
-                document.getElementById('pay-name').value = d.name;
-                document.getElementById('pay-amount').value = d.rawAmount || d.amount;
-                document.getElementById('pay-currency').value = d.currency || "TWD";
-                document.getElementById('pay-payer').value = d.payer;
-                document.getElementById('pay-note').value = d.note || "";
-                if(d.img) tempImages = Array.isArray(d.img) ? [...d.img] : [d.img];
-                renderPreviewGrid(); updateConvertHint();
-            }
-            openModal('modal-payment');
-        };
-
-        window.saveExpense = async () => {
-            const id = document.getElementById('edit-expense-id').value;
-            const name = document.getElementById('pay-name').value;
-            const rawAmount = Number(document.getElementById('pay-amount').value);
-            const currency = document.getElementById('pay-currency').value;
-            const splitTo = [...document.querySelectorAll('.split-cb:checked')].map(c => c.value);
-            if(!name || !rawAmount || splitTo.length === 0) return alert("資訊不完整");
-            const amount = (currency === "JPY") ? rawAmount * exchangeRate : rawAmount;
-            const data = { name, rawAmount, amount, currency, payer: document.getElementById('pay-payer').value, splitTo, note: document.getElementById('pay-note').value, img: tempImages, updatedAt: serverTimestamp() };
-            if(id) await updateDoc(doc(db, "expenses", id), data); else { data.createdAt = serverTimestamp(); await addDoc(collection(db, "expenses"), data); }
-            closeModal();
-        };
-
-        window.deleteExpenseReal = async () => {
-            const id = document.getElementById('edit-expense-id').value;
-            if(id && confirm("確定刪除此筆支出？")) { await deleteDoc(doc(db, "expenses", id)); closeModal(); }
-        };
 
         function updateSettleUI(balances) {
             let listHtml = '', debtors = [], creditors = [];
@@ -316,44 +296,75 @@
             document.getElementById('settle-suggestions').innerHTML = (debtors.length===0) ? "✅ 帳目已結清" : sug;
         }
 
-        // --- 首頁設定監聽 ---
-        onSnapshot(doc(db, "settings", "currentTrip"), (snap) => {
-            if(snap.exists()) {
-                const d = snap.data();
-                document.getElementById('dynamic-trip-name').innerText = d.tripName || "旅遊誌";
-                document.getElementById('input-trip-name').value = d.tripName || "";
-                document.getElementById('input-start-date').value = d.start || "";
-                document.getElementById('input-end-date').value = d.end || "";
-                document.getElementById('members-list-container').innerHTML = '';
-                if(d.members) d.members.forEach(m => addMemberRow(m.name));
-                currentMembers = d.members || [];
-                // 重要：獲取成員後啟動支出監聽
-                startListeningExpenses();
-                renderDates(d.start, d.end);
+        // --- 以下輔助功能維持不變 ---
+        window.handleMultipleFiles = (input) => {
+            if (input.files) {
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => { tempImages.push(e.target.result); renderPreviewGrid(); };
+                    reader.readAsDataURL(file);
+                });
+                input.value = "";
             }
-        });
-
-        // --- 行程功能 (長按 1 秒拖曳) ---
-        window.refreshItinerary = async () => {
-            if(!selectedDate) return;
-            const q = query(collection(db, "itinerary"), where("date", "==", selectedDate), orderBy("start", "asc"));
-            const snap = await getDocs(q);
-            const listEl = document.getElementById('itinerary-list');
-            let html = '';
-            snap.forEach(doc => {
-                const d = doc.data(), id = doc.id;
-                html += `<div class="itinerary-card" data-id="${id}"><div class="delete-btn-tl" onclick="window.deletePlan('${id}')"><i class="fas fa-times-circle"></i></div><div class="type-icon"><i class="fas fa-map-marker-alt"></i></div><div class="info-col"><div class="time-row">${d.start} - ${d.end}</div><div class="location-text">${d.location}</div>${d.desc ? `<div style="font-size:13px;color:#666;">${d.desc}</div>` : ''}</div><div class="btn-col"><button class="btn-action" style="background:#f39c12" onclick="window.openOnGoogleMaps('${d.location}')"><i class="fas fa-directions"></i></button><button class="btn-action" style="background:#3498db" onclick="window.editPlan('${id}')">編輯</button></div></div>`;
-            });
-            listEl.innerHTML = html || '<p style="text-align:center;color:white;padding:20px;">無行程計畫。</p>';
-            new Sortable(listEl, { animation: 150, delay: 1000, delayOnTouchOnly: true });
         };
-
-        // --- 其餘原本功能回復 ---
+        window.renderPreviewGrid = () => { document.getElementById('preview-grid').innerHTML = tempImages.map((src, i) => `<div class="preview-item"><button class="btn-remove-img" onclick="removeImage(${i})">✕</button><img src="${src}" class="preview-img"></div>`).join(''); };
+        window.removeImage = (i) => { tempImages.splice(i, 1); renderPreviewGrid(); };
+        window.updateConvertHint = () => {
+            const amount = Number(document.getElementById('pay-amount').value);
+            const curr = document.getElementById('pay-currency').value;
+            const hint = document.getElementById('convert-hint');
+            if(!amount) { hint.innerText = ""; return; }
+            hint.innerText = (curr === 'TWD') ? `≈ JPY ${(amount / exchangeRate).toFixed(0)}` : `≈ TWD ${(amount * exchangeRate).toFixed(0)}`;
+        };
+        window.openPayment = async (id = null) => {
+            document.getElementById('edit-expense-id').value = id || "";
+            document.getElementById('pay-name').value = "";
+            document.getElementById('pay-amount').value = "";
+            document.getElementById('pay-note').value = "";
+            tempImages = []; renderPreviewGrid();
+            document.getElementById('del-expense-btn').style.display = id ? "block" : "none";
+            document.getElementById('payment-modal-title').innerText = id ? "📝 編輯支出" : "💰 新增支出";
+            let opt = '', chk = '';
+            currentMembers.forEach(m => {
+                opt += `<option value="${m.name}">${m.name}</option>`;
+                chk += `<label style="display:block;margin:5px 0;"><input type="checkbox" class="split-cb" value="${m.name}" checked> ${m.name}</label>`;
+            });
+            document.getElementById('pay-payer').innerHTML = opt;
+            document.getElementById('pay-split-list').innerHTML = chk;
+            if(id) {
+                const ds = await getDoc(doc(db, "expenses", id));
+                const d = ds.data();
+                document.getElementById('pay-name').value = d.name;
+                document.getElementById('pay-amount').value = d.rawAmount || d.amount;
+                document.getElementById('pay-currency').value = d.currency || "TWD";
+                document.getElementById('pay-payer').value = d.payer;
+                document.getElementById('pay-note').value = d.note || "";
+                if(d.img) tempImages = Array.isArray(d.img) ? [...d.img] : [d.img];
+                renderPreviewGrid(); updateConvertHint();
+            }
+            openModal('modal-payment');
+        };
+        window.saveExpense = async () => {
+            const id = document.getElementById('edit-expense-id').value;
+            const name = document.getElementById('pay-name').value;
+            const rawAmount = Number(document.getElementById('pay-amount').value);
+            const currency = document.getElementById('pay-currency').value;
+            const splitTo = [...document.querySelectorAll('.split-cb:checked')].map(c => c.value);
+            if(!name || !rawAmount || splitTo.length === 0) return alert("資訊不完整");
+            const amount = (currency === "JPY") ? rawAmount * exchangeRate : rawAmount;
+            const data = { name, rawAmount, amount, currency, payer: document.getElementById('pay-payer').value, splitTo, note: document.getElementById('pay-note').value, img: tempImages, updatedAt: serverTimestamp() };
+            if(id) await updateDoc(doc(db, "expenses", id), data); else { data.createdAt = serverTimestamp(); await addDoc(collection(db, "expenses"), data); }
+            closeModal();
+        };
+        window.deleteExpenseReal = async () => {
+            const id = document.getElementById('edit-expense-id').value;
+            if(id && confirm("確定刪除此筆支出？")) { await deleteDoc(doc(db, "expenses", id)); closeModal(); }
+        };
         window.addMemberRow = (name = '') => {
             const container = document.getElementById('members-list-container');
             const row = document.createElement('div');
             row.className = 'member-row';
-            row.innerHTML = `<div class="member-info"><input type="text" class="member-name-input" value="${name}" placeholder="姓名"></div><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#ccc;padding:10px;"><i class="fas fa-times"></i></button>`;
+            row.innerHTML = `<div class="member-info"><input type="text" class="member-name-input" value="${name}" placeholder="姓名"></div><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#ccc;padding:10px;">✕</button>`;
             container.appendChild(row);
         };
         window.saveBaseSettings = async () => {
@@ -409,6 +420,15 @@
             });
             if(document.getElementById('flight-display-area')) document.getElementById('flight-display-area').innerHTML = html;
         });
+
+        const typeIcons = { attraction: 'fa-map-marker-alt', hotel: 'fa-hotel', flight: 'fa-plane', breakfast: 'fa-coffee', lunch: 'fa-utensils', dinner: 'fa-moon' };
+
+        function getTimeDiff(s, e) {
+            if(!s || !e) return "";
+            const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number);
+            let diff = (eh * 60 + em) - (sh * 60 + sm); if(diff < 0) diff += 1440;
+            return `停留 ${Math.floor(diff/60)}時${diff%60}分`;
+        }
 
     </script>
 </body>
